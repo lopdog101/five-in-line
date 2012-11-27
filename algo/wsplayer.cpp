@@ -1456,42 +1456,11 @@ bool wsplayer_t::check_four_line_hole_inside(const step_t& st,const field_t& fie
 	unsigned j=0;
 	Step s;
 
-    //Мы анализируем пять клеток влючая завершающий левый ноль.
-	//Правый ноль находится повторным вызовом фнукции с симметричными dx,dy в find_two_way_treats()
-	//Возможно даже одновременное наличие правой и левой закрытой четвёрки
-	for(;j<4;j++)
+    //Ищем дырку слева
+	for(;j<3;j++)
 	{
 		p.x-=dx;
 		p.y-=dy;
-		s=field.at(p);
-
-		if(s==st.step)
-		{
-			tr.add_rest(p);
-			continue;
-		}
-
-		if(s!=st_empty)break;
-
-		if(tr.cost_count!=0)return false;
-		tr.add_cost(p);
-	}
-
-    if(j==4)
-	{
-		p.x-=dx;
-		p.y-=dy;
-		s=field.at(p);
-	}
-
-	//Должна быть левая клетка противоположного цвета
-	if(s==st_empty||s==st.step)return false;
-
-	p=st;
-	for(;j<4;j++)
-	{
-		p.x+=dx;
-		p.y+=dy;
 		s=field.at(p);
 
 		if(s==st.step)
@@ -1501,16 +1470,58 @@ bool wsplayer_t::check_four_line_hole_inside(const step_t& st,const field_t& fie
 		}
 
 		if(s!=st_empty)return false;
-
-		if(tr.cost_count!=0)return false;
 		tr.add_cost(p);
+		break;
 	}
 
-	if(tr.cost_count==0)return false;
+	if(tr.cost_count==0)
+		return false;
 
-	//Существует случай, когда закрытая четвёрка с пустой клеткой перед нулём может оказаться открытой чётвёркой
-	treat_t ctr;
-	return !check_open_four_line(st,field,dx,dy,ctr);
+	//След. за дыркой должен быть 0
+	{
+		j++;
+		p.x-=dx;
+		p.y-=dy;
+		s=field.at(p);
+
+		if(s!=st.step)return false;
+		tr.add_rest(p);
+	}
+
+	if(j==4)
+	{
+		return true;
+	}
+
+	for(j++;j<4;j++)
+	{
+		p.x-=dx;
+		p.y-=dy;
+		s=field.at(p);
+
+		if(s!=st.step)break;
+		tr.add_rest(p);
+	}
+
+	if(j==4)
+	{
+		return true;
+	}
+
+	p=st;
+	for(;j<4;j++)
+	{
+		p.x+=dx;
+		p.y+=dy;
+		s=field.at(p);
+
+		if(s!=st.step)break;
+		tr.add_rest(p);
+	}
+
+	if(j!=4)return false;
+	
+	return true;
 }
 
 bool wsplayer_t::check_open_three_line_two_cost(const step_t& st,const field_t& field,int dx,int dy,treat_t& tr)
