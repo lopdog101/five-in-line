@@ -8,7 +8,7 @@
 
 #ifdef USE_XML
 #  include <cppexpat/xml_service.h>
-#  include "algo/game_xml.h"
+#  include "../algo/game_xml.h"
 #  include <cppexpat/pack_library.h>
 #endif
 
@@ -18,7 +18,7 @@ namespace fs=boost::filesystem;
 
 #include <object_progress/object_progress.hpp>
 #include <object_progress/perfomance.hpp>
-#include "algo/check_player.h"
+#include "../algo/check_player.h"
 
 // CAboutDlg dialog used for App About
 

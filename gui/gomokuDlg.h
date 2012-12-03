@@ -3,10 +3,10 @@
 
 #pragma once
 #include "mfc_field.h"
-#include "extern/DlgResizeHelper.h"
-#include "algo/game.h"
+#include "../extern/DlgResizeHelper.h"
+#include "../algo/game.h"
 #include "afxwin.h"
-#include "algo/wsplayer.h"
+#include "../algo/wsplayer.h"
 #ifdef USE_XML
 #  include <cppexpat/cppexpat.h>
 #endif

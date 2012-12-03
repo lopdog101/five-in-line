@@ -1,4 +1,4 @@
-#include "../stdafx.h"
+#include "../gui/stdafx.h"
 #include "DlgResizeHelper.h"
 
 void DlgResizeHelper::Init(HWND a_hParent) {

@@ -195,62 +195,66 @@
 			Name="Source Files"
 			Filter="cpp;c;cxx;def;odl;idl;hpj;bat;asm;asmx"
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}">
-			<File
-				RelativePath=".\extern\DlgResizeHelper.cpp">
-			</File>
-			<File
-				RelativePath=".\gomoku.cpp">
-			</File>
-			<File
-				RelativePath=".\gomokuDlg.cpp">
-			</File>
-			<File
-				RelativePath=".\mfc_field.cpp">
-			</File>
-			<File
-				RelativePath=".\stdafx.cpp">
-				<FileConfiguration
-					Name="Debug|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="1"/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="1"/>
-				</FileConfiguration>
-				<FileConfiguration
-					Name="Release_static|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						UsePrecompiledHeader="1"/>
-				</FileConfiguration>
-			</File>
-			<File
-				RelativePath=".\ThreadProcessor.cpp">
-			</File>
 			<Filter
 				Name="algo"
 				Filter="">
 				<File
-					RelativePath=".\algo\check_player.cpp">
+					RelativePath="..\algo\check_player.cpp">
 				</File>
 				<File
-					RelativePath=".\algo\field.cpp">
+					RelativePath="..\algo\field.cpp">
 				</File>
 				<File
-					RelativePath=".\algo\field_xml.cpp">
+					RelativePath="..\algo\field_xml.cpp">
 				</File>
 				<File
-					RelativePath=".\algo\game.cpp">
+					RelativePath="..\algo\game.cpp">
 				</File>
 				<File
-					RelativePath=".\algo\gomoku_exceptions.cpp">
+					RelativePath="..\algo\gomoku_exceptions.cpp">
 				</File>
 				<File
-					RelativePath=".\algo\wsplayer.cpp">
+					RelativePath="..\algo\wsplayer.cpp">
+				</File>
+			</Filter>
+			<Filter
+				Name="gui"
+				Filter="">
+				<File
+					RelativePath="..\extern\DlgResizeHelper.cpp">
+				</File>
+				<File
+					RelativePath=".\gomoku.cpp">
+				</File>
+				<File
+					RelativePath=".\gomokuDlg.cpp">
+				</File>
+				<File
+					RelativePath=".\mfc_field.cpp">
+				</File>
+				<File
+					RelativePath=".\stdafx.cpp">
+					<FileConfiguration
+						Name="Debug|Win32">
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="1"/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release|Win32">
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="1"/>
+					</FileConfiguration>
+					<FileConfiguration
+						Name="Release_static|Win32">
+						<Tool
+							Name="VCCLCompilerTool"
+							UsePrecompiledHeader="1"/>
+					</FileConfiguration>
+				</File>
+				<File
+					RelativePath=".\ThreadProcessor.cpp">
 				</File>
 			</Filter>
 		</Filter>
@@ -258,56 +262,60 @@
 			Name="Header Files"
 			Filter="h;hpp;hxx;hm;inl;inc;xsd"
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}">
-			<File
-				RelativePath=".\extern\DlgResizeHelper.h">
-			</File>
-			<File
-				RelativePath=".\gomoku.h">
-			</File>
-			<File
-				RelativePath=".\gomokuDlg.h">
-			</File>
-			<File
-				RelativePath=".\mfc_field.h">
-			</File>
-			<File
-				RelativePath=".\Resource.h">
-			</File>
-			<File
-				RelativePath=".\stdafx.h">
-			</File>
-			<File
-				RelativePath=".\ThreadProcessor.h">
-			</File>
 			<Filter
 				Name="algo"
 				Filter="">
 				<File
-					RelativePath=".\algo\check_player.h">
+					RelativePath="..\algo\check_player.h">
 				</File>
 				<File
-					RelativePath=".\algo\field.h">
+					RelativePath="..\algo\field.h">
 				</File>
 				<File
-					RelativePath=".\algo\field_xml.h">
+					RelativePath="..\algo\field_xml.h">
 				</File>
 				<File
-					RelativePath=".\algo\game.h">
+					RelativePath="..\algo\game.h">
 				</File>
 				<File
-					RelativePath=".\algo\game_xml.h">
+					RelativePath="..\algo\game_xml.h">
 				</File>
 				<File
-					RelativePath=".\algo\gomoku_exceptions.h">
+					RelativePath="..\algo\gomoku_exceptions.h">
 				</File>
 				<File
-					RelativePath=".\algo\primitives.h">
+					RelativePath="..\algo\primitives.h">
 				</File>
 				<File
-					RelativePath=".\algo\step.h">
+					RelativePath="..\algo\step.h">
 				</File>
 				<File
-					RelativePath=".\algo\wsplayer.h">
+					RelativePath="..\algo\wsplayer.h">
+				</File>
+			</Filter>
+			<Filter
+				Name="gui"
+				Filter="">
+				<File
+					RelativePath="..\extern\DlgResizeHelper.h">
+				</File>
+				<File
+					RelativePath=".\gomoku.h">
+				</File>
+				<File
+					RelativePath=".\gomokuDlg.h">
+				</File>
+				<File
+					RelativePath=".\mfc_field.h">
+				</File>
+				<File
+					RelativePath=".\Resource.h">
+				</File>
+				<File
+					RelativePath=".\stdafx.h">
+				</File>
+				<File
+					RelativePath=".\ThreadProcessor.h">
 				</File>
 			</Filter>
 		</Filter>
@@ -316,39 +324,36 @@
 			Filter="rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx"
 			UniqueIdentifier="{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}">
 			<File
-				RelativePath=".\res\empty.bmp">
+				RelativePath="..\res\empty.bmp">
 			</File>
 			<File
-				RelativePath=".\res\gomoku.ico">
+				RelativePath="..\res\gomoku.ico">
 			</File>
 			<File
-				RelativePath=".\gomoku.rc">
+				RelativePath="..\gomoku.rc">
 			</File>
 			<File
-				RelativePath=".\res\gomoku.rc2">
+				RelativePath="..\res\gomoku.rc2">
 			</File>
 			<File
-				RelativePath=".\res\krestik.bmp">
+				RelativePath="..\res\krestik.bmp">
 			</File>
 			<File
-				RelativePath=".\res\krestik_hi.bmp">
+				RelativePath="..\res\krestik_hi.bmp">
 			</File>
 			<File
-				RelativePath=".\res\krestik_last.bmp">
+				RelativePath="..\res\krestik_last.bmp">
 			</File>
 			<File
-				RelativePath=".\res\nolik.bmp">
+				RelativePath="..\res\nolik.bmp">
 			</File>
 			<File
-				RelativePath=".\res\nolik_hi.bmp">
+				RelativePath="..\res\nolik_hi.bmp">
 			</File>
 			<File
-				RelativePath=".\res\nolik_last.bmp">
+				RelativePath="..\res\nolik_last.bmp">
 			</File>
 		</Filter>
-		<File
-			RelativePath=".\ReadMe.txt">
-		</File>
 	</Files>
 	<Globals>
 		<Global
