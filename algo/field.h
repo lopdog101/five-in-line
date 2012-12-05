@@ -84,7 +84,7 @@ namespace Gomoku
 		point2val outbound;
 		size_t width;
 	public:
-		matrix(const rect& _max_bound=rect(-25,-25,25,25)) : 
+		matrix(const rect& _max_bound=rect(-40,-40,40,40)) : 
 		  max_bound(_max_bound),
 		  width(_max_bound.width()+1),
 		  fld((_max_bound.width()+1)*(_max_bound.height()+1),Value())

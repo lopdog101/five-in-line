@@ -39,7 +39,7 @@
 				Name="VCLinkerTool"
 				AdditionalDependencies="notification.lib object_progress.lib cppexpat.lib filelock.lib friend_rtti.lib"
 				OutputFile="$(SolutionDir)/five_in_line.exe"
-				LinkIncremental="2"
+				LinkIncremental="1"
 				AdditionalLibraryDirectories="\Comp\cpp\boost\lib;\Comp\xml\cppexpat\Debug_static;\src\shared\notification\Debug_static;\src\shared\object_progress\Debug_static;\src\shared\friend_rtti\Debug_static;\src\shared\filelock\Debug_static"
 				GenerateDebugInformation="TRUE"
 				SubSystem="2"
@@ -234,24 +234,6 @@
 				</File>
 				<File
 					RelativePath=".\stdafx.cpp">
-					<FileConfiguration
-						Name="Debug|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="1"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="1"/>
-					</FileConfiguration>
-					<FileConfiguration
-						Name="Release_static|Win32">
-						<Tool
-							Name="VCCLCompilerTool"
-							UsePrecompiledHeader="1"/>
-					</FileConfiguration>
 				</File>
 				<File
 					RelativePath=".\ThreadProcessor.cpp">
@@ -309,7 +291,7 @@
 					RelativePath=".\mfc_field.h">
 				</File>
 				<File
-					RelativePath=".\Resource.h">
+					RelativePath=".\resource.h">
 				</File>
 				<File
 					RelativePath=".\stdafx.h">
@@ -318,40 +300,59 @@
 					RelativePath=".\ThreadProcessor.h">
 				</File>
 			</Filter>
+			<Filter
+				Name="third"
+				Filter="">
+				<File
+					RelativePath="..\extern\binary_find.h">
+				</File>
+				<File
+					RelativePath="..\extern\exception_catch.h">
+				</File>
+				<File
+					RelativePath="..\extern\object_progress.hpp">
+				</File>
+				<File
+					RelativePath="..\extern\pair_comparator.h">
+				</File>
+				<File
+					RelativePath="..\extern\polimvar_intf.h">
+				</File>
+			</Filter>
 		</Filter>
 		<Filter
 			Name="Resource Files"
 			Filter="rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx"
 			UniqueIdentifier="{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}">
 			<File
-				RelativePath="..\res\empty.bmp">
+				RelativePath=".\res\empty.bmp">
 			</File>
 			<File
-				RelativePath="..\res\gomoku.ico">
+				RelativePath=".\res\gomoku.ico">
 			</File>
 			<File
-				RelativePath="..\gomoku.rc">
+				RelativePath=".\gomoku.rc">
 			</File>
 			<File
-				RelativePath="..\res\gomoku.rc2">
+				RelativePath=".\res\gomoku.rc2">
 			</File>
 			<File
-				RelativePath="..\res\krestik.bmp">
+				RelativePath=".\res\krestik.bmp">
 			</File>
 			<File
-				RelativePath="..\res\krestik_hi.bmp">
+				RelativePath=".\res\krestik_hi.bmp">
 			</File>
 			<File
-				RelativePath="..\res\krestik_last.bmp">
+				RelativePath=".\res\krestik_last.bmp">
 			</File>
 			<File
-				RelativePath="..\res\nolik.bmp">
+				RelativePath=".\res\nolik.bmp">
 			</File>
 			<File
-				RelativePath="..\res\nolik_hi.bmp">
+				RelativePath=".\res\nolik_hi.bmp">
 			</File>
 			<File
-				RelativePath="..\res\nolik_last.bmp">
+				RelativePath=".\res\nolik_last.bmp">
 			</File>
 		</Filter>
 	</Files>
