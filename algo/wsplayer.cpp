@@ -1234,19 +1234,23 @@ bool wsplayer_t::treat_t::is_one_of_cost(const point& p) const
 	return false;
 }
 
-
-void wsplayer_t::find_treats(const points_t& empty_points,treats_t& res,Step cl,unsigned steps_to_win)
+void wsplayer_t::find_treats(const points_t& empty_points,treats_t& res,Step cl,unsigned steps_to_win) const
 {
-	find_treats(empty_points,cl,res,check_five_line);
-	if(steps_to_win>=2)find_treats(empty_points,cl,res,check_open_four_line);
-	if(steps_to_win>=2)find_two_way_treats(empty_points,cl,res,check_close_four_line);
-	if(steps_to_win>=2)find_two_way_treats(empty_points,cl,res,check_four_line_hole_inside);
-	if(steps_to_win>=3)find_treats(empty_points,cl,res,check_open_three_line_two_cost);
-	if(steps_to_win>=3)find_two_way_treats(empty_points,cl,res,check_open_three_line_three_cost);
+	find_treats(empty_points,res,cl,field,steps_to_win);
+}
+
+void wsplayer_t::find_treats(const points_t& empty_points,treats_t& res,Step cl,const field_t& field,unsigned steps_to_win)
+{
+	find_treats(empty_points,cl,field,res,check_five_line);
+	if(steps_to_win>=2)find_treats(empty_points,cl,field,res,check_open_four_line);
+	if(steps_to_win>=2)find_two_way_treats(empty_points,cl,field,res,check_close_four_line);
+	if(steps_to_win>=2)find_two_way_treats(empty_points,cl,field,res,check_four_line_hole_inside);
+	if(steps_to_win>=3)find_treats(empty_points,cl,field,res,check_open_three_line_two_cost);
+	if(steps_to_win>=3)find_two_way_treats(empty_points,cl,field,res,check_open_three_line_three_cost);
 }
 
 
-void wsplayer_t::find_treats(const points_t& pts,Step cl,treats_t& results,treat_f f) const
+void wsplayer_t::find_treats(const points_t& pts,Step cl,const field_t& field,treats_t& results,treat_f f)
 {
 	step_t st;
 	st.step=cl;
@@ -1270,7 +1274,7 @@ void wsplayer_t::find_treats(const points_t& pts,Step cl,treats_t& results,treat
 	}
 }
 
-void wsplayer_t::find_two_way_treats(const points_t& pts,Step cl,treats_t& results,treat_f f) const
+void wsplayer_t::find_two_way_treats(const points_t& pts,Step cl,const field_t& field,treats_t& results,treat_f f)
 {
 	step_t st;
 	st.step=cl;

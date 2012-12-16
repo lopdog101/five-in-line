@@ -196,6 +196,25 @@
 			Filter="cpp;c;cxx;def;odl;idl;hpj;bat;asm;asmx"
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}">
 			<Filter
+				Name="gui"
+				Filter="">
+				<File
+					RelativePath="..\extern\DlgResizeHelper.cpp">
+				</File>
+				<File
+					RelativePath=".\gomokuDlg.cpp">
+				</File>
+				<File
+					RelativePath=".\mfc_field.cpp">
+				</File>
+				<File
+					RelativePath=".\stdafx.cpp">
+				</File>
+				<File
+					RelativePath=".\ThreadProcessor.cpp">
+				</File>
+			</Filter>
+			<Filter
 				Name="algo"
 				Filter="">
 				<File
@@ -215,28 +234,6 @@
 				</File>
 				<File
 					RelativePath="..\algo\wsplayer.cpp">
-				</File>
-			</Filter>
-			<Filter
-				Name="gui"
-				Filter="">
-				<File
-					RelativePath="..\extern\DlgResizeHelper.cpp">
-				</File>
-				<File
-					RelativePath=".\gomoku.cpp">
-				</File>
-				<File
-					RelativePath=".\gomokuDlg.cpp">
-				</File>
-				<File
-					RelativePath=".\mfc_field.cpp">
-				</File>
-				<File
-					RelativePath=".\stdafx.cpp">
-				</File>
-				<File
-					RelativePath=".\ThreadProcessor.cpp">
 				</File>
 			</Filter>
 		</Filter>

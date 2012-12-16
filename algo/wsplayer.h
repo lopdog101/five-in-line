@@ -283,6 +283,7 @@ namespace Gomoku
 		void increase_state();
 		inline void decrease_state(){--current_state;}
 
+	public:
 		void find_move_to_make_five(Step cl,points_t& results) const;
 		void add_move_to_make_five(const step_t& st,points_t& results) const;
 		static void check_five_line(const step_t& st,const field_t& field,int dx,int dy,points_t& results);
@@ -293,10 +294,12 @@ namespace Gomoku
 		void find_move_to_open_three(const points_t& pts,Step cl,atacks_t& results) const;
 		static bool check_open_three_line(const step_t& st,const field_t& field,int dx,int dy,point* open);
 
-        void find_treats(const points_t& empty_points,treats_t& res,Step cl,unsigned steps_to_win);
+        void find_treats(const points_t& empty_points,treats_t& res,Step cl,unsigned steps_to_win) const;
+        static void find_treats(const points_t& empty_points,treats_t& res,Step cl,const field_t& field,unsigned steps_to_win);
+
 		typedef bool (* treat_f)(const step_t& st,const field_t& field,int dx,int dy,treat_t& tr);
-		void find_treats(const points_t& pts,Step cl,treats_t& results,treat_f f) const;
-		void find_two_way_treats(const points_t& pts,Step cl,treats_t& results,treat_f f) const;
+		static void find_treats(const points_t& pts,Step cl,const field_t& field,treats_t& results,treat_f f);
+		static void find_two_way_treats(const points_t& pts,Step cl,const field_t& field,treats_t& results,treat_f f);
 		static bool check_five_line(const step_t& st,const field_t& field,int dx,int dy,treat_t& tr);
 		static bool check_open_four_line(const step_t& st,const field_t& field,int dx,int dy,treat_t& tr);
 		static bool check_close_four_line(const step_t& st,const field_t& field,int dx,int dy,treat_t& tr);
