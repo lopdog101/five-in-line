@@ -31,14 +31,16 @@ bool base_test_t::pass()
 	catch(e_check_failed& e)
 	{
 		lg<<"failed: "<<e.what();
+
+		if(!e.ctx.empty()) lg<<"ctx: "<<e.ctx;
 		
 		const e_check_failed::items_t& stack=e.get_stack();
-		
+
 		if(!stack.empty())lg<<"at:";
 		for(size_t i=0;i<stack.size();i++)
 		{
 			const e_check_failed::item_t& s=stack[i];
-			lg<<s.file<<": "<<s.line;
+			lg<<s.file<<": "<<s.line<<" "<<s.func;
 		}
 	}
 	catch(std::exception& e)

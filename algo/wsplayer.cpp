@@ -1234,6 +1234,13 @@ bool wsplayer_t::treat_t::is_one_of_cost(const point& p) const
 	return false;
 }
 
+void wsplayer_t::treat_t::sort()
+{
+	std::sort(cost,cost+cost_count,less_point_pr());
+	std::sort(rest,rest+rest_count,less_point_pr());
+}
+
+
 void wsplayer_t::find_treats(const points_t& empty_points,treats_t& res,Step cl,unsigned steps_to_win) const
 {
 	find_treats(empty_points,res,cl,field,steps_to_win);
@@ -1736,6 +1743,18 @@ std::string wsplayer_t::print_chain(item_ptr root)
 	}
 	return print_steps(sts);
 }
+
+std::string wsplayer_t::print_treat(treat_t& tr)
+{
+	points_t rest(tr.rest,tr.rest+tr.rest_count);
+	points_t cost(tr.cost,tr.cost+tr.cost_count);
+	points_t gain;
+	gain.push_back(tr.gain);
+
+	std::string ret="gain: "+print_points(gain)+" cost: "+print_points(cost)+" rest: "+print_points(rest);
+	return ret;
+}
+
 
 
 template<class Points>

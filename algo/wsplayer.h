@@ -77,6 +77,8 @@ namespace Gomoku
 			bool is_one_of_cost(const point& p) const;
 			bool is_conflict(const treat_t& b) const;
 			bool is_gain_conflict_with_rhs_gain_and_cost(const treat_t& rhs) const;
+
+			void sort();
 		};
 
 		class temporary_treat_state
@@ -312,6 +314,7 @@ namespace Gomoku
 		static bool is_on_same_line_and_can_make_five(const field_t& field,const point& a,const point& b,Step cl);
 
 		static std::string print_chain(item_ptr root);
+		static std::string print_treat(treat_t& tr);
 	public:
 		item_ptr root;
 

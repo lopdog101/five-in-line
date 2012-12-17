@@ -30,9 +30,10 @@ public:
 	{
 		std::string file;
 		int line;
+		std::string func;
 
 		item_t(){line=0;}
-		item_t(const std::string _file,int _line): file(_file) {line=_line;}
+		item_t(const std::string _file,int _line,const std::string _func): file(_file),func(_func) {line=_line;}
 	};
 
 	typedef std::vector<item_t> items_t;
@@ -45,7 +46,7 @@ public:
 
 	e_check_failed(const std::string& _msg) : msg(_msg){}
 	const char* what() const{return msg.c_str();}
-	void add_stack(const std::string& file,int line){items.push_back(item_t(file,line));}
+	void add_stack(const std::string& file,int line,const std::string& func){items.push_back(item_t(file,line,func));}
 	const items_t& get_stack() const{return items;}
 };
 
@@ -53,7 +54,7 @@ public:
 if(!(EXPRESSION))\
 {\
 	e_check_failed e(#EXPRESSION);\
-	e.add_stack(__FILE__,__LINE__);\
+	e.add_stack(__FILE__,__LINE__,__FUNCTION__);\
 	throw e;\
 }
 
@@ -61,27 +62,27 @@ if(!(EXPRESSION))\
 if(!(EXPRESSION))\
 {\
 	e_check_failed e(#EXPRESSION);\
-	e.ctx = CONTEXT;
-	e.add_stack(__FILE__,__LINE__);\
+	e.ctx = CONTEXT;\
+	e.add_stack(__FILE__,__LINE__,__FUNCTION__);\
 	throw e;\
 }
 
 #define CHECK_RETHROW \
 catch(e_check_failed& e)\
 {\
-	e.add_stack(__FILE__,__LINE__);\
+	e.add_stack(__FILE__,__LINE__,__FUNCTION__);\
 	throw e;\
 }\
 catch(std::exception& se)\
 {\
 	e_check_failed e(se.what());\
-	e.add_stack(__FILE__,__LINE__);\
+	e.add_stack(__FILE__,__LINE__,__FUNCTION__);\
 	throw e;\
 }\
 catch(...)\
 {\
 	e_check_failed e("unknown exception");\
-	e.add_stack(__FILE__,__LINE__);\
+	e.add_stack(__FILE__,__LINE__,__FUNCTION__);\
 	throw e;\
 }
 
