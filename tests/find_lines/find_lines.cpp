@@ -126,12 +126,12 @@ void find_lines_t::check_four_left_zero()
 			}
 		}
 		
-		CHECK_CTX( res.size()>=1 && res.size()<3, get_ctx(fl,i,j) );
+		CHECK_CTX( res.size()==1, get_ctx(fl,i,j) );
 
 		const Gomoku::wsplayer_t::treat_t& tr=res.front();
 
 		CHECK_CTX( tr.rest_count==3, get_ctx(fl,i,j) );
-/*
+
 		for(unsigned k=0;k<5;k++)
 		{
 			if(k==i || k==j)continue;
@@ -154,16 +154,6 @@ void find_lines_t::check_four_left_zero()
 			p.x=5;
 			CHECK_CTX( std::find(tr.cost,tr.cost+tr.cost_count,p)!=tr.cost+tr.cost_count , get_ctx(fl,i,j) );
 		}
-		else if(j==4)
-		{
-			CHECK_CTX( tr.cost_count==2 , get_ctx(fl,i,j) );
-
-			p.x=-1;
-			CHECK_CTX( std::find(tr.cost,tr.cost+tr.cost_count,p)!=tr.cost+tr.cost_count , get_ctx(fl,i,j) );
-
-			p.x=4;
-			CHECK_CTX( std::find(tr.cost,tr.cost+tr.cost_count,p)!=tr.cost+tr.cost_count , get_ctx(fl,i,j) );
-		}
 		else
 		{
 			CHECK_CTX( tr.cost_count==1 , get_ctx(fl,i,j) );
@@ -171,7 +161,6 @@ void find_lines_t::check_four_left_zero()
             p.x=j;
 			CHECK_CTX( tr.cost[0]==p , get_ctx(fl,i,j) );
 		}
-*/
 	}
 }
 

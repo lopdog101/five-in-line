@@ -304,8 +304,8 @@ namespace Gomoku
 		static void find_two_way_treats(const points_t& pts,Step cl,const field_t& field,treats_t& results,treat_f f);
 		static bool check_five_line(const step_t& st,const field_t& field,int dx,int dy,treat_t& tr);
 		static bool check_open_four_line(const step_t& st,const field_t& field,int dx,int dy,treat_t& tr);
-		static bool check_close_four_line(const step_t& st,const field_t& field,int dx,int dy,treat_t& tr);
 		static bool check_four_line_hole_inside(const step_t& st,const field_t& field,int dx,int dy,treat_t& tr);
+		static bool check_four_line_zero_left_hole_right(const step_t& st,const field_t& field,int dx,int dy,treat_t& tr);
 		static bool check_open_three_line_two_cost(const step_t& st,const field_t& field,int dx,int dy,treat_t& tr);
 		static bool check_open_three_line_three_cost(const step_t& st,const field_t& field,int dx,int dy,treat_t& tr);
 

@@ -1250,8 +1250,8 @@ void wsplayer_t::find_treats(const points_t& empty_points,treats_t& res,Step cl,
 {
 	find_treats(empty_points,cl,field,res,check_five_line);
 	if(steps_to_win>=2)find_treats(empty_points,cl,field,res,check_open_four_line);
-	if(steps_to_win>=2)find_two_way_treats(empty_points,cl,field,res,check_close_four_line);
 	if(steps_to_win>=2)find_two_way_treats(empty_points,cl,field,res,check_four_line_hole_inside);
+	if(steps_to_win>=2)find_two_way_treats(empty_points,cl,field,res,check_four_line_zero_left_hole_right);
 	if(steps_to_win>=3)find_treats(empty_points,cl,field,res,check_open_three_line_two_cost);
 	if(steps_to_win>=3)find_two_way_treats(empty_points,cl,field,res,check_open_three_line_three_cost);
 }
@@ -1394,71 +1394,6 @@ bool wsplayer_t::check_open_four_line(const step_t& st,const field_t& field,int 
 	return true;
 }
 
-bool wsplayer_t::check_close_four_line(const step_t& st,const field_t& field,int dx,int dy,treat_t& tr)
-{
-	tr=treat_t();
-	tr.gain=st;
-	Gomoku::point p=st;
-	unsigned j=0;
-	Step s;
-
-    //Мы анализируем пять клеток влючая завершающий левый ноль.
-	//Правый ноль находится повторным вызовом фнукции с симметричными dx,dy в find_two_way_treats()
-	//Возможно даже одновременное наличие правой и левой закрытой четвёрки
-	for(;j<4;j++)
-	{
-		p.x-=dx;
-		p.y-=dy;
-		s=field.at(p);
-
-		if(s==st.step)
-		{
-			tr.add_rest(p);
-			continue;
-		}
-
-		if(s!=st_empty)break;
-
-		if(tr.cost_count!=0)return false;
-		tr.add_cost(p);
-	}
-
-    if(j==4)
-	{
-		p.x-=dx;
-		p.y-=dy;
-		s=field.at(p);
-	}
-
-	//Должна быть левая клетка противоположного цвета
-	if(s==st_empty||s==st.step)return false;
-
-	p=st;
-	for(;j<4;j++)
-	{
-		p.x+=dx;
-		p.y+=dy;
-		s=field.at(p);
-
-		if(s==st.step)
-		{
-			tr.add_rest(p);
-			continue;
-		}
-
-		if(s!=st_empty)return false;
-
-		if(tr.cost_count!=0)return false;
-		tr.add_cost(p);
-	}
-
-	if(tr.cost_count==0)return false;
-
-	//Существует случай, когда закрытая четвёрка с пустой клеткой перед нулём может оказаться открытой чётвёркой
-	treat_t ctr;
-	return !check_open_four_line(st,field,dx,dy,ctr);
-}
-
 bool wsplayer_t::check_four_line_hole_inside(const step_t& st,const field_t& field,int dx,int dy,treat_t& tr)
 {
 	tr=treat_t();
@@ -1534,6 +1469,62 @@ bool wsplayer_t::check_four_line_hole_inside(const step_t& st,const field_t& fie
 	
 	return true;
 }
+
+bool wsplayer_t::check_four_line_zero_left_hole_right(const step_t& st,const field_t& field,int dx,int dy,treat_t& tr)
+{
+	tr=treat_t();
+	tr.gain=st;
+	Gomoku::point p=st;
+	unsigned j=0;
+	Step s;
+
+	for(;j<3;j++)
+	{
+		p.x-=dx;
+		p.y-=dy;
+		s=field.at(p);
+
+		if(s!=st.step)break;
+
+		tr.add_rest(p);
+	}
+
+	if(j==3)
+	{
+		p.x-=dx;
+		p.y-=dy;
+		s=field.at(p);
+	}
+
+	if(s!=other_step(st.step))
+		return false;
+
+	p=st;
+	for(;j<3;j++)
+	{
+		p.x+=dx;
+		p.y+=dy;
+		s=field.at(p);
+
+		if(s!=st.step)break;
+
+		tr.add_rest(p);
+	}
+
+	if(j!=3)return false;
+
+	p.x+=dx;
+	p.y+=dy;
+	s=field.at(p);
+
+	if(s!=st_empty)
+		return false;
+
+	tr.add_cost(p);
+
+	return true;
+}
+
 
 bool wsplayer_t::check_open_three_line_two_cost(const step_t& st,const field_t& field,int dx,int dy,treat_t& tr)
 {
