@@ -202,6 +202,9 @@
 					RelativePath="..\extern\DlgResizeHelper.cpp">
 				</File>
 				<File
+					RelativePath=".\gomoku.cpp">
+				</File>
+				<File
 					RelativePath=".\gomokuDlg.cpp">
 				</File>
 				<File
@@ -234,6 +237,15 @@
 				</File>
 				<File
 					RelativePath="..\algo\wsplayer.cpp">
+				</File>
+				<File
+					RelativePath="..\algo\wsplayer_common.cpp">
+				</File>
+				<File
+					RelativePath="..\algo\wsplayer_node.cpp">
+				</File>
+				<File
+					RelativePath="..\algo\wsplayer_treat.cpp">
 				</File>
 			</Filter>
 		</Filter>
@@ -270,6 +282,18 @@
 				</File>
 				<File
 					RelativePath="..\algo\wsplayer.h">
+				</File>
+				<File
+					RelativePath="..\algo\wsplayer_common.h">
+				</File>
+				<File
+					RelativePath="..\algo\wsplayer_common.inl">
+				</File>
+				<File
+					RelativePath="..\algo\wsplayer_node.h">
+				</File>
+				<File
+					RelativePath="..\algo\wsplayer_treat.h">
 				</File>
 			</Filter>
 			<Filter

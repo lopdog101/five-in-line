@@ -220,7 +220,7 @@ CgomokuDlg::CgomokuDlg(CWnd* pParent /*=NULL*/)
 	lib.add(mfcPlayer());
 	lib.add(ThreadPlayer());
 	lib.add(NullPlayer());
-	lib.add(Gomoku::wsplayer_t());
+	lib.add(Gomoku::WsPlayer::wsplayer_t());
 #endif
 }
 
@@ -264,18 +264,18 @@ BOOL CgomokuDlg::OnInitDialog()
 
 	const char* sval=getenv("stored_deep");
 	if(sval!=0&&(*sval)!=0)
-		Gomoku::wsplayer_t::stored_deep=atol(sval);
+		Gomoku::WsPlayer::stored_deep=atol(sval);
 
 	sval=getenv("lookup_deep");
 	if(sval!=0&&(*sval)!=0)
-		Gomoku::wsplayer_t::def_lookup_deep=atol(sval);
+		Gomoku::WsPlayer::def_lookup_deep=atol(sval);
 
 	sval=getenv("treat_deep");
 	if(sval!=0&&(*sval)!=0)
-		Gomoku::wsplayer_t::treat_deep=atol(sval);
+		Gomoku::WsPlayer::treat_deep=atol(sval);
 
 	ObjectProgress::log_generator lg(true);
-	lg<<"stored_deep="<<Gomoku::wsplayer_t::stored_deep<<" lookup_deep="<<Gomoku::wsplayer_t::def_lookup_deep<<" treat_deep="<<Gomoku::wsplayer_t::treat_deep;
+	lg<<"stored_deep="<<Gomoku::WsPlayer::stored_deep<<" lookup_deep="<<Gomoku::WsPlayer::def_lookup_deep<<" treat_deep="<<Gomoku::WsPlayer::treat_deep;
 
 	// Set the icon for this dialog.  The framework does this automatically
 	//  when the application's main window is not a dialog
@@ -391,7 +391,7 @@ Gomoku::player_ptr CgomokuDlg::create_player(const CComboBox& cb,Gomoku::Step st
 	case 0:ret=Gomoku::player_ptr(new mfcPlayer);break;
 	default:
 	{
-		Gomoku::player_ptr sub(new Gomoku::wsplayer_t);
+		Gomoku::player_ptr sub(new Gomoku::WsPlayer::wsplayer_t);
 		ret=Gomoku::player_ptr(new ThreadPlayer(sub));
 		break;
 	}
@@ -410,7 +410,7 @@ int CgomokuDlg::player2index(Gomoku::iplayer_t& pl)
 	Gomoku::player_ptr sub=tpl->get_player();
 	if(!sub)return -1;
 
-	if(dynamic_cast<Gomoku::wsplayer_t*>(&*sub)!=0) return 1;
+	if(dynamic_cast<Gomoku::WsPlayer::wsplayer_t*>(&*sub)!=0) return 1;
 	return -1;
 }
 
@@ -510,7 +510,7 @@ void CgomokuDlg::OnOperationTest()
 			c->set_steps(gml.field().get_steps());
 
 
-			if(dynamic_cast<const Gomoku::wsplayer_t*>(gml.get_krestik().get())!=0)
+			if(dynamic_cast<const Gomoku::WsPlayer::wsplayer_t*>(gml.get_krestik().get())!=0)
 			{
 				gm.set_krestik(gml.get_krestik());
 				gm.set_nolik(cp);

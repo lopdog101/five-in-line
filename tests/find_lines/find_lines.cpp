@@ -1,5 +1,5 @@
 #include "find_lines.h"
-#include "../../algo/wsplayer.h"
+#include "../../algo/wsplayer_treat.h"
 #include <boost/lexical_cast.hpp>
 
 base_test_t* create_find_lines(){return new find_lines_t;}
@@ -35,12 +35,12 @@ void find_lines_t::check_four_empty_both_sides()
 		p.x=i;
 		empty_steps.front()=p;
 
-		Gomoku::wsplayer_t::treats_t res;
-		Gomoku::wsplayer_t::find_treats(empty_steps,res,p.step,fl,5);
+		Gomoku::WsPlayer::treats_t res;
+		Gomoku::WsPlayer::find_treats(empty_steps,res,p.step,fl,5);
 
 		CHECK( res.size()==1 );
 
-		const Gomoku::wsplayer_t::treat_t& tr=res.front();
+		const Gomoku::WsPlayer::treat_t& tr=res.front();
 
 		CHECK( tr.rest_count==3 );
 
@@ -111,8 +111,8 @@ void find_lines_t::check_four_left_zero()
 		p.x=i;
 		empty_steps.front()=p;
 
-		Gomoku::wsplayer_t::treats_t res;
-		Gomoku::wsplayer_t::find_treats(empty_steps,res,p.step,fl,5);
+		Gomoku::WsPlayer::treats_t res;
+		Gomoku::WsPlayer::find_treats(empty_steps,res,p.step,fl,5);
 
 		if(res.size()==2)
 		{
@@ -120,15 +120,15 @@ void find_lines_t::check_four_left_zero()
 			
 			for(unsigned k=0;k<res.size();k++)
 			{
-				Gomoku::wsplayer_t::treat_t tr=res[k];
+				Gomoku::WsPlayer::treat_t tr=res[k];
 				tr.sort();
-				lg<<Gomoku::wsplayer_t::print_treat(tr);
+				lg<<Gomoku::WsPlayer::print_treat(tr);
 			}
 		}
 		
 		CHECK_CTX( res.size()==1, get_ctx(fl,i,j) );
 
-		const Gomoku::wsplayer_t::treat_t& tr=res.front();
+		const Gomoku::WsPlayer::treat_t& tr=res.front();
 
 		CHECK_CTX( tr.rest_count==3, get_ctx(fl,i,j) );
 

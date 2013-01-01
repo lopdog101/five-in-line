@@ -8,6 +8,7 @@ namespace fs=boost::filesystem;
 #include "bin_index.h"
 #include <stdexcept>
 #include "../algo/wsplayer.h"
+#include "../algo/wsplayer_node.h"
 #include <object_progress/log_to_file.hpp>
 #include <object_progress/object_progress.hpp>
 
@@ -25,9 +26,9 @@ void print_use()
 	printf("db <root_dir> solve_level [iteration_count]\n");
 	printf("db <root_dir> init_state <printable_steps>\n");
 	printf("Enviropment variables\n");
-	printf("stored_deep (default: %u)\n",wsplayer_t::stored_deep);
-	printf("lookup_deep (default: %u)\n",wsplayer_t::def_lookup_deep);
-	printf("treat_deep  (default: %u)\n",wsplayer_t::treat_deep);
+	printf("stored_deep (default: %u)\n",WsPlayer::stored_deep);
+	printf("lookup_deep (default: %u)\n",WsPlayer::def_lookup_deep);
+	printf("treat_deep  (default: %u)\n",WsPlayer::treat_deep);
 	printf("win_neitrals (default: %u)\n",solution_tree_t::win_neitrals);
 }
 
@@ -49,13 +50,13 @@ void self_solve(solution_tree_t& tr,const steps_t& key)
 	game_t gm;
 	gm.field().set_steps(init_state);
 
-	wsplayer_t pl;
+	WsPlayer::wsplayer_t pl;
 
 	pl.init(gm,other_step(last_step));
 	pl.begin_game();
 	pl.solve();
 
-	const wsplayer_t::wide_item_t& r=static_cast<const wsplayer_t::wide_item_t&>(*pl.root);
+	const WsPlayer::wide_item_t& r=static_cast<const WsPlayer::wide_item_t&>(*pl.root);
 
 	points_t neitrals(r.neitrals.size());
 	for(unsigned i=0;i<r.neitrals.size();i++)
@@ -65,7 +66,7 @@ void self_solve(solution_tree_t& tr,const steps_t& key)
 	for(unsigned i=0;i<r.wins.size();i++)
 	{
 		npoint& p=wins[i];
-		wsplayer_t::item_t& it=*r.wins[i];
+		WsPlayer::item_t& it=*r.wins[i];
 		p=it;
 		p.n=it.get_chain_depth();
 	}
@@ -74,7 +75,7 @@ void self_solve(solution_tree_t& tr,const steps_t& key)
 	for(unsigned i=0;i<r.fails.size();i++)
 	{
 		npoint& p=fails[i];
-		wsplayer_t::item_t& it=*r.fails[i];
+		WsPlayer::item_t& it=*r.fails[i];
 		p=it;
 		p.n=it.get_chain_depth();
 	}
@@ -108,22 +109,22 @@ void self_solve(solution_tree_t& tr,size_t iteration_count)
 {
 	const char* sval=getenv("stored_deep");
 	if(sval!=0&&(*sval)!=0)
-		wsplayer_t::stored_deep=atol(sval);
+		WsPlayer::stored_deep=atol(sval);
 
 	sval=getenv("lookup_deep");
 	if(sval!=0&&(*sval)!=0)
-		wsplayer_t::def_lookup_deep=atol(sval);
+		WsPlayer::def_lookup_deep=atol(sval);
 
 	sval=getenv("treat_deep");
 	if(sval!=0&&(*sval)!=0)
-		wsplayer_t::treat_deep=atol(sval);
+		WsPlayer::treat_deep=atol(sval);
 
 	sval=getenv("win_neitrals");
 	if(sval!=0&&(*sval)!=0)
 		solution_tree_t::win_neitrals=atol(sval);
 
 	ObjectProgress::log_generator lg(true);
-	lg<<"stored_deep="<<wsplayer_t::stored_deep<<" lookup_deep="<<wsplayer_t::def_lookup_deep<<" treat_deep="<<wsplayer_t::treat_deep<<" win_neitrals="<<solution_tree_t::win_neitrals;
+	lg<<"stored_deep="<<WsPlayer::stored_deep<<" lookup_deep="<<WsPlayer::def_lookup_deep<<" treat_deep="<<WsPlayer::treat_deep<<" win_neitrals="<<solution_tree_t::win_neitrals;
 
 	need_break=false;
 #ifdef _WIN32

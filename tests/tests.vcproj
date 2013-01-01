@@ -135,6 +135,15 @@
 				<File
 					RelativePath="..\algo\wsplayer.cpp">
 				</File>
+				<File
+					RelativePath="..\algo\wsplayer_common.cpp">
+				</File>
+				<File
+					RelativePath="..\algo\wsplayer_node.cpp">
+				</File>
+				<File
+					RelativePath="..\algo\wsplayer_treat.cpp">
+				</File>
 			</Filter>
 			<Filter
 				Name="test"
@@ -163,6 +172,22 @@
 				Filter="">
 				<File
 					RelativePath=".\find_lines\find_lines.h">
+				</File>
+			</Filter>
+			<Filter
+				Name="algo"
+				Filter="">
+				<File
+					RelativePath="..\algo\wsplayer_common.h">
+				</File>
+				<File
+					RelativePath="..\algo\wsplayer_common.inl">
+				</File>
+				<File
+					RelativePath="..\algo\wsplayer_node.h">
+				</File>
+				<File
+					RelativePath="..\algo\wsplayer_treat.h">
 				</File>
 			</Filter>
 		</Filter>
