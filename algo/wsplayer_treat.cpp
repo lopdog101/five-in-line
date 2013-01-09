@@ -205,7 +205,9 @@ item_ptr treat_node_t::icheck_tree_one_step(treat_node_t& gr,Step cl)
 			}
 		}
 	}
-/*
+
+	if(!max_r)return max_r;
+
 	item_ptr ccf;
 	if(contra_steps_exists(gr,cl,ccf))
 	{
@@ -217,7 +219,7 @@ item_ptr treat_node_t::icheck_tree_one_step(treat_node_t& gr,Step cl)
 			max_depth=depth;
 		}
 	}
-*/
+
 	return max_r;
 }
 
@@ -256,7 +258,7 @@ bool treat_node_t::contra_steps_exists(treat_node_t& attack_group,Step cl,item_p
 		}
 	}
 
-	return res!=0;
+	return res!=item_ptr();
 }
 
 bool treat_node_t::contra_steps_exists_one_step(treat_node_t& attack_group,Step cl,item_ptr& res,treat_node_t& gr)
@@ -273,11 +275,12 @@ bool treat_node_t::contra_steps_exists_one_step(treat_node_t& attack_group,Step 
 		for(unsigned j=0;j<ch.cost_count;j++)
 		{
 			temporary_step hld_answer(field,ch.cost[j],cl);
-			res=attack_group.icheck_tree_one_step(attack_group,cl);
+			res=icheck_tree_one_step(attack_group,cl);
 			if(!res)continue;
 			
 			item_ptr c(new item_t(player,gr.gain,other_step(cl) ));
 			item_ptr ca(new item_t(player,ch.cost[j],cl ));
+
 			c->win=ca;
 			ca->fail=res->fail;
 			res->fail=c;
