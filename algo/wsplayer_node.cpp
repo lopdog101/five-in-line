@@ -74,13 +74,14 @@ Result item_t::process(bool need_fill_neitrals,unsigned lookup_deep)
 		Result r=process_predictable_move(false,0);
 		if(r!=r_neitral)return r;
 
-		if(neitrals.empty())
+		neitrals.clear();
+
+		if(lookup_deep==0)
 		{
 			r=process_treat_sequence(need_fill_neitrals,lookup_deep);
 			if(r!=r_neitral)return r;
 		}
 
-		neitrals.clear();
 		return process_predictable_move(need_fill_neitrals,lookup_deep);
 	}
 
