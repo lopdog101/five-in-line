@@ -108,7 +108,7 @@ item_ptr treat_node_t::check_tree(Step cl)
 {
 	if(childs.empty())return item_ptr();
 
-    if(groupped)
+    if(!groupped)
 	{
 		group_by_step();
 		sort_by_min_deep();
@@ -289,7 +289,7 @@ item_ptr treat_node_t::contra_steps_exists_one_step(Step cl,treat_node_t& gr)
 
 void treat_node_t::group_by_step()
 {
-	if(!groupped) return;
+	if(groupped) return;
 	groupped=true;
 
 	if(childs.empty())return;
@@ -300,6 +300,7 @@ void treat_node_t::group_by_step()
 
 	treat_node_ptr cr(new treat_node_t(player));
 	cr->gain=tmp_childs.front()->gain;
+	cr->groupped=true;
 	cr->childs.push_back(tmp_childs.front());
 
 	for(unsigned i=1;i<tmp_childs.size();i++)
@@ -309,6 +310,7 @@ void treat_node_t::group_by_step()
 		{
 			childs.push_back(cr);
 			cr=treat_node_ptr(new treat_node_t(player));
+			cr->groupped=true;
 			cr->gain=p->gain;
 		}
         
