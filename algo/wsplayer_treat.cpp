@@ -108,48 +108,52 @@ item_ptr treat_node_t::check_tree(Step cl)
 {
 	if(childs.empty())return item_ptr();
 
-	group_by_step();
-	sort_by_min_deep();
+    if(groupped)
+	{
+		group_by_step();
+		sort_by_min_deep();
+	}
 
 	for(unsigned i=0;i<childs.size();i++)
 	{
 		player.check_cancel();
 		treat_node_t& gr=*childs[i];
 
-		item_ptr r=check_tree_one_step(gr,cl);
+		item_ptr r=gr.check_tree_one_group_step(cl);
 		if(r)return r;
 	}
 
 	return item_ptr();
 }
 
-item_ptr  treat_node_t::check_tree_one_step(treat_node_t& gr,Step cl)
+item_ptr treat_node_t::check_tree_one_group_step(Step cl)
 {
 	field_t& field=player.field;
-	temporary_step hld(field,gr.gain,cl);
-	return icheck_tree_one_step(gr,cl);
+	temporary_step hld(field,gain,cl);
+	return icheck_tree_one_group_step(cl);
 }
 
-item_ptr treat_node_t::icheck_tree_one_step(treat_node_t& gr,Step cl)
+item_ptr treat_node_t::icheck_tree_one_group_step(Step cl)
 {
 	field_t& field=player.field;
+
+	if(get_childs_min_steps_to_win()==0)
+	{
+		return item_ptr(new item_t(player,gain,cl ));
+	}
 
 	item_ptr max_r;
 	unsigned max_depth=0;
 
-	for(unsigned k=0;k<gr.childs.size();k++)
+	if(contra_steps_exists(cl,max_r))
 	{
-		treat_node_t& ch=*gr.childs[k];
+		if(!max_r)return item_ptr();
+		max_depth=max_r->get_chain_depth();
+	}
 
-		if(ch.get_steps_to_win()>1)
-		{
-			treat_node_t revert_treat(player);
-			revert_treat.build_tree(other_step(cl),false,revert_treat_filter_t(ch));
-			if(revert_treat.win)return item_ptr();
-			ch.remove_revertable_path(revert_treat);
-		}
-
-		if(!ch.win)return item_ptr();
+	for(unsigned k=0;k<childs.size();k++)
+	{
+		treat_node_t& ch=*childs[k];
 
 		if(ch.childs.empty())
 		{
@@ -186,10 +190,8 @@ item_ptr treat_node_t::icheck_tree_one_step(treat_node_t& gr,Step cl)
 			for(unsigned j=0;j<ch.cost_count;j++)
 			{
 				temporary_step hld_c(field,ch.cost[j],other_step(cl));
-				treat_node_ptr cch=ch.clone();
-				
-				item_ptr cf=cch->check_tree(cl);
 
+				item_ptr cf=ch.check_tree(cl);
 				if(!cf)return item_ptr();
 
 				unsigned depth=cf->get_chain_depth()+2;
@@ -206,26 +208,12 @@ item_ptr treat_node_t::icheck_tree_one_step(treat_node_t& gr,Step cl)
 		}
 	}
 
-	if(!max_r)return max_r;
-
-	item_ptr ccf;
-	if(contra_steps_exists(gr,cl,ccf))
-	{
-		if(!ccf)return item_ptr();
-		unsigned depth=ccf->get_chain_depth();
-		if(!max_r||depth>max_depth)
-		{
-			max_r=ccf;
-			max_depth=depth;
-		}
-	}
-
 	return max_r;
 }
 
-bool treat_node_t::contra_steps_exists(treat_node_t& attack_group,Step cl,item_ptr& res)
+bool treat_node_t::contra_steps_exists(Step cl,item_ptr& res)
 {
-	unsigned min_steps_to_win=attack_group.get_childs_min_steps_to_win();
+	unsigned min_steps_to_win=get_childs_min_steps_to_win();
 	if(min_steps_to_win<=1)return false;
 
 	treat_node_ptr ctree(new treat_node_t(player));
@@ -239,9 +227,7 @@ bool treat_node_t::contra_steps_exists(treat_node_t& attack_group,Step cl,item_p
 		player.check_cancel();
 		treat_node_t& gr=*ctree->childs[i];
 
-		item_ptr cres;
-		if(!contra_steps_exists_one_step(attack_group,cl,cres,gr))
-			continue;
+		item_ptr cres=contra_steps_exists_one_step(cl,gr);
 
 		if(!cres)
 		{
@@ -261,8 +247,13 @@ bool treat_node_t::contra_steps_exists(treat_node_t& attack_group,Step cl,item_p
 	return res!=item_ptr();
 }
 
-bool treat_node_t::contra_steps_exists_one_step(treat_node_t& attack_group,Step cl,item_ptr& res,treat_node_t& gr)
+item_ptr treat_node_t::contra_steps_exists_one_step(Step cl,treat_node_t& gr)
 {
+	if(gr.get_childs_min_steps_to_win()==0)
+	{
+		return item_ptr();
+	}
+
 	field_t& field=player.field;
 	temporary_step hld(field,gr.gain,other_step(cl));
 
@@ -272,10 +263,12 @@ bool treat_node_t::contra_steps_exists_one_step(treat_node_t& attack_group,Step 
 	for(unsigned k=0;k<gr.childs.size();k++)
 	{
 		treat_node_t& ch=*gr.childs[k];
+
 		for(unsigned j=0;j<ch.cost_count;j++)
 		{
 			temporary_step hld_answer(field,ch.cost[j],cl);
-			res=icheck_tree_one_step(attack_group,cl);
+
+			item_ptr res=icheck_tree_one_group_step(cl);
 			if(!res)continue;
 			
 			item_ptr c(new item_t(player,gr.gain,other_step(cl) ));
@@ -284,11 +277,11 @@ bool treat_node_t::contra_steps_exists_one_step(treat_node_t& attack_group,Step 
 			c->win=ca;
 			ca->fail=res->fail;
 			res->fail=c;
-			return true;
+			return res;
 		}
 	}
 
-	return false;
+	return item_ptr();
 }
 
 
@@ -296,6 +289,9 @@ bool treat_node_t::contra_steps_exists_one_step(treat_node_t& attack_group,Step 
 
 void treat_node_t::group_by_step()
 {
+	if(!groupped) return;
+	groupped=true;
+
 	if(childs.empty())return;
 
 	std::sort(childs.begin(),childs.end(),treat_step_pr());

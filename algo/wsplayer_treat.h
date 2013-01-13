@@ -90,19 +90,20 @@ namespace Gomoku { namespace WsPlayer
 	class treat_node_t : public treat_t
 	{
 		wsplayer_t& player;
+		bool groupped;
 
 		void build_tree_same_line(const treat_t& b,Step cl,bool only_win,const treat_filter_t& tf,unsigned deep);
 	public:
 		treat_nodes_t childs;
 
-		treat_node_t(wsplayer_t& _player) : player(_player){}
+		treat_node_t(wsplayer_t& _player) : player(_player){groupped=false;}
 		void build_tree(Step cl,bool only_win,const treat_filter_t& tf,unsigned deep=(unsigned)-1);
 
 		item_ptr check_tree(Step cl);
-		item_ptr check_tree_one_step(treat_node_t& gr,Step cl);
-		item_ptr icheck_tree_one_step(treat_node_t& gr,Step cl);
-		bool contra_steps_exists(treat_node_t& attack_group,Step cl,item_ptr& res);
-		bool contra_steps_exists_one_step(treat_node_t& attack_group,Step cl,item_ptr& res,treat_node_t& gr);
+		item_ptr check_tree_one_group_step(Step cl);
+		item_ptr icheck_tree_one_group_step(Step cl);
+		bool contra_steps_exists(Step cl,item_ptr& res);
+		item_ptr contra_steps_exists_one_step(Step cl,treat_node_t& gr);
 		void remove_revertable_path(const treat_node_t& revert_treat);
 		bool is_tree_conflict(const treat_t& tr) const;
 		bool is_tree_gain_conflict_with_rhs_gain_and_cost(const treat_t& tr) const;
