@@ -23,6 +23,7 @@ namespace Gomoku { namespace WsPlayer
 		bool is_one_of_cost(const point& p) const;
 		bool is_conflict(const treat_t& b) const;
 		bool is_gain_conflict_with_rhs_gain_and_cost(const treat_t& rhs) const;
+		bool one_of_cost_have_color(const field_t& fl,Step cl) const;
 
 		void sort();
 	};
@@ -90,13 +91,13 @@ namespace Gomoku { namespace WsPlayer
 	class treat_node_t : public treat_t
 	{
 		wsplayer_t& player;
-		bool groupped;
 
 		void build_tree_same_line(const treat_t& b,Step cl,bool only_win,const treat_filter_t& tf,unsigned deep);
 	public:
 		treat_nodes_t childs;
+		treat_nodes_t groups;
 
-		treat_node_t(wsplayer_t& _player) : player(_player){groupped=false;}
+		treat_node_t(wsplayer_t& _player) : player(_player){}
 		void build_tree(Step cl,bool only_win,const treat_filter_t& tf,unsigned deep=(unsigned)-1);
 
 		item_ptr check_tree(Step cl);
@@ -108,7 +109,6 @@ namespace Gomoku { namespace WsPlayer
 		bool is_tree_conflict(const treat_t& tr) const;
 		bool is_tree_gain_conflict_with_rhs_gain_and_cost(const treat_t& tr) const;
 		void group_by_step();
-		void sort_by_min_deep();
 
 		treat_node_ptr clone() const;
 		unsigned max_deep() const;

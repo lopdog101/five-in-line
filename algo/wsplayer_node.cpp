@@ -288,7 +288,8 @@ Result item_t::process_predictable_move(bool need_fill_neitrals,unsigned lookup_
 
 	if(!need_fill_neitrals)
 	{
-		//Если есть fail весь узел будет считаться фэйлом, хотя это ещё неизвестно
+		//if fail exists all node would be mean as fail
+		//But it is not known yet
 		fail.reset();
 		return r_neitral;
 	}

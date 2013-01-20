@@ -108,16 +108,12 @@ item_ptr treat_node_t::check_tree(Step cl)
 {
 	if(childs.empty())return item_ptr();
 
-    if(!groupped)
-	{
-		group_by_step();
-		sort_by_min_deep();
-	}
+    group_by_step();
 
-	for(unsigned i=0;i<childs.size();i++)
+	for(unsigned i=0;i<groups.size();i++)
 	{
 		player.check_cancel();
-		treat_node_t& gr=*childs[i];
+		treat_node_t& gr=*groups[i];
 
 		item_ptr r=gr.check_tree_one_group_step(cl);
 		if(r)return r;
@@ -128,19 +124,43 @@ item_ptr treat_node_t::check_tree(Step cl)
 
 item_ptr treat_node_t::check_tree_one_group_step(Step cl)
 {
+	if(get_childs_min_steps_to_win()<=1)//+++ wrong should be checked
+	{
+		return item_ptr(new item_t(player,gain,cl ));
+	}
+
 	field_t& field=player.field;
+
+	Step cur_cl=field.at(gain);
+
+	if(cur_cl==other_step(cl)) return item_ptr();
+
+	if(cur_cl==cl)
+	{
+		unsigned cur_deep=max_deep();
+
+		treat_node_ptr tr(new treat_node_t(player));
+		tr->build_tree(cl,true,treat_filter_t(),cur_deep);
+
+		if(!tr->win)return item_ptr();
+
+		return tr->check_tree(cl);
+	}
+
 	temporary_step hld(field,gain,cl);
-	return icheck_tree_one_group_step(cl);
+	
+	item_ptr c=icheck_tree_one_group_step(cl);
+	if(!c)return item_ptr();
+
+	item_ptr ret(new item_t(player,gain,cl ));
+	ret->fail=c;
+
+	return ret;
 }
 
 item_ptr treat_node_t::icheck_tree_one_group_step(Step cl)
 {
 	field_t& field=player.field;
-
-	if(get_childs_min_steps_to_win()==0)
-	{
-		return item_ptr(new item_t(player,gain,cl ));
-	}
 
 	item_ptr max_r;
 	unsigned max_depth=0;
@@ -155,33 +175,24 @@ item_ptr treat_node_t::icheck_tree_one_group_step(Step cl)
 	{
 		treat_node_t& ch=*childs[k];
 
+		if(ch.one_of_cost_have_color(field,other_step(cl)) )
+			continue;
+
 		if(ch.childs.empty())
 		{
 			item_ptr cr;
 			
-			if(ch.get_steps_to_win()==1)
-			{
-				max_r=item_ptr(new item_t(player,ch.gain,cl ));
-				max_depth=1;
-				break;//альтернативы нету уже победа
-			}
-			else
-			{
-				if(ch.get_steps_to_win()!=2||ch.cost_count!=2)
-					throw std::runtime_error("check_tree() open four expected");
-					
-				cr=item_ptr(new item_t(player,ch.gain,cl ));
-				item_ptr f(new item_t(player,ch.cost[0],other_step(cl) ));
-				item_ptr w(new item_t(player,ch.cost[1],cl ));
+			if(ch.get_steps_to_win()!=2||ch.cost_count!=2)
+				throw std::runtime_error("check_tree() open four expected");
+				
+			item_ptr f(new item_t(player,ch.cost[0],other_step(cl) ));
+			item_ptr w(new item_t(player,ch.cost[1],cl ));
+			f->win=w;
 
-				f->win=w;
-				cr->fail=f;
-			}
-
-			unsigned depth=cr->get_chain_depth();
+			unsigned depth=f->get_chain_depth();
 			if(!max_r||depth>max_depth)
 			{
-				max_r=cr;
+				max_r=f;
 				max_depth=depth;
 			}
 		}
@@ -194,14 +205,12 @@ item_ptr treat_node_t::icheck_tree_one_group_step(Step cl)
 				item_ptr cf=ch.check_tree(cl);
 				if(!cf)return item_ptr();
 
-				unsigned depth=cf->get_chain_depth()+2;
+				unsigned depth=cf->get_chain_depth()+1;
 				if(!max_r||depth>max_depth)
 				{
-					item_ptr f(new item_t(player,ch.cost[j],other_step(cl) ));
-					f->win=cf;
-					max_r=item_ptr(new item_t(player,ch.gain,cl) );
-					max_r->fail=f;
-					
+					max_r=item_ptr(new item_t(player,ch.cost[j],other_step(cl) ));
+					max_r->win=cf;
+		
 					max_depth=depth;
 				}
 			}
@@ -222,10 +231,10 @@ bool treat_node_t::contra_steps_exists(Step cl,item_ptr& res)
 
 	unsigned max_depth=0;
 
-	for(unsigned i=0;i<ctree->childs.size();i++)
+	for(unsigned i=0;i<ctree->groups.size();i++)
 	{
 		player.check_cancel();
-		treat_node_t& gr=*ctree->childs[i];
+		treat_node_t& gr=*ctree->groups[i];
 
 		item_ptr cres=contra_steps_exists_one_step(cl,gr);
 
@@ -249,7 +258,7 @@ bool treat_node_t::contra_steps_exists(Step cl,item_ptr& res)
 
 item_ptr treat_node_t::contra_steps_exists_one_step(Step cl,treat_node_t& gr)
 {
-	if(gr.get_childs_min_steps_to_win()==0)
+	if(gr.get_childs_min_steps_to_win()==0)//wrong existing five is not detected by treat
 	{
 		return item_ptr();
 	}
@@ -275,9 +284,8 @@ item_ptr treat_node_t::contra_steps_exists_one_step(Step cl,treat_node_t& gr)
 			item_ptr ca(new item_t(player,ch.cost[j],cl ));
 
 			c->win=ca;
-			ca->fail=res->fail;
-			res->fail=c;
-			return res;
+			ca->fail=res;
+			return c;
 		}
 	}
 
@@ -289,42 +297,31 @@ item_ptr treat_node_t::contra_steps_exists_one_step(Step cl,treat_node_t& gr)
 
 void treat_node_t::group_by_step()
 {
-	if(groupped) return;
-	groupped=true;
-
+	if(!groups.empty()) return;
 	if(childs.empty())return;
 
 	std::sort(childs.begin(),childs.end(),treat_step_pr());
-	treat_nodes_t tmp_childs;
-	std::swap(tmp_childs,childs);
 
 	treat_node_ptr cr(new treat_node_t(player));
-	cr->gain=tmp_childs.front()->gain;
-	cr->groupped=true;
-	cr->childs.push_back(tmp_childs.front());
+	cr->gain=childs.front()->gain;
+	cr->childs.push_back(childs.front());
 
-	for(unsigned i=1;i<tmp_childs.size();i++)
+	for(unsigned i=1;i<childs.size();i++)
 	{
-		treat_node_ptr& p=tmp_childs[i];
+		treat_node_ptr& p=childs[i];
 		if(cr->gain!=p->gain)
 		{
-			childs.push_back(cr);
+			groups.push_back(cr);
 			cr=treat_node_ptr(new treat_node_t(player));
-			cr->groupped=true;
 			cr->gain=p->gain;
 		}
         
 		cr->childs.push_back(p);
 	}
 
-	childs.push_back(cr);
+	groups.push_back(cr);
+	std::sort(groups.begin(),groups.end(),treat_min_deep_pr());
 }
-
-void treat_node_t::sort_by_min_deep()
-{
-	std::sort(childs.begin(),childs.end(),treat_min_deep_pr());
-}
-
 
 treat_node_ptr treat_node_t::clone() const
 {
@@ -475,6 +472,14 @@ void treat_t::sort()
 	std::sort(rest,rest+rest_count,less_point_pr());
 }
 
+bool treat_t::one_of_cost_have_color(const field_t& fl,Step cl) const
+{
+	for(unsigned i=0;i<cost_count;i++)
+	if(fl.at(cost[i])==cl)
+		return true;
+
+	return false;
+}
 
 /////////////////////////////////////////////////////////////////////
 //
