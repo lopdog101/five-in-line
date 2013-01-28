@@ -104,7 +104,7 @@ void treat_node_t::build_tree_same_line(const treat_t& b,Step cl,bool only_win,c
 }
 
 
-item_ptr treat_node_t::check_tree(Step cl)
+item_ptr treat_node_t::check_tree(Step cl,bool refind_one_step)
 {
 	if(childs.empty())return item_ptr();
 
@@ -115,41 +115,49 @@ item_ptr treat_node_t::check_tree(Step cl)
 		player.check_cancel();
 		treat_node_t& gr=*groups[i];
 
-		item_ptr r=gr.check_tree_one_group_step(cl);
+		item_ptr r=gr.check_tree_one_group_step(cl,refind_one_step);
 		if(r)return r;
 	}
 
 	return item_ptr();
 }
 
-item_ptr treat_node_t::check_tree_one_group_step(Step cl)
+item_ptr treat_node_t::check_tree_one_group_step(Step cl,bool refind_one_step)
 {
-	if(get_childs_min_steps_to_win()<=1)//+++ wrong should be checked
+	field_t& field=player.field;
+
+    if(refind_one_step)
+	{
+		Step cur_cl=field.at(gain);
+
+		if(cur_cl==other_step(cl)) return item_ptr();
+
+		if(cur_cl==cl)
+		{
+			unsigned cur_deep=max_deep();
+
+			treat_node_ptr tr(new treat_node_t(player));
+			tr->build_tree(cl,true,treat_filter_t(),cur_deep);
+
+			if(!tr->win)return item_ptr();
+
+			return tr->check_tree(cl,false);
+		}
+	}
+
+	if(get_childs_min_steps_to_win()==1)
 	{
 		return item_ptr(new item_t(player,gain,cl ));
 	}
 
-	field_t& field=player.field;
-
-	Step cur_cl=field.at(gain);
-
-	if(cur_cl==other_step(cl)) return item_ptr();
-
-	if(cur_cl==cl)
+	if(refind_one_step&&is_one_step_treat_exists(gain,player.field,cl))
 	{
-		unsigned cur_deep=max_deep();
-
-		treat_node_ptr tr(new treat_node_t(player));
-		tr->build_tree(cl,true,treat_filter_t(),cur_deep);
-
-		if(!tr->win)return item_ptr();
-
-		return tr->check_tree(cl);
+		return item_ptr(new item_t(player,gain,cl ));
 	}
 
 	temporary_step hld(field,gain,cl);
 	
-	item_ptr c=icheck_tree_one_group_step(cl);
+	item_ptr c=icheck_tree_one_group_step(cl,refind_one_step);
 	if(!c)return item_ptr();
 
 	item_ptr ret(new item_t(player,gain,cl ));
@@ -158,7 +166,7 @@ item_ptr treat_node_t::check_tree_one_group_step(Step cl)
 	return ret;
 }
 
-item_ptr treat_node_t::icheck_tree_one_group_step(Step cl)
+item_ptr treat_node_t::icheck_tree_one_group_step(Step cl,bool refind_one_step)
 {
 	field_t& field=player.field;
 
@@ -175,8 +183,23 @@ item_ptr treat_node_t::icheck_tree_one_group_step(Step cl)
 	{
 		treat_node_t& ch=*childs[k];
 
-		if(ch.one_of_cost_have_color(field,other_step(cl)) )
-			continue;
+        if(refind_one_step)
+		{
+			if(ch.one_of_cost_have_color(field,other_step(cl)) )
+				continue;
+
+			if(ch.one_of_cost_have_color(field,cl) )
+			{
+				unsigned cur_deep=max_deep();
+
+				treat_node_ptr tr(new treat_node_t(player));
+				tr->build_tree(cl,true,treat_filter_t(),cur_deep);
+
+				if(!tr->win)return item_ptr();
+
+				return tr->check_tree(cl,false);
+			}
+		}
 
 		if(ch.childs.empty())
 		{
@@ -202,7 +225,7 @@ item_ptr treat_node_t::icheck_tree_one_group_step(Step cl)
 			{
 				temporary_step hld_c(field,ch.cost[j],other_step(cl));
 
-				item_ptr cf=ch.check_tree(cl);
+				item_ptr cf=ch.check_tree(cl,refind_one_step);
 				if(!cf)return item_ptr();
 
 				unsigned depth=cf->get_chain_depth()+1;
@@ -223,7 +246,6 @@ item_ptr treat_node_t::icheck_tree_one_group_step(Step cl)
 bool treat_node_t::contra_steps_exists(Step cl,item_ptr& res)
 {
 	unsigned min_steps_to_win=get_childs_min_steps_to_win();
-	if(min_steps_to_win<=1)return false;
 
 	treat_node_ptr ctree(new treat_node_t(player));
 	ctree->build_tree(other_step(cl),false,step_treat_filter_t(min_steps_to_win-1),0);
@@ -258,7 +280,7 @@ bool treat_node_t::contra_steps_exists(Step cl,item_ptr& res)
 
 item_ptr treat_node_t::contra_steps_exists_one_step(Step cl,treat_node_t& gr)
 {
-	if(gr.get_childs_min_steps_to_win()==0)//wrong existing five is not detected by treat
+	if(gr.get_childs_min_steps_to_win()==1)
 	{
 		return item_ptr();
 	}
@@ -273,11 +295,24 @@ item_ptr treat_node_t::contra_steps_exists_one_step(Step cl,treat_node_t& gr)
 	{
 		treat_node_t& ch=*gr.childs[k];
 
+        //check if one of anwer to contra step make five
+		for(unsigned j=0;j<ch.cost_count;j++)
+		{
+			if(!is_one_step_treat_exists(ch.cost[j],player.field,cl))
+				continue;
+
+			item_ptr c(new item_t(player,gr.gain,other_step(cl) ));
+			item_ptr ca(new item_t(player,ch.cost[j],cl ));
+
+			c->win=ca;
+			return c;
+		}
+
 		for(unsigned j=0;j<ch.cost_count;j++)
 		{
 			temporary_step hld_answer(field,ch.cost[j],cl);
 
-			item_ptr res=icheck_tree_one_group_step(cl);
+			item_ptr res=icheck_tree_one_group_step(cl,true);
 			if(!res)continue;
 			
 			item_ptr c(new item_t(player,gr.gain,other_step(cl) ));
@@ -422,6 +457,8 @@ bool treat_node_t::is_tree_gain_conflict_with_rhs_gain_and_cost(const treat_t& t
 	}
 	return false;
 }
+
+////////////////////////////////////////////////////////////////////////////////////
 
 bool treat_t::is_conflict(const treat_t& b) const
 {
@@ -972,6 +1009,19 @@ bool check_open_three_line_three_cost(const step_t& st,const field_t& field,int 
 	p.y+=dy;
 	s=field.at(p);
 	return s==st_empty;
+}
+
+/////////////////////////////////////////////////////////////////
+
+bool is_one_step_treat_exists(const point& pt,const field_t& field,Step cl)
+{
+	points_t empty_points(1);
+	empty_points.front()=pt;
+
+	treats_t treats;
+	find_treats(empty_points,treats,cl,field,1);
+
+	return !treats.empty();
 }
 
 } }//namespace Gomoku

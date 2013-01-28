@@ -100,9 +100,9 @@ namespace Gomoku { namespace WsPlayer
 		treat_node_t(wsplayer_t& _player) : player(_player){}
 		void build_tree(Step cl,bool only_win,const treat_filter_t& tf,unsigned deep=(unsigned)-1);
 
-		item_ptr check_tree(Step cl);
-		item_ptr check_tree_one_group_step(Step cl);
-		item_ptr icheck_tree_one_group_step(Step cl);
+		item_ptr check_tree(Step cl,bool refind_one_step);
+		item_ptr check_tree_one_group_step(Step cl,bool refind_one_step);
+		item_ptr icheck_tree_one_group_step(Step cl,bool refind_one_step);
 		bool contra_steps_exists(Step cl,item_ptr& res);
 		item_ptr contra_steps_exists_one_step(Step cl,treat_node_t& gr);
 		void remove_revertable_path(const treat_node_t& revert_treat);
@@ -110,10 +110,12 @@ namespace Gomoku { namespace WsPlayer
 		bool is_tree_gain_conflict_with_rhs_gain_and_cost(const treat_t& tr) const;
 		void group_by_step();
 
+
 		treat_node_ptr clone() const;
 		unsigned max_deep() const;
 		unsigned min_deep() const;
 		unsigned get_childs_min_steps_to_win() const;
+		
 	};
 
 	struct treat_step_pr : public less_point_pr
@@ -150,6 +152,7 @@ namespace Gomoku { namespace WsPlayer
 	bool check_open_three_line_two_cost(const step_t& st,const field_t& field,int dx,int dy,treat_t& tr);
 	bool check_open_three_line_three_cost(const step_t& st,const field_t& field,int dx,int dy,treat_t& tr);
 
+	bool is_one_step_treat_exists(const point& pt,const field_t& field,Step cl);
 } }//namespace Gomoku
 
 #endif

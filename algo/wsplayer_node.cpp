@@ -409,7 +409,7 @@ Result item_t::process_treat_sequence(bool need_fill_neitrals,unsigned lookup_de
 		perf.reset();
 #endif
 
-		item_ptr r=tr->check_tree(other_step(step));
+		item_ptr r=tr->check_tree(other_step(step),false);
 
 #ifdef PRINT_PREDICT_STEPS
 		lg<<"process_treat_sequence()2 check_tree(): deep="<<deep<<" win="<<tr->win<<" childs.size()="<<tr->childs.size()<<" time="<<perf;
