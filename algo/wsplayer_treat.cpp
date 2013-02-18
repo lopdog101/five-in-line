@@ -136,8 +136,18 @@ item_ptr treat_node_t::check_tree_one_group_step(Step cl,bool refind_one_step)
 		{
 			unsigned cur_deep=max_deep();
 
+#ifdef PRINT_TREAT_PERFOMANCE
+			ObjectProgress::log_generator lg;
+			ObjectProgress::perfomance perf;
+#endif
 			treat_node_ptr tr(new treat_node_t(player));
 			tr->build_tree(cl,true,treat_filter_t(),cur_deep);
+
+#ifdef PRINT_TREAT_PERFOMANCE
+			lg<<"check_tree_one_group_step()1 build_tree():  cur_deep="<<cur_deep
+				<<" res_deep="<<tr->max_deep()<<" win="<<tr->win<<" time="<<perf;
+			perf.reset();
+#endif
 
 			if(!tr->win)return item_ptr();
 
@@ -192,9 +202,18 @@ item_ptr treat_node_t::icheck_tree_one_group_step(Step cl,bool refind_one_step)
 			{
 				unsigned cur_deep=max_deep();
 
+#ifdef PRINT_TREAT_PERFOMANCE
+				ObjectProgress::log_generator lg;
+				ObjectProgress::perfomance perf;
+#endif
 				treat_node_ptr tr(new treat_node_t(player));
 				tr->build_tree(cl,true,treat_filter_t(),cur_deep);
 
+#ifdef PRINT_TREAT_PERFOMANCE
+				lg<<"check_tree_one_group_step()1 build_tree():  cur_deep="<<cur_deep
+					<<" res_deep="<<tr->max_deep()<<" win="<<tr->win<<" time="<<perf;
+				perf.reset();
+#endif
 				if(!tr->win)return item_ptr();
 
 				return tr->check_tree(cl,false);
@@ -608,6 +627,59 @@ std::string print_treat(treat_t& tr)
 	std::string ret="gain: "+print_points(gain)+" cost: "+print_points(cost)+" rest: "+print_points(rest);
 	return ret;
 }
+
+std::string print_treat_tree(treat_node_t& tr)
+{
+	std::string res,offset;
+
+	if(tr.childs.empty())
+	{
+		return res;
+	}
+
+	res="\r\n";
+	
+	std::string offset_str;
+
+	print_treat_tree(*tr.childs.front(),res,offset_str);
+	for(size_t i=1;i<tr.childs.size();i++)
+	{
+		res+=offset;
+		print_treat_tree(*tr.childs[i],res,offset_str);
+	}
+
+	return res;
+}
+
+void print_treat_tree(treat_node_t& tr,std::string& res,std::string& offset_str)
+{
+	char tmp[256];
+	int len=sprintf(tmp,"(%d,%d)",tr.gain.x,tr.gain.y);
+	res+=tmp;
+
+	if(tr.childs.empty())
+	{
+		res+="\r\n";
+		return;
+	}
+
+	static const int offset_delta=10;
+
+	if(offset_delta>len)
+		res.resize(res.size()+offset_delta-len,' ');
+
+	offset_str.resize(offset_str.size()+offset_delta);
+
+	print_treat_tree(*tr.childs.front(),res,offset_str);
+	for(size_t i=1;i<tr.childs.size();i++)
+	{
+		res+=offset_str;
+		print_treat_tree(*tr.childs[i],res,offset_str);
+	}
+
+	offset_str.resize(offset_str.size()-offset_delta);
+}
+
 
 /////////////////////////////////////////////////////////////////////
 //
@@ -1023,6 +1095,7 @@ bool is_one_step_treat_exists(const point& pt,const field_t& field,Step cl)
 
 	return !treats.empty();
 }
+
 
 } }//namespace Gomoku
 

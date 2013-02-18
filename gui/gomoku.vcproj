@@ -80,7 +80,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				AdditionalIncludeDirectories="c:\Comp\cpp;c:\Comp\xml;c:\Comp\cpp\boost;\src;\src\shared"
-				PreprocessorDefinitions="WIN32;_WINDOWS;NDEBUG;USE_XML"
+				PreprocessorDefinitions="WIN32;_WINDOWS;NDEBUG;USE_XML;PRINT_TREAT_PERFOMANCE"
 				MinimalRebuild="FALSE"
 				RuntimeLibrary="0"
 				TreatWChar_tAsBuiltInType="TRUE"

@@ -139,6 +139,8 @@ namespace Gomoku { namespace WsPlayer
 	bool is_on_same_line_and_can_make_five(const field_t& field,const point& a,const point& b,Step cl);
 
 	std::string print_treat(treat_t& tr);
+	std::string print_treat_tree(treat_node_t& tr);
+	void print_treat_tree(treat_node_t& tr,std::string& res,std::string& offset_str);
 
 
 	void find_treats(const points_t& empty_points,treats_t& res,Step cl,const field_t& field,unsigned steps_to_win);

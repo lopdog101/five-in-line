@@ -76,11 +76,11 @@ Result item_t::process(bool need_fill_neitrals,unsigned lookup_deep)
 
 		neitrals.clear();
 
-		if(lookup_deep==0)
-		{
-			r=process_treat_sequence(need_fill_neitrals,lookup_deep);
+//		if(lookup_deep==0)
+//		{
+			r=process_treat_sequence();
 			if(r!=r_neitral)return r;
-		}
+//		}
 
 		return process_predictable_move(need_fill_neitrals,lookup_deep);
 	}
@@ -381,15 +381,15 @@ void item_t::drop_neitrals_and_fail_child(unsigned generation)
 		neitrals[i]->drop_neitrals_and_fail_child(generation-1);
 }
 
-Result item_t::process_treat_sequence(bool need_fill_neitrals,unsigned lookup_deep)
+Result item_t::process_treat_sequence()
 {
-#ifdef PRINT_PREDICT_STEPS
+#ifdef PRINT_TREAT_PERFOMANCE
 	ObjectProgress::log_generator lg(true);
 #endif
 
     for(unsigned cur_deep=4;cur_deep<treat_deep;cur_deep+=4)
 	{
-#ifdef PRINT_PREDICT_STEPS
+#ifdef PRINT_TREAT_PERFOMANCE
 		ObjectProgress::perfomance perf;
 #endif
 
@@ -404,14 +404,14 @@ Result item_t::process_treat_sequence(bool need_fill_neitrals,unsigned lookup_de
 			continue;
 		}
 
-#ifdef PRINT_PREDICT_STEPS
+#ifdef PRINT_TREAT_PERFOMANCE
 		lg<<"process_treat_sequence()1 build_tree(): deep="<<deep<<" cur_deep="<<cur_deep<<" win="<<tr->win<<" time="<<perf;
 		perf.reset();
 #endif
 
 		item_ptr r=tr->check_tree(other_step(step),false);
 
-#ifdef PRINT_PREDICT_STEPS
+#ifdef PRINT_TREAT_PERFOMANCE
 		lg<<"process_treat_sequence()2 check_tree(): deep="<<deep<<" win="<<tr->win<<" childs.size()="<<tr->childs.size()<<" time="<<perf;
 		perf.reset();
 
@@ -419,6 +419,10 @@ Result item_t::process_treat_sequence(bool need_fill_neitrals,unsigned lookup_de
 		{
 			lg<<"process_treat_sequence()3 check_tree(): chain_depth="<<r->get_chain_depth()<<": "<<print_chain(r);
 			lg<<"process_treat_sequence()3.1 field: "<<print_steps(player.field.get_steps());
+			
+			lg<<"process_treat_sequence()3.2\r\n";
+			lg<<print_treat_tree(*tr);
+
 		}
 #endif
 
@@ -432,7 +436,7 @@ Result item_t::process_treat_sequence(bool need_fill_neitrals,unsigned lookup_de
 		return r_fail;
 	}
 	
-#ifdef PRINT_PREDICT_STEPS
+#ifdef PRINT_TREAT_PERFOMANCE
 	lg<<"process_treat_sequence()4: max deep reached";
 #endif
 	return r_neitral;

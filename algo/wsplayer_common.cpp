@@ -15,15 +15,13 @@
 #include "wsplayer.h"
 
 
-//#define PRINT_PREDICT_STEPS
-
 namespace Gomoku { namespace WsPlayer
 {
 
 unsigned nodes_count=0;
-unsigned stored_deep=2;
+unsigned stored_deep=1;
 unsigned def_lookup_deep=0;
-unsigned treat_deep=14;
+unsigned treat_deep=8;
 
 
 

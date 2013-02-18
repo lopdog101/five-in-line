@@ -20,7 +20,7 @@ namespace Gomoku { namespace WsPlayer
 		void clear();
 
 		Result process_predictable_move(bool need_fill_neitrals,unsigned lookup_deep);
-		Result process_treat_sequence(bool need_fill_neitrals,unsigned lookup_deep);
+		Result process_treat_sequence();
 		Result process_neitrals(bool need_fill_neitrals,unsigned lookup_deep,unsigned from=0);
 		void drop_neitrals_and_fail_child(unsigned generation=0);
 		Result process_deep_stored();
