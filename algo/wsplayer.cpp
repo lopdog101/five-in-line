@@ -1,16 +1,9 @@
 #include "wsplayer.h"
 #include <stdexcept>
 
-#ifdef WITHOUT_EXTERNAL_LIBS
-#  include "../extern/pair_comparator.h"
-#  include "../extern/binary_find.h"
-#  include "../extern/object_progress.hpp"
-#else
-#  include <object_progress/object_progress.hpp>
-#  include <object_progress/perfomance.hpp>
-#  include <pair_comparator.h>
-#  include <binary_find.h>
-#endif
+#include "../extern/pair_comparator.h"
+#include "../extern/binary_find.h"
+#include "../extern/object_progress.hpp"
 
 #include "wsplayer_node.h"
 

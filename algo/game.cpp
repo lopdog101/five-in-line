@@ -45,9 +45,7 @@ void game_t::make_step(const iplayer_t& pl,const point& pt)
 	if((field().size()%2==0) != (&pl==krestik.get()))throw e_invalid_step(pl.color());
 
 	field().add(pt,pl.color());
-#ifndef WITHOUT_EXTERNAL_LIBS
 	OnNextStep(*this);
-#endif
 	if(is_game_over()) return;
 
 	if(field().size()%2) nolik->delegate_step();

@@ -4,7 +4,7 @@
 #include <vector>
 #include <boost/thread/recursive_mutex.hpp>
 #include <boost/thread/condition.hpp>
-#include <notification/notification.hpp>
+#include <boost/signal.hpp>
 
 // CThreadProcessor
 
@@ -47,9 +47,9 @@ public:
 	void cancel_job();
 	bool is_cancelling() const;
 
-	Notification::notify<void (*)()> OnExecute;
-	Notification::notify<void (*)()> OnComplete;
-	Notification::notify<void (*)(const errors_t& vals)> OnErrors;
+	boost::signal<void ()> OnExecute;
+	boost::signal<void ()> OnComplete;
+	boost::signal<void (const errors_t& vals)> OnErrors;
 
 protected:
 	DECLARE_MESSAGE_MAP()

@@ -5,12 +5,8 @@
 
 #include <boost/shared_ptr.hpp>
 
-#ifdef WITHOUT_EXTERNAL_LIBS
 #  include "../extern/polimvar_intf.h"
-#else
-#  include <notification/notification.hpp>
-#  include <polimvar_intf.h>
-#endif
+#  include <boost/signal.hpp>
 
 #ifdef USE_XML
 #  include <cppexpat/cppexpat.h>
@@ -82,9 +78,7 @@ namespace Gomoku
 		player_ptr get_krestik() const{return krestik;}
 		player_ptr get_nolik() const{return nolik;}
 
-#ifndef WITHOUT_EXTERNAL_LIBS
-		Notification::notify< void (*)(const game_t&)> OnNextStep;
-#endif
+		boost::signal< void (const game_t&)> OnNextStep;
 	};
 
 }//namespace Gomoku

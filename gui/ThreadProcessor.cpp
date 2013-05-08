@@ -3,7 +3,6 @@
 
 #include "stdafx.h"
 #include "ThreadProcessor.h"
-#include <friend_rtti/exceptions_filter.hpp>
 #include <boost/function.hpp>
 #include <boost/bind.hpp>
 //#include "extern/exception_catch.h"
@@ -91,15 +90,19 @@ void CThreadProcessor::execute()
 			}
 		}
 	}
+	catch(std::exception& e)
+	{
+		if(state==st_stopping)return;
+		error_t err;
+		err.message=std::string("std::exception: ")+e.what();
+		add_message(err);
+		PostMessage(WM_COMPLETE,0,0);
+	}
 	catch(...)
 	{
 		if(state==st_stopping)return;
 		error_t err;
-		std::string type_name;
-		bool handled=false;
-		FriendRtti::exceptions_filter::instance().message(err.message,type_name,handled);
-		if(handled)err.message=type_name+": "+err.message;
-		else err.message="unknown exception";
+		err.message="unknown exception";
 		add_message(err);
 		PostMessage(WM_COMPLETE,0,0);
 	}

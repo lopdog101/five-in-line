@@ -16,8 +16,7 @@
 #include <boost/filesystem/convenience.hpp>
 namespace fs=boost::filesystem;
 
-#include <object_progress/object_progress.hpp>
-#include <object_progress/perfomance.hpp>
+#include "../extern/object_progress.hpp"
 #include "../algo/check_player.h"
 
 // CAboutDlg dialog used for App About
@@ -67,10 +66,10 @@ void mfcPlayer::init(Gomoku::game_t& _gm,Gomoku::Step _cl)
 void mfcPlayer::fieldLMouseUp(Gomoku::point pos)
 {
 	if(gm->field().at(pos)!=Gomoku::st_empty)return;
-	hld_mouse_down.clear();
-	hld_mouse_up.clear();
-	hld_mouse_move.clear();
-	hld_after_draw.clear();
+    hld_mouse_down.disconnect();
+	hld_mouse_up.disconnect();
+	hld_mouse_move.disconnect();
+	hld_after_draw.disconnect();
 	gm->make_step(*this,pos);
 }
 
@@ -94,14 +93,14 @@ void mfcPlayer::fieldMouseMove(Gomoku::point pos)
 
 void mfcPlayer::fieldLMouseDown(Gomoku::point pos)
 {
-	hld_mouse_up=fd->OnLMouseUp.connect(*this,&mfcPlayer::fieldLMouseUp);
+	hld_mouse_up=fd->OnLMouseUp.connect(boost::bind(&mfcPlayer::fieldLMouseUp,this,_1) );
 }
 
 void mfcPlayer::delegate_step()
 {
-	hld_mouse_down=fd->OnLMouseDown.connect(*this,&mfcPlayer::fieldLMouseDown);
-	hld_mouse_move=fd->on_mouse_move.connect(*this,&mfcPlayer::fieldMouseMove);
-	hld_after_draw=fd->on_after_paint.connect(*this,&mfcPlayer::afterDraw);
+	hld_mouse_down=fd->OnLMouseDown.connect(boost::bind(&mfcPlayer::fieldLMouseDown,this,_1) );
+	hld_mouse_move=fd->on_mouse_move.connect(boost::bind(&mfcPlayer::fieldMouseMove,this,_1) );
+	hld_after_draw=fd->on_after_paint.connect(boost::bind(&mfcPlayer::afterDraw,this,_1) );
 }
 
 #ifdef USE_XML
@@ -118,9 +117,9 @@ void mfcPlayer::unpack(const Xpat::ipacker_t& root_node,bool process_type)
 // ThreadPlayer
 void ThreadPlayer::clear()
 {
-	hld_execute.clear();
-	hld_complete.clear();
-	hld_errors.clear();
+    hld_execute.disconnect();
+    hld_complete.disconnect();
+    hld_errors.disconnect();
 	if(pl)pl->cancel();
 	processor.stop();
 }
@@ -149,9 +148,10 @@ void ThreadPlayer::init(Gomoku::game_t& _gm,Gomoku::Step _cl)
 
 	pl->init(mirror_gm,_cl);
 
-	hld_execute=processor.OnExecute.connect(*this,&ThreadPlayer::MirrorExecute);
-	hld_complete=processor.OnComplete.connect(*this,&ThreadPlayer::TaskComplete);
-	hld_errors=processor.OnErrors.connect(*this,&ThreadPlayer::TaskErrors);
+	hld_execute=processor.OnExecute.connect(boost::bind(&ThreadPlayer::MirrorExecute,this) );
+	hld_complete=processor.OnComplete.connect(boost::bind(&ThreadPlayer::TaskComplete,this) );
+	hld_errors=processor.OnErrors.connect(boost::bind(&ThreadPlayer::TaskErrors,this,_1) );
+
 	processor.start();
 }
 
@@ -371,14 +371,14 @@ void CgomokuDlg::gameNextStep(const Gomoku::game_t&)
 	m_field->Invalidate();
 	m_field->UpdateWindow();
 	if(!game.is_game_over())return;
-	hld_step.clear();
+	hld_step.disconnect();
 	if(game.field().size()%2)MessageBox("krestik win",MB_OK);
 	else MessageBox("nolik win",MB_OK);
 }
 
 void CgomokuDlg::start_game()
 {
-	hld_step=game.OnNextStep.connect(*this,&CgomokuDlg::gameNextStep);
+	hld_step=game.OnNextStep.connect(boost::bind(&CgomokuDlg::gameNextStep,this,_1) );
 	game.begin_play();
 	m_field->Invalidate();
 }
@@ -545,7 +545,7 @@ void CgomokuDlg::OnEditUndo()
 	check_state();
 	if(game_over)
 	{
-		hld_step=game.OnNextStep.connect(*this,&CgomokuDlg::gameNextStep);
+		hld_step=game.OnNextStep.connect(boost::bind(&CgomokuDlg::gameNextStep,this,_1) );
 		game.continue_play();
 	}
 }

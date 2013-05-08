@@ -4,11 +4,7 @@
 #include <stdexcept>
 #include "gomoku_exceptions.h"
 
-#ifdef WITHOUT_EXTERNAL_LIBS
 # include "../extern/binary_find.h"
-#else
-# include <binary_find.h>
-#endif
 
 
 namespace Gomoku

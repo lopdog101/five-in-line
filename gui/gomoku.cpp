@@ -5,13 +5,8 @@
 #include "gomoku.h"
 #include "gomokuDlg.h"
 #include <boost/filesystem/path.hpp>
-#include <object_progress/log_to_file.hpp>
-#include <object_progress/perfomance.hpp>
+#include "../extern/object_progress.hpp"
 #include <boost/filesystem/operations.hpp>
-
-#ifdef _DEBUG
-#define new DEBUG_NEW
-#endif
 
 
 // CgomokuApp
@@ -25,7 +20,6 @@ END_MESSAGE_MAP()
 
 CgomokuApp::CgomokuApp()
 {
-	boost::filesystem::path::default_name_check(boost::filesystem::native);
 }
 
 
@@ -34,31 +28,13 @@ CgomokuApp::CgomokuApp()
 CgomokuApp theApp;
 
 
-ObjectProgress::log_to_file lf;
+//ObjectProgress::log_to_file lf;
 
 // CgomokuApp initialization
 
 BOOL CgomokuApp::InitInstance()
 {
 	CWinApp::InitInstance();
-
-	lf.file_name="five_in_line.log";
-	lf.create_empty=true;
-	lf.set_manager(ObjectProgress::log_manager_singleton::instance());
-	lf.open();
-	boost::filesystem::initial_path();
-
-	ObjectProgress::perfomance::precision=ObjectProgress::perfomance::pr_microsec;
-
-
-	// Standard initialization
-	// If you are not using these features and wish to reduce the size
-	// of your final executable, you should remove from the following
-	// the specific initialization routines you do not need
-	// Change the registry key under which our settings are stored
-	// TODO: You should modify this string to be something appropriate
-	// such as the name of your company or organization
-	SetRegistryKey(_T("Local AppWizard-Generated Applications"));
 
 	CgomokuDlg dlg;
 	m_pMainWnd = &dlg;

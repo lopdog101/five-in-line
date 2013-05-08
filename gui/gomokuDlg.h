@@ -11,6 +11,7 @@
 #  include <cppexpat/cppexpat.h>
 #endif
 #include "ThreadProcessor.h"
+#include <boost/signals/connection.hpp>
 
 class mfcPlayer : public Gomoku::iplayer_t
 {
@@ -18,10 +19,10 @@ class mfcPlayer : public Gomoku::iplayer_t
 	CBitmap bmp;
 	bool inited;
 
-	Notification::notify_connect hld_mouse_down;
-	Notification::notify_connect hld_mouse_up;
-	Notification::notify_connect hld_mouse_move;
-	Notification::notify_connect hld_after_draw;
+	boost::signals::connection hld_mouse_down;
+	boost::signals::connection hld_mouse_up;
+	boost::signals::connection hld_mouse_move;
+	boost::signals::connection hld_after_draw;
 
 	void fieldLMouseDown(Gomoku::point pos);
 	void fieldLMouseUp(Gomoku::point pos);
@@ -51,9 +52,9 @@ private:
 	Gomoku::game_t mirror_gm;
 	Gomoku::step_t last_step;
 
-	Notification::notify_connect hld_execute;
-	Notification::notify_connect hld_complete;
-	Notification::notify_connect hld_errors;
+	boost::signals::connection hld_execute;
+	boost::signals::connection hld_complete;
+	boost::signals::connection hld_errors;
 
 	void MirrorExecute();
 	void TaskComplete();
@@ -109,7 +110,7 @@ private:
 	field_ptr m_field;
 	DlgResizeHelper szr;
 	Gomoku::game_t game;
-	Notification::notify_connect hld_step;
+	boost::signals::connection hld_step;
 	
 	
 	void gameNextStep(const Gomoku::game_t&);
