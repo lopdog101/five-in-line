@@ -15,19 +15,10 @@ class one_message
 public:
 	struct data_t
 	{
-#if defined(BOOST_NO_STRINGSTREAM)
-		std::strstream stream;
-#elif defined(BOOST_NO_STD_LOCALE)
-		std::stringstream stream;
-#else
 		std::basic_stringstream<char> stream;
-#endif
 		data_t(log_generator&) {}
 		~data_t()
                 {
-#if defined(BOOST_NO_STRINGSTREAM)
-       stream<<'\0';
-#endif
 	   std::cerr<<stream.str()<<std::endl;
                 }
 	};
