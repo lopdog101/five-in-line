@@ -27,6 +27,10 @@ namespace Gomoku { namespace WsPlayer
 
 		void sort();
 	};
+    
+    struct e_max_treat_deep_reached{};
+
+
 
 	class temporary_treat_state
 	{

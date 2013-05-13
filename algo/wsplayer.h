@@ -31,6 +31,8 @@ namespace Gomoku { namespace WsPlayer
         states_t states;
 		unsigned current_state;
 
+        unsigned current_treat_check_deep;
+
 		void init_states();
 		inline state_t& get_state(){return *states[current_state];}
 		inline const state_t& get_state() const {return *states[current_state];}

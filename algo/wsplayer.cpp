@@ -15,6 +15,7 @@ wsplayer_t::wsplayer_t()
 {
 	predict_deep=0;
 	predict_processed=0;
+    current_treat_check_deep=0;
 }
 
 void wsplayer_t::begin_game()

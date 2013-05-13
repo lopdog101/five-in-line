@@ -401,11 +401,20 @@ Result item_t::process_treat_sequence()
 		lg<<"process_treat_sequence()1 build_tree(): deep="<<deep<<" cur_deep="<<cur_deep<<" win="<<tr->win<<" time="<<perf;
 		perf.reset();
 #endif
-
-		item_ptr r=tr->check_tree(other_step(step),false);
+        item_ptr r;
+        
+        try
+        {
+            r=tr->check_tree(other_step(step),false);
+        }
+        catch(e_max_treat_deep_reached&)
+        {
+            return r_neitral;
+        }
 
 #ifdef PRINT_TREAT_PERFOMANCE
-		lg<<"process_treat_sequence()2 check_tree(): deep="<<deep<<" win="<<tr->win<<" childs.size()="<<tr->childs.size()<<" time="<<perf;
+		lg<<"process_treat_sequence()2 check_tree(): deep="<<deep<<" win="<<tr->win<<" childs.size()="<<tr->childs.size()
+            <<" check_count="<<player.current_treat_check_deep<<" time="<<perf;
 		perf.reset();
 
 		if(r)

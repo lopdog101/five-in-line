@@ -10,6 +10,8 @@ namespace ObjectProgress
 {
 class log_generator;
 
+void output_debug_message(const std::string& str);
+
 class one_message
 {
 public:
@@ -18,9 +20,11 @@ public:
 		std::basic_stringstream<char> stream;
 		data_t(log_generator&) {}
 		~data_t()
-                {
-	   std::cerr<<stream.str()<<std::endl;
-                }
+        {
+            std::string str = stream.str();
+            output_debug_message(str);
+            std::cerr<<str<<std::endl;
+       }
 	};
 public:
 	boost::shared_ptr< data_t > data;
