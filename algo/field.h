@@ -120,7 +120,6 @@ namespace Gomoku
 	public:
 		typedef std::vector<step_t> steps_t;
 	private:
-		//Последовательность шагов
 		steps_t steps;
 		rect bound;
 		matrix<Step> fld;

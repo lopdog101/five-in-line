@@ -14,7 +14,6 @@ namespace Gomoku { namespace WsPlayer
 
 	typedef boost::shared_ptr<item_t> item_ptr;
 
-	//Игрок, основанный на поиске решения в ширину
 	class wsplayer_t : public iplayer_t
 	{
 	private:
@@ -48,22 +47,17 @@ namespace Gomoku { namespace WsPlayer
 		void delegate_step();
 		void solve();
 
-#ifdef USE_XML
-		void pack(Xpat::ipacker_t& root_node,bool process_type=true) const;
-		void unpack(const Xpat::ipacker_t& root_node,bool process_type=true);
-#endif
+        template<class Archive>
+        void serialize(Archive &ar, const unsigned int version)
+        {
+            ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(iplayer_t);
+        }
 
-		POLIMVAR_IMPLEMENT_CLONE(wsplayer_t )
+        POLIMVAR_IMPLEMENT_CLONE(wsplayer_t )
 	};
 
 
 } }//namespace Gomoku
 
-#ifdef USE_XML
-namespace Xpat
-{
-template <> inline std::string xml_type_name< Gomoku::WsPlayer::wsplayer_t>::get(){return "width_search_player";};
-}//
-#endif
 #endif
 

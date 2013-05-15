@@ -1,6 +1,6 @@
 #include "check_player.h"
 #include <stdexcept>
-#include "field_xml.h"
+#include "field.h"
 
 namespace Gomoku
 {
@@ -17,19 +17,5 @@ void check_player_t::delegate_step()
 
 	gm->make_step(*this,s);
 }
-
-#ifdef USE_XML
-void check_player_t::pack(Xpat::ipacker_t& root_node,bool process_type) const
-{
-	if(XML_SET_TYPE)return;
-	XML_MPACK(steps);
-}
-
-void check_player_t::unpack(const Xpat::ipacker_t& root_node,bool process_type)
-{
-	if(XML_CHECK_TYPE)return;
-	XML_MUNPACK(steps);
-}
-#endif
 
 }

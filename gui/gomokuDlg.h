@@ -7,9 +7,6 @@
 #include "../algo/game.h"
 #include "afxwin.h"
 #include "../algo/wsplayer.h"
-#ifdef USE_XML
-#  include <cppexpat/cppexpat.h>
-#endif
 #include "ThreadProcessor.h"
 #include <boost/signals/connection.hpp>
 
@@ -35,10 +32,12 @@ public:
 	void init(Gomoku::game_t& _gm,Gomoku::Step _cl);
 	void delegate_step();
 
-#ifdef USE_XML
-	void pack(Xpat::ipacker_t& root_node,bool process_type=true) const;
-	void unpack(const Xpat::ipacker_t& root_node,bool process_type=true);
-#endif
+    template<class Archive>
+    void serialize(Archive &ar, const unsigned int version)
+    {
+        ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(iplayer_t);
+    }
+
 	POLIMVAR_IMPLEMENT_CLONE(mfcPlayer )
 };
 
@@ -71,10 +70,13 @@ public:
 	void delegate_step();
 	Gomoku::player_ptr get_player() const{return pl;}
 
-#ifdef USE_XML
-	void pack(Xpat::ipacker_t& root_node,bool process_type=true) const;
-	void unpack(const Xpat::ipacker_t& root_node,bool process_type=true);
-#endif
+    template<class Archive>
+    void serialize(Archive &ar, const unsigned int version)
+    {
+        ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(iplayer_t);
+        ar & BOOST_SERIALIZATION_NVP(pl);
+    }
+
 	POLIMVAR_IMPLEMENT_CLONE(ThreadPlayer)
 };
 
@@ -87,10 +89,12 @@ public:
 	void init(Gomoku::game_t& _gm,Gomoku::Step _cl){}
 	void delegate_step(){}
 
-#ifdef USE_XML
-	void pack(Xpat::ipacker_t& root_node,bool process_type=true) const;
-	void unpack(const Xpat::ipacker_t& root_node,bool process_type=true);
-#endif
+    template<class Archive>
+    void serialize(Archive &ar, const unsigned int version)
+    {
+        ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(iplayer_t);
+    }
+
 	POLIMVAR_IMPLEMENT_CLONE(NullPlayer)
 };
 
@@ -158,12 +162,3 @@ protected:
 public:
 	afx_msg void OnClose();
 };
-
-#ifdef USE_XML
-namespace Xpat
-{
-template <> inline std::string xml_type_name< mfcPlayer>::get(){return "mfc_player";};
-template <> inline std::string xml_type_name< ThreadPlayer>::get(){return "thread_player";};
-template <> inline std::string xml_type_name< NullPlayer>::get(){return "null_player";};
-}//
-#endif

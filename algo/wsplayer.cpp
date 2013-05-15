@@ -75,15 +75,4 @@ void wsplayer_t::init_states()
 	get_state().init_zero();
 }
 
-#ifdef USE_XML
-void wsplayer_t::pack(Xpat::ipacker_t& root_node,bool process_type) const
-{
-	if(XML_SET_TYPE)return;
-}
-
-void wsplayer_t::unpack(const Xpat::ipacker_t& root_node,bool process_type)
-{
-	if(XML_CHECK_TYPE)return;
-}
-#endif
 } }//namespace Gomoku

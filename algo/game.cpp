@@ -1,11 +1,6 @@
 
 #include "game_xml.h"
 #include "gomoku_exceptions.h"
-#include "field_xml.h"
-#ifdef USE_XML
-#  include <cppexpat/xml_service.h>
-#  include <cppexpat/pack_library.h>
-#endif
 
 namespace Gomoku
 {
@@ -63,27 +58,3 @@ bool game_t::is_play() const
 }
 
 }//namespace Gomoku
-
-
-#ifdef USE_XML
-namespace Xpat
-{
-	void xmlpack(ipacker_t& root_node,const Gomoku::game_t& val)
-	{
-		XML_NPACK("field",val.field());
-		XML_NPACK("krestik",val.get_krestik());
-		XML_NPACK("nolik",val.get_nolik());
-	}
-	
-	void xmlunpack(const ipacker_t& root_node,Gomoku::game_t& val)
-	{
-		XML_NUNPACK("field",val.field());
-		Gomoku::player_ptr krestik,nolik;
-		XML_MUNPACK(krestik);
-		XML_MUNPACK(nolik);
-		val.set_krestik(krestik);
-		val.set_nolik(nolik);
-	}
-
-}//namespace
-#endif

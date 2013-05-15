@@ -8,11 +8,6 @@
 #  include "../extern/polimvar_intf.h"
 #  include <boost/signal.hpp>
 
-#ifdef USE_XML
-#  include <cppexpat/cppexpat.h>
-#endif
-
-
 namespace Gomoku
 {
 	class game_t;
@@ -20,9 +15,6 @@ namespace Gomoku
 	struct e_cancel{};
 
 	class iplayer_t 
-#ifdef USE_XML
-		: public Xpat::packable_t
-#endif
 	{
 		Step color_;
 	protected:

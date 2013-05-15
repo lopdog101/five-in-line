@@ -11,13 +11,11 @@
 
 namespace Gomoku
 {
-//Точка
 template<class T>
 struct pointT
 {
 	T x;
 	T y;
-	//Не чем не инициализируется
 	pointT(){}
 	pointT(T _x,T _y){x=_x;y=_y;}
 	inline bool operator==(const pointT& rhs) const{return x==rhs.x&&y==rhs.y;}
@@ -46,7 +44,6 @@ struct pointT
 	}
 };
 
-//Прямоугольник
 template<class T>
 struct rectT
 {
@@ -55,7 +52,6 @@ struct rectT
 	T x2;
 	T y2;
 
-	//не тривиальный конструктор в point не позволяет сделать union
 	inline const pointT<T>& p1() const{return *reinterpret_cast<const pointT<T>*>(&x1);}
 	inline pointT<T>& p1(){return *reinterpret_cast< pointT<T>*>(&x1);}
 	inline const pointT<T>& p2() const{return *reinterpret_cast<const pointT<T>*>(&x2);}
@@ -120,8 +116,6 @@ struct rectT
 
 	inline void operator+=(const pointT<T>& r)
 	{
-		//Специально не делал else
-		//чтобы инверсная бесконечность превращалась в точку
 		if(x2<r.x)x2=r.x;
 		if(x1>r.x)x1=r.x;
 		if(y2<r.y)y2=r.y;
@@ -184,27 +178,21 @@ struct rectT
 	inline T middle_y() const{return (y2+y1)/2;}
 };
 
-//Прямоугольник на всю область рациональных чисел
 template<class T>
 struct rect_infinityT : public rectT<T>
 {
 	rect_infinityT(){this->set_infinity();}
 };
 
-//Инвертированый прямоугольник на всю область рациональных чисел
 template<class T>
 struct rect_inverse_infinityT : public rectT<T>
 {
 	rect_inverse_infinityT(){this->set_inverse_infinity();}
 };
 
-// int точка
 typedef pointT<int> point;
-// int прямоугольник
 typedef rectT<int> rect;
-// int R
 typedef rect_infinityT<int> rect_infinity;
-// int inverse R
 typedef rect_inverse_infinityT<int> rect_inverse_infinity;
 
 

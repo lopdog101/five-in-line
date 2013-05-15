@@ -6,11 +6,10 @@
 #include "gomokuDlg.h"
 #include ".\gomokudlg.h"
 
-#ifdef USE_XML
-#  include <cppexpat/xml_service.h>
-#  include "../algo/game_xml.h"
-#  include <cppexpat/pack_library.h>
-#endif
+#include <boost/archive/xml_oarchive.hpp>
+#include <boost/archive/xml_iarchive.hpp>
+#include <boost/serialization/shared_ptr.hpp>
+#include <boost/serialization/export.hpp>
 
 #include <boost/filesystem/operations.hpp>
 #include <boost/filesystem/convenience.hpp>
@@ -18,6 +17,7 @@ namespace fs=boost::filesystem;
 
 #include "../extern/object_progress.hpp"
 #include "../algo/check_player.h"
+#include "../algo/game_xml.h"
 
 // CAboutDlg dialog used for App About
 
@@ -103,17 +103,6 @@ void mfcPlayer::delegate_step()
 	hld_after_draw=fd->on_after_paint.connect(boost::bind(&mfcPlayer::afterDraw,this,_1) );
 }
 
-#ifdef USE_XML
-void mfcPlayer::pack(Xpat::ipacker_t& root_node,bool process_type) const
-{
-	if(XML_SET_TYPE)return;
-}
-
-void mfcPlayer::unpack(const Xpat::ipacker_t& root_node,bool process_type)
-{
-	if(XML_CHECK_TYPE)return;
-}
-#endif
 // ThreadPlayer
 void ThreadPlayer::clear()
 {
@@ -182,31 +171,6 @@ void ThreadPlayer::TaskErrors(const CThreadProcessor::errors_t& vals)
 	AfxMessageBox(vals.front().message.c_str());
 }
 
-
-#ifdef USE_XML
-void ThreadPlayer::pack(Xpat::ipacker_t& root_node,bool process_type) const
-{
-	if(XML_SET_TYPE)return;
-	XML_MPACK(pl);
-}
-
-void ThreadPlayer::unpack(const Xpat::ipacker_t& root_node,bool process_type)
-{
-	if(XML_CHECK_TYPE)return;
-	XML_MUNPACK(pl);
-}
-
-
-void NullPlayer::pack(Xpat::ipacker_t& root_node,bool process_type) const
-{
-	if(XML_SET_TYPE)return;
-}
-
-void NullPlayer::unpack(const Xpat::ipacker_t& root_node,bool process_type)
-{
-	if(XML_CHECK_TYPE)return;
-}
-#endif
 // CgomokuDlg dialog
 
 CgomokuDlg::CgomokuDlg(CWnd* pParent /*=NULL*/)
@@ -214,14 +178,6 @@ CgomokuDlg::CgomokuDlg(CWnd* pParent /*=NULL*/)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 	game.fieldp=m_field;
-
-#ifdef USE_XML
-	Xpat::pack_library& lib=Xpat::pack_library::instance();
-	lib.add(mfcPlayer());
-	lib.add(ThreadPlayer());
-	lib.add(NullPlayer());
-	lib.add(Gomoku::WsPlayer::wsplayer_t());
-#endif
 }
 
 void CgomokuDlg::DoDataExchange(CDataExchange* pDX)
@@ -448,30 +404,43 @@ void CgomokuDlg::OnCbnSelchangePlayer2()
 
 void CgomokuDlg::OnLoadGame()
 {
-#ifdef USE_XML
-	hld_step.clear();
+    hld_step.disconnect();
 
 	CFileDialog dlg(TRUE,0,0,OFN_FILEMUSTEXIST,"Games (*.gm)|*.gm||");
 	if(dlg.DoModal()!=IDOK)return;
-	Xpat::load_from_xml_file(dlg.GetPathName().GetString(),game);
-	m_field->Invalidate();
+
+//    Xpat::load_from_xml_file(,game);
+    std::ifstream ifs;
+    ifs.exceptions( std::ifstream::failbit | std::ifstream::badbit );
+    ifs.open(dlg.GetPathName().GetString());
+    boost::archive::xml_iarchive ia(ifs);
+
+    ia >> BOOST_SERIALIZATION_NVP(game);
+
+    ifs.close();
+
+    m_field->Invalidate();
 	m_field->UpdateWindow();
 	check_state();
 	if(game.is_play())
 	{
-		hld_step=game.OnNextStep.connect(*this,&CgomokuDlg::gameNextStep);
+        hld_step=game.OnNextStep.connect(boost::bind(&CgomokuDlg::gameNextStep,this,_1) );
 		game.continue_play();
 	}
-#endif
 }
 
 void CgomokuDlg::OnSaveGame()
 {
-#ifdef USE_XML
 	CFileDialog dlg(FALSE,".gm",0,OFN_HIDEREADONLY|OFN_OVERWRITEPROMPT,"Games (*.gm)|*.gm||");
 	if(dlg.DoModal()!=IDOK)return;
-	Xpat::save_to_xml_file(dlg.GetPathName().GetString(),game);
-#endif
+
+    std::ofstream ofs;
+
+    ofs.open(dlg.GetPathName().GetString());
+    ofs.exceptions( std::ifstream::failbit | std::ifstream::badbit );
+
+    boost::archive::xml_oarchive oa(ofs);
+    oa << BOOST_SERIALIZATION_NVP(game);
 }
 
 void CgomokuDlg::OnSaveStringField()
