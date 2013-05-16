@@ -60,7 +60,7 @@ template<class Archive>
 void serialize(Archive & ar, Gomoku::step_t & v, const unsigned int version)
 {
     ar & make_nvp(BOOST_PP_STRINGIZE(point),base_object<Gomoku::point>(v));
-//    ar & v.step;
+    ar & make_nvp(BOOST_PP_STRINGIZE(step),v.step);
 }
 
 

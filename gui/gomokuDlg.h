@@ -16,10 +16,10 @@ class mfcPlayer : public Gomoku::iplayer_t
 	CBitmap bmp;
 	bool inited;
 
-	boost::signals::connection hld_mouse_down;
-	boost::signals::connection hld_mouse_up;
-	boost::signals::connection hld_mouse_move;
-	boost::signals::connection hld_after_draw;
+	boost::signals::scoped_connection hld_mouse_down;
+	boost::signals::scoped_connection hld_mouse_up;
+	boost::signals::scoped_connection hld_mouse_move;
+	boost::signals::scoped_connection hld_after_draw;
 
 	void fieldLMouseDown(Gomoku::point pos);
 	void fieldLMouseUp(Gomoku::point pos);
@@ -51,9 +51,9 @@ private:
 	Gomoku::game_t mirror_gm;
 	Gomoku::step_t last_step;
 
-	boost::signals::connection hld_execute;
-	boost::signals::connection hld_complete;
-	boost::signals::connection hld_errors;
+	boost::signals::scoped_connection hld_execute;
+	boost::signals::scoped_connection hld_complete;
+	boost::signals::scoped_connection hld_errors;
 
 	void MirrorExecute();
 	void TaskComplete();
@@ -114,7 +114,7 @@ private:
 	field_ptr m_field;
 	DlgResizeHelper szr;
 	Gomoku::game_t game;
-	boost::signals::connection hld_step;
+	boost::signals::scoped_connection hld_step;
 	
 	
 	void gameNextStep(const Gomoku::game_t&);
@@ -150,7 +150,6 @@ public:
 	afx_msg void OnLoadGame();
 	afx_msg void OnSaveGame();
 	afx_msg void OnSaveStringField();
-	afx_msg void OnOperationTest();
 	afx_msg void OnEditUndo();
 	afx_msg void OnUpdateEditUndo(CCmdUI *pCmdUI);
 	afx_msg void OnUpdateEditShowmovenumber(CCmdUI *pCmdUI);

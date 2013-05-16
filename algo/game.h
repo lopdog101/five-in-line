@@ -40,7 +40,12 @@ namespace Gomoku
 		}
 		void check_cancel(){if(is_canceled())throw e_cancel();}
 
-		POLIMVAR_DECLARE_CLONE(iplayer_t )
+        template<class Archive>
+        void serialize(Archive &ar, const unsigned int version)
+        {
+        }
+
+        POLIMVAR_DECLARE_CLONE(iplayer_t )
 	};
 
 	typedef boost::shared_ptr<iplayer_t> player_ptr;

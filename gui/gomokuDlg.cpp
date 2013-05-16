@@ -3,13 +3,21 @@
 
 #include "stdafx.h"
 #include "gomoku.h"
-#include "gomokuDlg.h"
-#include ".\gomokudlg.h"
 
 #include <boost/archive/xml_oarchive.hpp>
 #include <boost/archive/xml_iarchive.hpp>
 #include <boost/serialization/shared_ptr.hpp>
 #include <boost/serialization/export.hpp>
+#include <boost/serialization/string.hpp>
+#include <boost/serialization/vector.hpp>
+#include <boost/serialization/shared_ptr.hpp>
+#include <boost/serialization/export.hpp>
+#include <boost/serialization/nvp.hpp>
+
+#include "gomokuDlg.h"
+#include ".\gomokudlg.h"
+
+
 
 #include <boost/filesystem/operations.hpp>
 #include <boost/filesystem/convenience.hpp>
@@ -18,6 +26,12 @@ namespace fs=boost::filesystem;
 #include "../extern/object_progress.hpp"
 #include "../algo/check_player.h"
 #include "../algo/game_xml.h"
+
+BOOST_CLASS_EXPORT(Gomoku::check_player_t)
+BOOST_CLASS_EXPORT(Gomoku::WsPlayer::wsplayer_t)
+BOOST_CLASS_EXPORT(ThreadPlayer)
+BOOST_CLASS_EXPORT(mfcPlayer)
+BOOST_CLASS_EXPORT(NullPlayer)
 
 // CAboutDlg dialog used for App About
 
@@ -202,7 +216,6 @@ BEGIN_MESSAGE_MAP(CgomokuDlg, CDialog)
 	ON_COMMAND(ID_OPERATION_LOADGAME, OnLoadGame)
 	ON_COMMAND(ID_OPERATION_SAVEGAME, OnSaveGame)
 	ON_COMMAND(ID_OPERATION_SAVESTRINGFIELD, OnSaveStringField)
-	ON_COMMAND(ID_OPERATION_TEST, OnOperationTest)
 	ON_COMMAND(ID_EDIT_UNDO, OnEditUndo)
 	ON_UPDATE_COMMAND_UI(ID_EDIT_UNDO, OnUpdateEditUndo)
 	ON_UPDATE_COMMAND_UI(ID_EDIT_SHOWMOVENUMBER, OnUpdateEditShowmovenumber)
@@ -406,27 +419,33 @@ void CgomokuDlg::OnLoadGame()
 {
     hld_step.disconnect();
 
-	CFileDialog dlg(TRUE,0,0,OFN_FILEMUSTEXIST,"Games (*.gm)|*.gm||");
-	if(dlg.DoModal()!=IDOK)return;
+    try
+    {
+	    CFileDialog dlg(TRUE,0,0,OFN_FILEMUSTEXIST,"Games (*.gm)|*.gm||");
+	    if(dlg.DoModal()!=IDOK)return;
 
-//    Xpat::load_from_xml_file(,game);
-    std::ifstream ifs;
-    ifs.exceptions( std::ifstream::failbit | std::ifstream::badbit );
-    ifs.open(dlg.GetPathName().GetString());
-    boost::archive::xml_iarchive ia(ifs);
+    //    Xpat::load_from_xml_file(,game);
+        std::ifstream ifs;
+        ifs.exceptions( std::ifstream::failbit | std::ifstream::badbit );
+        ifs.open(dlg.GetPathName().GetString());
+        boost::archive::xml_iarchive ia(ifs);
 
-    ia >> BOOST_SERIALIZATION_NVP(game);
+        ia >> BOOST_SERIALIZATION_NVP(game);
 
-    ifs.close();
+        m_field->Invalidate();
+        m_field->UpdateWindow();
+        check_state();
+        if(game.is_play())
+        {
+            hld_step=game.OnNextStep.connect(boost::bind(&CgomokuDlg::gameNextStep,this,_1) );
+	        game.continue_play();
+        }
+    }
+    catch(std::exception& e)
+    {
+        AfxMessageBox(e.what());
+    }
 
-    m_field->Invalidate();
-	m_field->UpdateWindow();
-	check_state();
-	if(game.is_play())
-	{
-        hld_step=game.OnNextStep.connect(boost::bind(&CgomokuDlg::gameNextStep,this,_1) );
-		game.continue_play();
-	}
 }
 
 void CgomokuDlg::OnSaveGame()
@@ -445,62 +464,20 @@ void CgomokuDlg::OnSaveGame()
 
 void CgomokuDlg::OnSaveStringField()
 {
-#ifdef USE_XML
 	CFileDialog dlg(FALSE,".txt",0,OFN_HIDEREADONLY|OFN_OVERWRITEPROMPT,"Strings (*.txt)|*.txt||");
 	if(dlg.DoModal()!=IDOK)return;
 
 	Gomoku::steps_t steps=game.field().get_steps();
 	std::string str=print_steps(steps);
 
-	Xpat::save_content(dlg.GetPathName().GetString(),str);
-#endif
+    std::ofstream ofs;
+
+    ofs.open(dlg.GetPathName().GetString());
+    ofs.exceptions( std::ifstream::failbit | std::ifstream::badbit );
+    ofs<<str;
 }
 
 
-void CgomokuDlg::OnOperationTest()
-{
-#ifdef USE_XML
-	ObjectProgress::log_generator lg(true);
-    
-	fs::directory_iterator it("tests"),endit;
-	for(;it!=endit;++it)
-	{
-		fs::path p=*it;
-		if(extension(p)!=".gm") continue;
-		lg<<"INF:"<<"test: "<<p.leaf();
-
-		try
-		{
-			Gomoku::game_t gm,gml;
-			Xpat::load_from_xml_file(p.string(),gml);
-			
-			Gomoku::check_player_t* c=new Gomoku::check_player_t;
-			Gomoku::player_ptr cp(c);
-			c->set_steps(gml.field().get_steps());
-
-
-			if(dynamic_cast<const Gomoku::WsPlayer::wsplayer_t*>(gml.get_krestik().get())!=0)
-			{
-				gm.set_krestik(gml.get_krestik());
-				gm.set_nolik(cp);
-			}
-			else
-			{
-				gm.set_krestik(cp);
-				gm.set_nolik(gml.get_nolik());
-			}
-			
-			ObjectProgress::perfomance perf;
-			gm.begin_play();
-			lg<<"PERF:"<<p.leaf()<<": "<<perf;
-		}
-		catch(std::exception& e)
-		{
-			lg<<"ERR:"<<p.leaf()<<": "<<e.what();
-		}
-	}
-#endif
-}
 
 void CgomokuDlg::OnEditUndo()
 {

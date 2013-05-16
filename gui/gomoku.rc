@@ -13,13 +13,11 @@
 #undef APSTUDIO_READONLY_SYMBOLS
 
 /////////////////////////////////////////////////////////////////////////////
-// Russian resources
+// Russian (Russia) resources
 
 #if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_RUS)
-#ifdef _WIN32
 LANGUAGE LANG_RUSSIAN, SUBLANG_DEFAULT
 #pragma code_page(1251)
-#endif //_WIN32
 
 #ifdef APSTUDIO_INVOKED
 /////////////////////////////////////////////////////////////////////////////
@@ -84,7 +82,7 @@ IDB_KRESTIK_LAST        BITMAP                  "res\\krestik_last.bmp"
 // Menu
 //
 
-IDR_GOMOKU_MENU MENU 
+IDR_GOMOKU_MENU MENU
 BEGIN
     POPUP "Operation"
     BEGIN
@@ -92,7 +90,6 @@ BEGIN
         MENUITEM "Save game...",                ID_OPERATION_SAVEGAME
         MENUITEM "Save string field...",        ID_OPERATION_SAVESTRINGFIELD
         MENUITEM SEPARATOR
-        MENUITEM "test",                        ID_OPERATION_TEST
     END
     POPUP "Edit"
     BEGIN
@@ -101,18 +98,16 @@ BEGIN
     END
 END
 
-#endif    // Russian resources
+#endif    // Russian (Russia) resources
 /////////////////////////////////////////////////////////////////////////////
 
 
 /////////////////////////////////////////////////////////////////////////////
-// English (U.S.) resources
+// English (United States) resources
 
 #if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
-#ifdef _WIN32
 LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 #pragma code_page(1252)
-#endif //_WIN32
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -120,8 +115,7 @@ LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 //
 
 IDD_ABOUTBOX DIALOGEX 0, 0, 235, 55
-STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | 
-    WS_SYSMENU
+STYLE DS_SETFONT | DS_MODALFRAME | DS_FIXEDSYS | WS_POPUP | WS_CAPTION | WS_SYSMENU
 CAPTION "About gomoku"
 FONT 8, "MS Shell Dlg", 0, 0, 0x1
 BEGIN
@@ -132,8 +126,7 @@ BEGIN
 END
 
 IDD_GOMOKU_DIALOG DIALOGEX 0, 0, 320, 200
-STYLE DS_SETFONT | DS_FIXEDSYS | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_POPUP | 
-    WS_VISIBLE | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME
+STYLE DS_SETFONT | DS_FIXEDSYS | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_POPUP | WS_VISIBLE | WS_CAPTION | WS_SYSMENU | WS_THICKFRAME
 EXSTYLE WS_EX_APPWINDOW
 CAPTION "gomoku"
 MENU IDR_GOMOKU_MENU
@@ -143,11 +136,9 @@ BEGIN
     LTEXT           "Static",IDC_FIELD_PLACE,7,7,242,186,NOT WS_VISIBLE
     PUSHBUTTON      "Stop",IDC_STOP,263,23,50,14
     LTEXT           "Player1:",IDC_PLAYER1_LABEL,265,46,28,8
-    COMBOBOX        IDC_PLAYER1,265,57,48,61,CBS_DROPDOWNLIST | WS_VSCROLL | 
-                    WS_TABSTOP
+    COMBOBOX        IDC_PLAYER1,265,57,48,61,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
     LTEXT           "Player2:",IDC_PLAYER2_LABEL,265,77,28,8
-    COMBOBOX        IDC_PLAYER2,265,88,48,52,CBS_DROPDOWNLIST | WS_VSCROLL | 
-                    WS_TABSTOP
+    COMBOBOX        IDC_PLAYER2,265,88,48,52,CBS_DROPDOWNLIST | WS_VSCROLL | WS_TABSTOP
 END
 
 
@@ -196,7 +187,7 @@ END
 //
 
 #ifdef APSTUDIO_INVOKED
-GUIDELINES DESIGNINFO 
+GUIDELINES DESIGNINFO
 BEGIN
     IDD_ABOUTBOX, DIALOG
     BEGIN
@@ -241,12 +232,12 @@ END
 // String Table
 //
 
-STRINGTABLE 
+STRINGTABLE
 BEGIN
     IDS_ABOUTBOX            "&About gomoku..."
 END
 
-#endif    // English (U.S.) resources
+#endif    // English (United States) resources
 /////////////////////////////////////////////////////////////////////////////
 
 

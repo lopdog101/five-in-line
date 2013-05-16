@@ -15,6 +15,7 @@ IMPLEMENT_DYNAMIC(CThreadProcessor, CWnd)
 CThreadProcessor::CThreadProcessor()
 {
 	window_created=false;
+    state = st_stopped;
 }
 
 CThreadProcessor::~CThreadProcessor()

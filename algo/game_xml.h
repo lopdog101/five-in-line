@@ -2,16 +2,13 @@
 #define gomoku_game_xmlH
 #include "game.h"
 #include "field_xml.h"
+#include <boost/serialization/shared_ptr.hpp>
+#include <boost/serialization/nvp.hpp>
 
 BOOST_SERIALIZATION_SPLIT_FREE(::Gomoku::game_t)
 //BOOST_SERIALIZATION_ASSUME_ABSTRACT(Gomoku::iplayer_t)
 
 namespace boost {namespace serialization {
-
-template<class Archive>
-void serialize(Archive & ar, Gomoku::iplayer_t& v, const unsigned int version)
-{
-}
 
 template<class Archive>
 void save(Archive & ar,const  Gomoku::game_t& v, const unsigned int version)
