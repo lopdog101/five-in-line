@@ -129,18 +129,18 @@ item_ptr treat_node_t::check_tree_one_group_step(Step cl,bool refind_one_step)
 		{
 			unsigned cur_deep=max_deep();
 
-//#ifdef PRINT_TREAT_PERFOMANCE
-//			ObjectProgress::log_generator lg(true);
-//			ObjectProgress::perfomance perf;
-//#endif
+#ifdef PRINT_TREAT_PERFOMANCE
+			ObjectProgress::log_generator lg(true);
+			ObjectProgress::perfomance perf;
+#endif
 			treat_node_ptr tr(new treat_node_t(player));
 			tr->build_tree(cl,true,treat_filter_t(),cur_deep);
 
-//#ifdef PRINT_TREAT_PERFOMANCE
-//			lg<<"check_tree_one_group_step()1 build_tree():  cur_deep="<<cur_deep
-//				<<" res_deep="<<tr->max_deep()<<" win="<<tr->win<<" time="<<perf;
-//			perf.reset();
-//#endif
+#ifdef PRINT_TREAT_PERFOMANCE
+			lg<<"check_tree_one_group_step()1 build_tree():  cur_deep="<<cur_deep
+				<<" res_deep="<<tr->max_deep()<<" win="<<tr->win<<" time="<<perf;
+			perf.reset();
+#endif
 
 			if(!tr->win)return item_ptr();
 
@@ -198,19 +198,20 @@ item_ptr treat_node_t::icheck_tree_one_group_step(Step cl,bool refind_one_step)
 			if(ch.one_of_cost_have_color(field,cl) )
 			{
 				unsigned cur_deep=max_deep();
+                if(cur_deep>3)cur_deep-=3;
 
-//#ifdef PRINT_TREAT_PERFOMANCE
-//				ObjectProgress::log_generator lg(true);
-//				ObjectProgress::perfomance perf;
-//#endif
+#ifdef PRINT_TREAT_PERFOMANCE
+				ObjectProgress::log_generator lg(true);
+				ObjectProgress::perfomance perf;
+#endif
 				treat_node_ptr tr(new treat_node_t(player));
 				tr->build_tree(cl,true,treat_filter_t(),cur_deep);
 
-//#ifdef PRINT_TREAT_PERFOMANCE
-//				lg<<"check_tree_one_group_step()1 build_tree():  cur_deep="<<cur_deep
-//					<<" res_deep="<<tr->max_deep()<<" win="<<tr->win<<" time="<<perf;
-//				perf.reset();
-//#endif
+#ifdef PRINT_TREAT_PERFOMANCE
+				lg<<"icheck_tree_one_group_step()1 build_tree():  cur_deep="<<cur_deep
+					<<" res_deep="<<tr->max_deep()<<" win="<<tr->win<<" time="<<perf;
+				perf.reset();
+#endif
 				if(!tr->win)return item_ptr();
 
 				return tr->check_tree(cl,false);

@@ -59,19 +59,22 @@ public:
 
 class perfomance
 {
+public:
+	typedef unsigned long long val_t;
+	enum PrecT{pr_sec,pr_millisec,pr_microsec};
 private:
-	time_t start;
+	val_t start;
 public:
 	perfomance(){reset();}
-	inline time_t delay() const{return time(0)-start;}
-	std::string str() const
-	{
-	  char str[256];
-	  sprintf(str,"%d sec.",(int)delay());
-	  return std::string(str);
-	}
+	inline val_t delay() const{return current_time()-start;}
+	std::string str() const;
 
-	inline void reset(){start=time(0);}
+	inline void reset(){start=current_time();}
+
+	static PrecT precision;
+	static std::string units;
+
+	static val_t current_time();
 };
 
 
