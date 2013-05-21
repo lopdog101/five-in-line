@@ -30,13 +30,17 @@ namespace Gomoku { namespace WsPlayer
         states_t states;
 		unsigned current_state;
 
-        unsigned current_treat_check_deep;
+        unsigned treat_check_count;
+        unsigned treat_check_rebuild_tree_count;
 
 		void init_states();
 		inline state_t& get_state(){return *states[current_state];}
 		inline const state_t& get_state() const {return *states[current_state];}
 		void increase_state();
 		inline void decrease_state(){--current_state;}
+
+        void increase_treat_check_count();
+        void increase_treat_check_rebuild_tree_count();
 
 	public:
 		item_ptr root;

@@ -13,7 +13,7 @@ namespace Gomoku { namespace WsPlayer
 /////////////////////////////////////////////////////////////////////////////////////
 void treat_node_t::build_tree(Step cl,bool only_win,const treat_filter_t& tf,unsigned deep)
 {
-	points_t empty_points;
+	static points_t empty_points;
 	player.field.get_empty_around(empty_points,2);
 
 	treats_t treats;
@@ -52,7 +52,7 @@ void treat_node_t::build_tree_same_line(const treat_t& b,Step cl,bool only_win,c
 {
 	temporary_treat_state hld_b(player.field,b,cl);
 
-	points_t empty_points;
+	static points_t empty_points;
 	player.field.get_empty_around(empty_points,2);
 
 	treats_t treats;
@@ -127,7 +127,9 @@ item_ptr treat_node_t::check_tree_one_group_step(Step cl,bool refind_one_step)
 
 		if(cur_cl==cl)
 		{
-			unsigned cur_deep=max_deep();
+            player.increase_treat_check_rebuild_tree_count();
+
+            unsigned cur_deep=max_deep();
 
 #ifdef PRINT_TREAT_PERFOMANCE
 			ObjectProgress::log_generator lg(true);
@@ -176,9 +178,7 @@ item_ptr treat_node_t::icheck_tree_one_group_step(Step cl,bool refind_one_step)
 	item_ptr max_r;
 	unsigned max_depth=0;
 
-    ++player.current_treat_check_deep;
-    if(player.current_treat_check_deep>treat_check_deep)
-        throw e_max_treat_deep_reached();
+    player.increase_treat_check_count();
 
 	if(contra_steps_exists(cl,max_r))
 	{
@@ -197,6 +197,8 @@ item_ptr treat_node_t::icheck_tree_one_group_step(Step cl,bool refind_one_step)
 
 			if(ch.one_of_cost_have_color(field,cl) )
 			{
+                player.increase_treat_check_rebuild_tree_count();
+
 				unsigned cur_deep=max_deep();
                 if(cur_deep>3)cur_deep-=3;
 

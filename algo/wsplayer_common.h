@@ -8,8 +8,11 @@ namespace Gomoku { namespace WsPlayer
 	extern unsigned stored_deep;
 	extern unsigned def_lookup_deep;
 	extern unsigned treat_deep;
-    extern unsigned treat_check_deep;
+    extern unsigned max_treat_check;
+    extern unsigned max_treat_check_rebuild_tree;
 
+    struct e_max_treat_check_reached : public e_cancel{};
+    struct e_max_treat_check_rebuild_tree : public e_max_treat_check_reached{};
 
 	extern unsigned nodes_count;
 

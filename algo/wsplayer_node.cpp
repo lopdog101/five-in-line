@@ -402,21 +402,43 @@ Result item_t::process_treat_sequence()
 		perf.reset();
 #endif
         item_ptr r;
+
+        player.treat_check_count=0;
+        player.treat_check_rebuild_tree_count=0;
+
+        bool max_check_reached=true;
         
         try
         {
             r=tr->check_tree(other_step(step),false);
+
+            max_check_reached=false;
         }
-        catch(e_max_treat_deep_reached&)
+        catch(e_max_treat_check_rebuild_tree&)
+        {
+#ifdef PRINT_TREAT_PERFOMANCE
+		lg<<"process_treat_sequence()1.1 check_tree(): e_max_treat_check_rebuild_tree";
+#endif
+        }
+        catch(e_max_treat_check_reached&)
+        {
+#ifdef PRINT_TREAT_PERFOMANCE
+		lg<<"process_treat_sequence()1.2 check_tree(): e_max_treat_check_reached";
+#endif
+        }
+
+#ifdef PRINT_TREAT_PERFOMANCE
+		lg<<"process_treat_sequence()2 check_tree(): deep="<<deep<<" win="<<tr->win<<" childs.size()="<<tr->childs.size()
+            <<" treat_check_count="<<player.treat_check_count<<" treat_check_rebuild_tree_count="<<player.treat_check_rebuild_tree_count<<" time="<<perf;
+		perf.reset();
+#endif
+
+        if(max_check_reached)
         {
             return r_neitral;
         }
 
 #ifdef PRINT_TREAT_PERFOMANCE
-		lg<<"process_treat_sequence()2 check_tree(): deep="<<deep<<" win="<<tr->win<<" childs.size()="<<tr->childs.size()
-            <<" check_count="<<player.current_treat_check_deep<<" time="<<perf;
-		perf.reset();
-
 		if(r)
 		{
 			lg<<"process_treat_sequence()3 check_tree(): chain_depth="<<r->get_chain_depth()<<": "<<print_chain(r);

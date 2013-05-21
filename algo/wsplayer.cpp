@@ -15,7 +15,8 @@ wsplayer_t::wsplayer_t()
 {
 	predict_deep=0;
 	predict_processed=0;
-    current_treat_check_deep=0;
+    treat_check_count=0;
+    treat_check_rebuild_tree_count=0;
 }
 
 void wsplayer_t::begin_game()
@@ -67,12 +68,26 @@ void wsplayer_t::increase_state()
 	states[current_state]->state_from(*states[current_state-1]);
 }
 
-///////////////////////////////////////////////////////////////
 void wsplayer_t::init_states()
 {
 	current_state=0;
 	if(states.empty())states.push_back(state_ptr(new state_t(*this)));
 	get_state().init_zero();
 }
+
+void wsplayer_t::increase_treat_check_count()
+{
+    ++treat_check_count;
+    if(treat_check_count>max_treat_check)
+        throw e_max_treat_check_reached();
+}
+
+void wsplayer_t::increase_treat_check_rebuild_tree_count()
+{
+    ++treat_check_rebuild_tree_count;
+    if(treat_check_rebuild_tree_count>max_treat_check_rebuild_tree)
+        throw e_max_treat_check_rebuild_tree();
+}
+
 
 } }//namespace Gomoku

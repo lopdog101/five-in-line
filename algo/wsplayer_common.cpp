@@ -15,7 +15,8 @@ unsigned nodes_count=0;
 unsigned stored_deep=2;
 unsigned def_lookup_deep=0;
 unsigned treat_deep=16;
-unsigned treat_check_deep = 1000;
+unsigned max_treat_check = 1000;
+unsigned max_treat_check_rebuild_tree = 10;
 
 
 
