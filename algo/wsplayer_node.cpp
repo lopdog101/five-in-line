@@ -380,7 +380,12 @@ Result item_t::process_treat_sequence()
 	ObjectProgress::log_generator lg(true);
 #endif
 
-    for(unsigned cur_deep=4;cur_deep<treat_deep;cur_deep+=4)
+    unsigned const start_deep=4;
+    
+    int last_treat_check_count=0;
+    int last_treat_check_rebuild_tree_count=0;
+
+    for(unsigned cur_deep=start_deep;cur_deep<treat_deep;cur_deep+=4)
 	{
 #ifdef PRINT_TREAT_PERFOMANCE
 		ObjectProgress::perfomance perf;
@@ -450,14 +455,22 @@ Result item_t::process_treat_sequence()
 		}
 #endif
 
-		if(!r)
-		{
-			if(deep<cur_deep)return r_neitral;
-			continue;
-		}
-		
-		win=r;
-		return r_fail;
+        if(r)
+        {
+            win=r;
+            return r_fail;
+        }
+        
+        if(deep<cur_deep)return r_neitral;
+
+        if(last_treat_check_count==player.treat_check_count && 
+           last_treat_check_rebuild_tree_count==player.treat_check_rebuild_tree_count)
+        {
+            return r_neitral;
+        }
+
+        last_treat_check_count=player.treat_check_count;
+        last_treat_check_rebuild_tree_count=player.treat_check_rebuild_tree_count;
 	}
 	
 #ifdef PRINT_TREAT_PERFOMANCE
