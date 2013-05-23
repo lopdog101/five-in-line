@@ -69,19 +69,10 @@ void CThreadProcessor::execute()
 	{
 		while(true)
 		{
-			{
-				lkt lk(mtx);
-				cond.wait(lk);
-				if(state==st_stopping)return;
-				if(state!=st_new_task)
-				{
-					state=st_wait_task;
-					continue;
-				}
-				state=st_execute_task;
-			}
-
-			OnExecute();
+            if(!wait_for_new_job())
+                return;
+            
+            OnExecute();
 
 			{
 				lkt lk(mtx);
@@ -107,14 +98,31 @@ void CThreadProcessor::execute()
 		add_message(err);
 		PostMessage(WM_COMPLETE,0,0);
 	}
-
 }
+
+bool CThreadProcessor::wait_for_new_job()
+{
+    lkt lk(mtx);
+    while(state!=st_new_task)
+    {
+        if(state==st_stopping)
+            return false;
+
+        cond.wait(lk);
+    }
+
+    state=st_execute_task;
+    return true;
+}
+
 
 void CThreadProcessor::start_job()
 {
-	lkt lk(mtx);
-	if(state!=st_wait_task)throw std::runtime_error("CThreadProcessor::start_job(): invalid state");
-	state=st_new_task;
+    {
+        lkt lk(mtx);
+        if(state!=st_wait_task)throw std::runtime_error("CThreadProcessor::start_job(): invalid state");
+        state=st_new_task;
+    }
 	cond.notify_all();
 }
 

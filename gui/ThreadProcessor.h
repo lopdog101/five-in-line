@@ -34,6 +34,7 @@ private:
 	errors_t messages;
 
 	void execute();
+    bool wait_for_new_job();
 void add_message(const error_t& mess);
 	void create_window();
 public:
