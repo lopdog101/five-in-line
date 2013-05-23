@@ -630,7 +630,7 @@ std::string print_treat(treat_t& tr)
 
 std::string print_treat_tree(treat_node_t& tr)
 {
-	std::string res,offset;
+	std::string res;
 
 	if(tr.childs.empty())
 	{
@@ -644,7 +644,6 @@ std::string print_treat_tree(treat_node_t& tr)
 	print_treat_tree(*tr.childs.front(),res,offset_str);
 	for(size_t i=1;i<tr.childs.size();i++)
 	{
-		res+=offset;
 		print_treat_tree(*tr.childs[i],res,offset_str);
 	}
 
@@ -668,7 +667,7 @@ void print_treat_tree(treat_node_t& tr,std::string& res,std::string& offset_str)
 	if(offset_delta>len)
 		res.resize(res.size()+offset_delta-len,' ');
 
-	offset_str.resize(offset_str.size()+offset_delta);
+	offset_str.resize(offset_str.size()+offset_delta,' ');
 
 	print_treat_tree(*tr.childs.front(),res,offset_str);
 	for(size_t i=1;i<tr.childs.size();i++)

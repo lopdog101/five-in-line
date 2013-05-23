@@ -185,6 +185,8 @@ namespace Gomoku
 		for(;i!=endi;++i)*i-=pt;
 	}
 
+	std::string to_string(Step val);
+
 	std::string print_field(const steps_t& val);
 	std::string print_steps(const steps_t& val);
 

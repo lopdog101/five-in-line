@@ -115,7 +115,14 @@ namespace Gomoku
 	}
 
 
-	std::string print_field(const steps_t& val)
+std::string to_string(Step val)
+{
+    if(val==st_krestik)return std::string("x");
+    if(val==st_nolik)return std::string("0");
+    return std::string();
+}
+
+std::string print_field(const steps_t& val)
 	{
 		if(val.empty())return std::string();
 		rect rc=rect_inverse_infinity();

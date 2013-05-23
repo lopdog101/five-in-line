@@ -398,7 +398,7 @@ Result item_t::process_treat_sequence()
 		}
 
 #ifdef PRINT_TREAT_PERFOMANCE
-		lg<<"process_treat_sequence()1 build_tree(): deep="<<deep<<" cur_deep="<<cur_deep<<" win="<<tr->win<<" time="<<perf;
+		lg<<"process_treat_sequence()1 build_tree(): "<<to_string(other_step(step))<<": deep="<<deep<<" cur_deep="<<cur_deep<<" win="<<tr->win<<" time="<<perf;
 		perf.reset();
 #endif
         item_ptr r;
@@ -417,18 +417,18 @@ Result item_t::process_treat_sequence()
         catch(e_max_treat_check_rebuild_tree&)
         {
 #ifdef PRINT_TREAT_PERFOMANCE
-		lg<<"process_treat_sequence()1.1 check_tree(): e_max_treat_check_rebuild_tree";
+		lg<<"process_treat_sequence()1.1 check_tree(): "<<to_string(other_step(step))<<": e_max_treat_check_rebuild_tree";
 #endif
         }
         catch(e_max_treat_check_reached&)
         {
 #ifdef PRINT_TREAT_PERFOMANCE
-		lg<<"process_treat_sequence()1.2 check_tree(): e_max_treat_check_reached";
+		lg<<"process_treat_sequence()1.2 check_tree(): "<<to_string(other_step(step))<<": e_max_treat_check_reached";
 #endif
         }
 
 #ifdef PRINT_TREAT_PERFOMANCE
-		lg<<"process_treat_sequence()2 check_tree(): deep="<<deep<<" win="<<tr->win<<" childs.size()="<<tr->childs.size()
+		lg<<"process_treat_sequence()2 check_tree(): "<<to_string(other_step(step))<<": deep="<<deep<<" win="<<tr->win<<" childs.size()="<<tr->childs.size()
             <<" treat_check_count="<<player.treat_check_count<<" treat_check_rebuild_tree_count="<<player.treat_check_rebuild_tree_count<<" time="<<perf;
 		perf.reset();
 #endif
@@ -441,7 +441,7 @@ Result item_t::process_treat_sequence()
 #ifdef PRINT_TREAT_PERFOMANCE
 		if(r)
 		{
-			lg<<"process_treat_sequence()3 check_tree(): chain_depth="<<r->get_chain_depth()<<": "<<print_chain(r);
+			lg<<"process_treat_sequence()3 check_tree(): "<<to_string(other_step(step))<<": chain_depth="<<r->get_chain_depth()<<": "<<print_chain(r);
 			lg<<"process_treat_sequence()3.1 field: "<<print_steps(player.field.get_steps());
 			
 			lg<<"process_treat_sequence()3.2\r\n";
@@ -461,7 +461,7 @@ Result item_t::process_treat_sequence()
 	}
 	
 #ifdef PRINT_TREAT_PERFOMANCE
-	lg<<"process_treat_sequence()4: max deep reached";
+	lg<<"process_treat_sequence()4: "<<to_string(other_step(step))<<": max deep reached";
 #endif
 	return r_neitral;
 
