@@ -380,6 +380,11 @@ Result item_t::process_treat_sequence()
 	ObjectProgress::log_generator lg(true);
 #endif
 
+    if(is_defence_five_exists())
+    {
+        return r_neitral;
+    }
+
     unsigned const start_deep=4;
     
     int last_treat_check_count=0;
@@ -485,6 +490,14 @@ unsigned item_t::get_chain_depth() const
 	if(win)return win->get_chain_depth()+1;
 	if(fail)return fail->get_chain_depth()+1;
 	return 1;
+}
+
+bool item_t::is_defence_five_exists() const
+{
+	const state_t& state=player.get_state();
+
+	const points_t& d5_pts=state.get_make_five(step);
+    return !d5_pts.empty();
 }
 
 ///////////////////////////////////////////////////////////////
