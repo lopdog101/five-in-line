@@ -5,11 +5,9 @@
 #include <string>
 #include <boost/shared_ptr.hpp>
 
-#ifndef WITHOUT_EXTERNAL_LIBS
 namespace boost{namespace filesystem{
 	class path;
 }}//namespace
-#endif
 
 namespace Gomoku
 {
@@ -26,10 +24,8 @@ struct file_hldr
 void load_file(const std::string& file_name,data_t& res);
 void save_file(const std::string& file_name,const data_t& res);
 
-#ifndef WITHOUT_EXTERNAL_LIBS
 void load_file(const boost::filesystem::path& file_name,data_t& res);
 void save_file(const boost::filesystem::path& file_name,const data_t& res);
-#endif
 
 void hex2bin(const std::string& str,data_t& bin);
 void bin2hex(const data_t& bin,std::string& str);

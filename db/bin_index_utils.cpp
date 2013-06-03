@@ -2,10 +2,8 @@
 #include <stdexcept>
 #include <boost/lexical_cast.hpp>
 
-#ifndef WITHOUT_EXTERNAL_LIBS
 #  include <boost/filesystem/operations.hpp>
 namespace fs=boost::filesystem;
-#endif
 
 
 namespace Gomoku
@@ -69,7 +67,6 @@ namespace Gomoku
 			throw std::runtime_error(file_name+": write error");
 	}
 
-#ifndef WITHOUT_EXTERNAL_LIBS
 	void load_file(const boost::filesystem::path& file_name,data_t& res)
 	{
 		load_file(file_name.string(),res);
@@ -79,5 +76,4 @@ namespace Gomoku
 	{
 		save_file(file_name.string(),res);
 	}
-#endif
 }//namespace

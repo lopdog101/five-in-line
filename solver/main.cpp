@@ -4,14 +4,7 @@
 #include "../algo/wsplayer.h"
 #include "../algo/wsplayer_node.h"
 
-#ifdef WITHOUT_EXTERNAL_LIBS
 #  include "../extern/object_progress.hpp"
-#else
-# include <boost/filesystem/operations.hpp>
-namespace fs=boost::filesystem;
-# include <object_progress/log_to_file.hpp>
-# include <object_progress/object_progress.hpp>
-#endif
 
 using namespace Gomoku;
 
@@ -27,17 +20,6 @@ void print_use()
 
 int main(int argc,char** argv)
 {
-#ifndef WITHOUT_EXTERNAL_LIBS
-	fs::path::default_name_check(boost::filesystem::native);
-
-	ObjectProgress::log_to_file lf;
-	
-	lf.file_name="solver.log";
-	lf.create_empty=true;
-	lf.set_manager(ObjectProgress::log_manager_singleton::instance());
-	lf.open();
-#endif
-
 	const char* sval=getenv("stored_deep");
 	if(sval!=0&&(*sval)!=0)
 		WsPlayer::stored_deep=atol(sval);

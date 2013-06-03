@@ -3,7 +3,7 @@
 
 #pragma once
 #include "mfc_field.h"
-#include "../extern/DlgResizeHelper.h"
+#include "DlgResizeHelper.h"
 #include "../algo/game.h"
 #include "afxwin.h"
 #include "../algo/wsplayer.h"

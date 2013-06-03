@@ -6,22 +6,22 @@ link_directories($ENV{BOOST}lib)
 project (five_in_line)
 
 FILE(GLOB SRC_ALGO_FILES
-../algo/*.cpp
-../algo/*.h
-../algo/*.hpp
+../../algo/*.cpp
+../../algo/*.h
+../../algo/*.hpp
 )
 
 FILE(GLOB SRC_GUI_FILES
-*.cpp
-*.h
-*.hpp
-*.rc
+../*.cpp
+../*.h
+../*.hpp
+../*.rc
 )
 
 FILE(GLOB SRC_EXTERN_FILES
-../extern/*.cpp
-../extern/*.h
-../extern/*.hpp
+../../extern/*.cpp
+../../extern/*.h
+../../extern/*.hpp
 )
 
 SOURCE_GROUP(algo FILES ${SRC_ALGO_FILES} )
