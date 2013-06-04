@@ -4,36 +4,24 @@
 #include "../algo/wsplayer.h"
 #include "../algo/wsplayer_node.h"
 
-#  include "../extern/object_progress.hpp"
+#include "../extern/object_progress.hpp"
+#include "../algo/env_variables.h"
 
 using namespace Gomoku;
 
 void print_use()
 {
 	printf("USE: solver key\n");
-	printf("Enviropment variables\n");
-	printf("stored_deep (default: %u)\n",WsPlayer::stored_deep);
-	printf("lookup_deep (default: %u)\n",WsPlayer::def_lookup_deep);
-	printf("treat_deep  (default: %u)\n",WsPlayer::treat_deep);
+    Gomoku::print_enviropment_variables_hint();
 }
 
 
 int main(int argc,char** argv)
 {
-	const char* sval=getenv("stored_deep");
-	if(sval!=0&&(*sval)!=0)
-		WsPlayer::stored_deep=atol(sval);
-
-	sval=getenv("lookup_deep");
-	if(sval!=0&&(*sval)!=0)
-		WsPlayer::def_lookup_deep=atol(sval);
-
-	sval=getenv("treat_deep");
-	if(sval!=0&&(*sval)!=0)
-		WsPlayer::treat_deep=atol(sval);
+    scan_enviropment_variables();
 
 	ObjectProgress::log_generator lg(true);
-	lg<<"stored_deep="<<WsPlayer::stored_deep<<" lookup_deep="<<WsPlayer::def_lookup_deep<<" treat_deep="<<WsPlayer::treat_deep;
+    print_used_enviropment_variables(lg);
 
 	if(argc!=2)
 	{

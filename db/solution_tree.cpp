@@ -1,9 +1,9 @@
 #include "solution_tree.h"
 #include <boost/filesystem/operations.hpp>
 #include <stdexcept>
-#include <binary_find.h>
+#include "../extern/binary_find.h"
 #include <boost/lexical_cast.hpp>
-#include <object_progress/object_progress.hpp>
+#include "../extern/object_progress.hpp"
 
 namespace fs=boost::filesystem;
 

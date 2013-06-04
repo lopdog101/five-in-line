@@ -26,6 +26,7 @@ namespace fs=boost::filesystem;
 #include "../extern/object_progress.hpp"
 #include "../algo/check_player.h"
 #include "../algo/game_xml.h"
+#include "../algo/env_variables.h"
 
 BOOST_CLASS_EXPORT(Gomoku::check_player_t)
 BOOST_CLASS_EXPORT(Gomoku::WsPlayer::wsplayer_t)
@@ -231,20 +232,10 @@ BOOL CgomokuDlg::OnInitDialog()
 {
 	CDialog::OnInitDialog();
 
-	const char* sval=getenv("stored_deep");
-	if(sval!=0&&(*sval)!=0)
-		Gomoku::WsPlayer::stored_deep=atol(sval);
-
-	sval=getenv("lookup_deep");
-	if(sval!=0&&(*sval)!=0)
-		Gomoku::WsPlayer::def_lookup_deep=atol(sval);
-
-	sval=getenv("treat_deep");
-	if(sval!=0&&(*sval)!=0)
-		Gomoku::WsPlayer::treat_deep=atol(sval);
+    Gomoku::scan_enviropment_variables();
 
 	ObjectProgress::log_generator lg(true);
-	lg<<"stored_deep="<<Gomoku::WsPlayer::stored_deep<<" lookup_deep="<<Gomoku::WsPlayer::def_lookup_deep<<" treat_deep="<<Gomoku::WsPlayer::treat_deep;
+    Gomoku::print_used_enviropment_variables(lg);
 
 	// Set the icon for this dialog.  The framework does this automatically
 	//  when the application's main window is not a dialog

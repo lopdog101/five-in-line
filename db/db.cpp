@@ -9,8 +9,8 @@ namespace fs=boost::filesystem;
 #include <stdexcept>
 #include "../algo/wsplayer.h"
 #include "../algo/wsplayer_node.h"
-#include <object_progress/log_to_file.hpp>
-#include <object_progress/object_progress.hpp>
+#include "../extern/object_progress.hpp"
+#include "../algo/env_variables.h"
 
 using namespace Gomoku;
 
@@ -25,10 +25,7 @@ void print_use()
 	printf("db <root_dir> view_root\n");
 	printf("db <root_dir> solve_level [iteration_count]\n");
 	printf("db <root_dir> init_state <printable_steps>\n");
-	printf("Enviropment variables\n");
-	printf("stored_deep (default: %u)\n",WsPlayer::stored_deep);
-	printf("lookup_deep (default: %u)\n",WsPlayer::def_lookup_deep);
-	printf("treat_deep  (default: %u)\n",WsPlayer::treat_deep);
+    Gomoku::print_enviropment_variables_hint();
 	printf("win_neitrals (default: %u)\n",solution_tree_t::win_neitrals);
 }
 
@@ -107,24 +104,15 @@ void sig_handler(int v)
 
 void self_solve(solution_tree_t& tr,size_t iteration_count)
 {
-	const char* sval=getenv("stored_deep");
-	if(sval!=0&&(*sval)!=0)
-		WsPlayer::stored_deep=atol(sval);
+    scan_enviropment_variables();
 
-	sval=getenv("lookup_deep");
-	if(sval!=0&&(*sval)!=0)
-		WsPlayer::def_lookup_deep=atol(sval);
-
-	sval=getenv("treat_deep");
-	if(sval!=0&&(*sval)!=0)
-		WsPlayer::treat_deep=atol(sval);
-
-	sval=getenv("win_neitrals");
+	const char* sval=getenv("win_neitrals");
 	if(sval!=0&&(*sval)!=0)
 		solution_tree_t::win_neitrals=atol(sval);
 
 	ObjectProgress::log_generator lg(true);
-	lg<<"stored_deep="<<WsPlayer::stored_deep<<" lookup_deep="<<WsPlayer::def_lookup_deep<<" treat_deep="<<WsPlayer::treat_deep<<" win_neitrals="<<solution_tree_t::win_neitrals;
+	print_used_enviropment_variables(lg);
+    lg<<"win_neitrals="<<solution_tree_t::win_neitrals;
 
 	need_break=false;
 #ifdef _WIN32
@@ -218,15 +206,6 @@ bool show_state(solution_tree_t& tr,steps_t req)
 
 int main(char argc,char** argv)
 {
-	fs::path::default_name_check(boost::filesystem::native);
-
-	ObjectProgress::log_to_file lf;
-	
-	lf.file_name="db.log";
-	lf.create_empty=true;
-	lf.set_manager(ObjectProgress::log_manager_singleton::instance());
-	lf.open();
-
 	if(argc<3)
 	{
 		print_use();

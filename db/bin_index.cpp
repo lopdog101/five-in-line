@@ -1,7 +1,7 @@
 #include "bin_index.h"
 #include <boost/filesystem/operations.hpp>
 #include <stdexcept>
-#include <binary_find.h>
+#include "../extern/binary_find.h"
 #include <boost/lexical_cast.hpp>
 
 namespace fs=boost::filesystem;
@@ -698,7 +698,7 @@ namespace Gomoku
 		{
 			fs::path fl=*itr;
 			if(!is_directory(fl))continue;
-			std::string h=fl.leaf();
+            std::string h=fl.leaf().string();
 			data_t d;
 			hex2bin(h,d);
 			if(d.size()!=parent.dir_key_len)
