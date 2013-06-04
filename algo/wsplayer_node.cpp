@@ -376,6 +376,9 @@ void item_t::drop_neitrals_and_fail_child(unsigned generation)
 
 Result item_t::process_treat_sequence()
 {
+    if(treat_deep)
+        return r_neitral;
+
 #ifdef PRINT_TREAT_PERFOMANCE
 	ObjectProgress::log_generator lg(true);
 #endif
