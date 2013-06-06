@@ -14,6 +14,9 @@ namespace fs=boost::filesystem;
 
 using namespace Gomoku;
 
+ObjectProgress::logout_cerr log_err;
+ObjectProgress::logout_file log_file;
+
 void print_use()
 {
 	printf("USE: \n");
@@ -212,8 +215,17 @@ int main(char argc,char** argv)
 		return 1;
 	}
 
+    log_err.open();
+        
+    log_file.file_name="db.log";
+    log_file.print_timestamp=true;
+    log_file.open();
+
+    ObjectProgress::log_generator lg(true);
+
 	try
 	{
+
 		fs::path root_dir(argv[1]);
 		std::string cmd=argv[2];
 
@@ -409,12 +421,12 @@ int main(char argc,char** argv)
 	}
 	catch(std::exception& e)
 	{
-		printf("std::exception: %s\n",e.what());
+        lg<<"std::exception: "<<e.what();
 		return 1;
 	}
 	catch(...)
 	{
-		printf("unknown exception\n");
+        lg<<"unknown exception";
 		return 1;
 	}
 

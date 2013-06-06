@@ -7,6 +7,10 @@
 #include "../extern/object_progress.hpp"
 #include "../algo/env_variables.h"
 
+
+ObjectProgress::logout_cerr log_err;
+ObjectProgress::logout_file log_file;
+
 using namespace Gomoku;
 
 void print_use()
@@ -18,20 +22,26 @@ void print_use()
 
 int main(int argc,char** argv)
 {
-    scan_enviropment_variables();
-
-	ObjectProgress::log_generator lg(true);
-    print_used_enviropment_variables(lg);
-
 	if(argc!=2)
 	{
 		print_use();
 		return 1;
 	}
 
+    log_err.open();
+        
+    log_file.file_name="solver.log";
+    log_file.print_timestamp=true;
+    log_file.open();
+
+    scan_enviropment_variables();
+
+	ObjectProgress::log_generator lg(true);
+    print_used_enviropment_variables(lg);
+
 	try
 	{
-		data_t bin;
+        data_t bin;
 		hex2bin(argv[1],bin);
 		steps_t init_state;
 		bin2points(bin,init_state);
@@ -117,12 +127,13 @@ int main(int argc,char** argv)
 	}
 	catch(std::exception& e)
 	{
+        lg<<"std::exception: "<<e.what();
 		printf("std::exception: %s\n",e.what());
 		return 1;
 	}
 	catch(...)
 	{
-		printf("unknown exception\n");
+        lg<<"unknown exception";
 		return 1;
 	}
 

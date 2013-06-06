@@ -9,6 +9,7 @@
 #include "../algo/wsplayer.h"
 #include "ThreadProcessor.h"
 #include <boost/signals/connection.hpp>
+#include "../extern/object_progress.hpp"
 
 class mfcPlayer : public Gomoku::iplayer_t
 {
@@ -115,6 +116,9 @@ private:
 	DlgResizeHelper szr;
 	Gomoku::game_t game;
 	boost::signals::scoped_connection hld_step;
+
+    ObjectProgress::logout_debug log_dbg;
+    ObjectProgress::logout_file log_file;
 	
 	
 	void gameNextStep(const Gomoku::game_t&);

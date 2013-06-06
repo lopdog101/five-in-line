@@ -23,7 +23,6 @@
 #include <boost/filesystem/convenience.hpp>
 namespace fs=boost::filesystem;
 
-#include "../extern/object_progress.hpp"
 #include "../algo/check_player.h"
 #include "../algo/game_xml.h"
 #include "../algo/env_variables.h"
@@ -192,6 +191,13 @@ CgomokuDlg::CgomokuDlg(CWnd* pParent /*=NULL*/)
 	: CDialog(CgomokuDlg::IDD, pParent),m_field(new CMfcField)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
+
+    log_dbg.open();
+    
+    log_file.file_name="five_in_line.log";
+    log_file.print_timestamp=true;
+    log_file.open();
+
 	game.fieldp=m_field;
 }
 

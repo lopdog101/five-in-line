@@ -2,16 +2,15 @@
 #include <windows.h>
 #endif
 #include "object_progress.hpp"
+#include <boost/bind.hpp>
+#include <iostream>
 
 namespace ObjectProgress
 {
-
-    void output_debug_message(const std::string& str)
+    log_handler_t& get_log_handler()
     {
-#ifdef _WIN32
-        std::string s = "DBG: "+str+"\r\n";
-        OutputDebugStringA(s.c_str());
-#endif
+        static log_handler_t v;
+        return v;
     }
 
     perfomance::PrecT perfomance::precision=pr_millisec;
@@ -72,6 +71,61 @@ namespace ObjectProgress
     
 	    ret+=units;
 	    return ret;
+    }
+
+    void ilogout::open()
+    {
+        hld=get_log_handler().connect(boost::bind(&ilogout::on_message,this,_1) );
+    }
+        
+    std::string ilogout::current_timestamp()
+    {
+        time_t t=time(0);
+        tm tt=*localtime(&t);
+
+        char tmp[256];
+        sprintf(tmp,"%04d-%02d-%02d %02d:%02d:%02d",
+            tt.tm_year+1900,tt.tm_mon+1,tt.tm_mday,
+            tt.tm_hour,tt.tm_min,tt.tm_sec);
+
+        return std::string(tmp);
+    }
+
+
+    void logout_debug::on_message(const std::string& str)
+    {
+#ifdef _WIN32
+        std::string s;
+        if(print_timestamp)s=current_timestamp()+" ";
+        s+=str+"\r\n";
+        OutputDebugStringA(s.c_str());
+#endif
+    }
+    
+    void logout_cerr::on_message(const std::string& str)
+    {
+        std::string s;
+        if(print_timestamp)s=current_timestamp()+" ";
+        s+=str;
+        std::cerr<<s<<std::endl;
+    }
+
+    void logout_file::open()
+    {
+        file.open(file_name,file.binary);
+        ilogout::open();
+    }
+
+    void logout_file::on_message(const std::string& str)
+    {
+        if(!file.is_open())
+            return;
+        
+        std::string s;
+        if(print_timestamp)s=current_timestamp()+" ";
+        s+=str;
+
+        file<<s<<std::endl;
     }
 
 }//namespace

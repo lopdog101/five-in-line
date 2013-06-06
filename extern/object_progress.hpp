@@ -3,14 +3,19 @@
 #include <stdio.h>
 #include <time.h>
 #include <iostream>
+#include <fstream>
 #include <boost/lexical_cast.hpp>
 #include <boost/shared_ptr.hpp>
+#include <boost/signal.hpp>
 
 namespace ObjectProgress
 {
 class log_generator;
 
-void output_debug_message(const std::string& str);
+typedef boost::signal<void (const std::string&)> log_handler_t;
+log_handler_t& get_log_handler();
+
+
 
 class one_message
 {
@@ -22,8 +27,7 @@ public:
 		~data_t()
         {
             std::string str = stream.str();
-            output_debug_message(str);
-            std::cerr<<str<<std::endl;
+            get_log_handler()(str);
        }
 	};
 public:
@@ -84,6 +88,46 @@ inline std::basic_ostream<charT, traits>& operator<<(std::basic_ostream<charT, t
 	return os<<t.str();
 }
 
+
+
+class ilogout
+{
+    boost::signals::scoped_connection hld;
+protected:
+    virtual void on_message(const std::string& str)= 0;
+public:
+    bool print_timestamp;
+
+    ilogout(){print_timestamp=false;}
+    virtual ~ilogout(){}
+    virtual void open();
+    
+    static std::string current_timestamp();
+};
+
+class logout_debug : public ilogout
+{
+protected:
+    void on_message(const std::string& str);
+};
+
+class logout_cerr : public ilogout
+{
+protected:
+    void on_message(const std::string& str);
+};
+
+class logout_file : public ilogout
+{
+protected:
+    std::ofstream file;
+
+    void on_message(const std::string& str);
+public:
+    std::string file_name;
+
+    void open();
+};
 
 }//namespace
 
