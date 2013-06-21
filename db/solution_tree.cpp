@@ -218,11 +218,11 @@ namespace Gomoku
 				return true;
 		}
 
-		sol_state_t p;
+		steps_t p;
 
-		for(steps_t k=key.key;k.size()>key.get_root_key_size();k=p.key)
+		for(steps_t k=key.key;k.size()>key.get_root_key_size();k=p)
 		{
-			p.key=steps_t(k.begin(),k.end()-1);
+			p=steps_t(k.begin(),k.end()-1);
 
 			sol_state_t pst;
 			pst.key=k;
@@ -231,7 +231,7 @@ namespace Gomoku
 			if(pst.use_count==0)
 				continue;
 
-			const points_t& n=key.get_key_neitrals(p.key.size());
+			const points_t& n=key.get_key_neitrals(p.size());
 
 			points_t::const_iterator it=std::find(n.begin(),n.end(),k.back());
 			if(it==n.end())throw std::runtime_error("rewind_to_not_solved(): neitral does not exist: "+print_steps(k)+" of "+print_steps(key.key));
@@ -240,7 +240,7 @@ namespace Gomoku
 			{
 				deep_solve_t child=key;
 				child.trunc_to_key_size(k.size());
-				child.key=p.key;
+				child.key=p;
 				
 				Step move_step=(k.size()%2)==0? st_nolik:st_krestik;
 				child.key.push_back(step_t(move_step,it->x,it->y));
