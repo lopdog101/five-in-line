@@ -30,10 +30,15 @@
 #include <iostream>
 
 #include "gtest.h"
+#include "../../extern/object_progress.hpp"
 
-GTEST_API_ int main(int argc, char **argv) {
-  std::cout << "Running main() from gtest_main.cc\n";
 
-  testing::InitGoogleTest(&argc, argv);
-  return RUN_ALL_TESTS();
+ObjectProgress::logout_cerr log_err;
+
+GTEST_API_ int main(int argc, char **argv)
+{
+    log_err.open();
+
+    testing::InitGoogleTest(&argc, argv);
+    return RUN_ALL_TESTS();
 }

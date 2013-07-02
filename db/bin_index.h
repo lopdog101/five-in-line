@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include "ibin_index.h"
 #include <map>
+#include "../extern/exception_catch.h"
 
 namespace Gomoku
 {
@@ -189,7 +190,15 @@ public:
 	std::string items_count_file_name;
 
 	bin_index_t(const std::string& _base_dir,size_t _key_len,size_t _dir_key_len=1,size_t _file_max_records=1048576);
-	~bin_index_t(){save_items_count();}
+	~bin_index_t()
+    {
+        try
+        {
+            save_items_count();
+        }
+        UNCATCHED_EXCEPTION_CATCH;
+    }
+
 	
 	bool get(const data_t& key,data_t& val) const
 	{

@@ -1,85 +1,99 @@
-/*
+#include "gtest/gtest.h"
 #include <boost/filesystem/operations.hpp>
 namespace fs=boost::filesystem;
-#include "solution_tree.h"
-#include "bin_index.h"
+#include "../db/solution_tree.h"
+#include "../db/bin_index.h"
 
-using namespace Gomoku;
+namespace fs=boost::filesystem;
 
-void check_write()
+namespace Gomoku{
+
+class avl_tree : public testing::Test
 {
-	bin_index_t ind("c:\\1\\1",4);
+protected:
+     void read();
+     void write();
+public:
+    static const char* index_dir;
+};
+
+const char* avl_tree::index_dir="../tmp";
+
+void avl_tree::write()
+{
+    if(fs::exists(index_dir))
+        fs::remove_all(index_dir);
+
+    fs::create_directories(index_dir);
+
+	bin_index_t ind(index_dir,4);
 	for(unsigned i=0;i<65536;i++)
 	{
 		const char* pi=(const char*)(&i);
-		Gomoku::data_t key(pi,pi+4);
+		data_t key(pi,pi+4);
 		ind.set(key,key);
 	}
 }
 
-void check_read()
+void avl_tree::read()
 {
-	bin_index_t ind("c:\\1\\1",4);
+	bin_index_t ind(index_dir,4);
 	for(unsigned i=0;i<65536;i++)
 	{
-		const char* pi=(const char*)(&i);
-		Gomoku::data_t key(pi,pi+4);
-		Gomoku::data_t val;
-		if(!ind.get(key,val))
-		{
-			printf("check_read(): i=%d not found\n",i);
-			continue;
-		}
+        SCOPED_TRACE(i);
 
-		if(key!=val)
-		{
-			printf("check_read(): i=%d not equal\n",i);
-			continue;
-		}
+		const char* pi=(const char*)(&i);
+		data_t key(pi,pi+4);
+		data_t val;
+		ASSERT_TRUE(ind.get(key,val));
+
+		ASSERT_EQ(key,val);
 	}
 }
 
-void check_first_next()
+TEST_F(avl_tree, DISABLED_check_write)
 {
-	bin_index_t ind("c:\\1\\1",4);
+    write();
+}
+
+TEST_F(avl_tree, DISABLED_check_read_write)
+{
+    write();
+    read();
+}
+
+TEST_F(avl_tree, DISABLED_check_first_next)
+{
+    write();
+
+    bin_index_t ind(index_dir,4);
 	
-	Gomoku::data_t key;
-	Gomoku::data_t val;
+	data_t key;
+	data_t val;
 	unsigned i=0;
 
 	const char* pi=(const char*)(&i);
 
-	if(!ind.first(key,val))
-	{
-		printf("check_first(): failed\n",i);
-		return;
-	}
+	ASSERT_TRUE(ind.first(key,val));
 
 	do
 	{
-		Gomoku::data_t pkey(pi,pi+4);
+        SCOPED_TRACE(i);
+
+        data_t pkey(pi,pi+4);
 		std::reverse(pkey.begin(),pkey.begin()+2);
 
-		if(key!=val)
-		{
-			printf("%d: key!=val\n",i);
-			return;
-		}
-
-		if(key!=pkey)
-		{
-			printf("%d: key!=pkey\n",i);
-			return;
-		}
+		ASSERT_EQ(key,val);
+		ASSERT_EQ(key,pkey);
 
 		++i;
 	}
 	while(ind.next(key,val));
 
-	if(i!=65536)printf("%d: unexpected end\n",i);
+	ASSERT_EQ(i,65536);
 }
 
-void check_sol_state_pack()
+TEST_F(avl_tree, check_sol_state_pack)
 {
 	data_t bin;
 	sol_state_t st;
@@ -96,11 +110,4 @@ void check_sol_state_pack()
 	bin=bin;
 }
 
-void test()
-{
-	check_write();
-//	check_read();
-//	check_first_next();
-//	check_sol_state_pack();
-}
-*/
+}//namespace
