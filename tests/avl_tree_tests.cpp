@@ -1,3 +1,4 @@
+/*
 #include <boost/filesystem/operations.hpp>
 namespace fs=boost::filesystem;
 #include "solution_tree.h"
@@ -102,3 +103,4 @@ void test()
 //	check_first_next();
 //	check_sol_state_pack();
 }
+*/

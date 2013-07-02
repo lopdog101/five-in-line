@@ -1,7 +1,7 @@
 cmake_minimum_required (VERSION 2.6)
 set(CMAKE_MFC_FLAG 1)
 
-link_directories($ENV{BOOST}lib)
+link_directories($ENV{BOOST}/stage/lib)
 
 project (five_in_line)
 

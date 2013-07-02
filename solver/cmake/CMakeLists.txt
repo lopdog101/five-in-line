@@ -1,6 +1,6 @@
 cmake_minimum_required (VERSION 2.6)
 
-link_directories($ENV{BOOST}lib)
+link_directories($ENV{BOOST}/stage/lib)
 
 project (solver)
 
