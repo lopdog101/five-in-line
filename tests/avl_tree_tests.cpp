@@ -12,20 +12,26 @@ namespace Gomoku{
 class avl_tree : public testing::Test
 {
 protected:
-     void read();
-     void write();
+    void recreate_dirs();
+    void read();
+    void write();
 public:
     static const char* index_dir;
 };
 
 const char* avl_tree::index_dir="../tmp";
 
-void avl_tree::write()
+void avl_tree::recreate_dirs()
 {
     if(fs::exists(index_dir))
         fs::remove_all(index_dir);
 
     fs::create_directories(index_dir);
+}
+
+void avl_tree::write()
+{
+    recreate_dirs();
 
 	bin_index_t ind(index_dir,4);
 	for(unsigned i=0;i<65536;i++)
@@ -111,6 +117,46 @@ TEST_F(avl_tree, check_sol_state_pack)
 	bin=bin;
 }
 
+TEST_F(avl_tree,split)
+{
+    char init_chain[]={0,0,0,-1,0,2,0,3,1,-1,2,-2,3,-4,3,-2,1,-2,3,-1,2,3,-2,2,3,-1,1,-2,1,-1,2,-3,4,5,3,-2,1,2,-2,4,1,-1,2,-3};
+    static const size_t chain_length=sizeof(init_chain)/sizeof(char);
+
+    static const unsigned num_iterations=3000;
+
+    recreate_dirs();
+
+    {
+	    bin_index_t ind(index_dir,chain_length,1,512);
+        
+        data_t key(init_chain,init_chain+chain_length);
+
+        for(unsigned i=0;i<num_iterations;i++,std::next_permutation(key.begin(),key.end()))
+	    {
+            SCOPED_TRACE(i);
+
+            ind.set(key,key);
+	    }
+    }
+
+    {
+	    bin_index_t ind(index_dir,chain_length,1,512);
+        
+        data_t key(init_chain,init_chain+chain_length);
+
+        for(unsigned i=0;i<num_iterations;i++,std::next_permutation(key.begin(),key.end()))
+	    {
+            SCOPED_TRACE(i);
+
+            data_t val;
+
+            ASSERT_TRUE(ind.get(key,val));
+
+            ASSERT_EQ(key,val);
+	    }
+    }
+}
+
 TEST_F(avl_tree, DISABLED_show)
 {
     steps_t not_found=scan_steps("(-1,1:X);(0,0:X);(1,-1:X);(1,0:O);(1,1:O);(-2,2:O);(2,-2:X);(3,-3:O);(-2,0:X);(-2,3:O);(-2,1:X);(-2,4:O)");
@@ -121,9 +167,6 @@ TEST_F(avl_tree, DISABLED_show)
 
     std::cout<<print_steps(not_found)<<std::endl<<print_steps(writed_steps)<<std::endl;
 
-    
-
-    
     data_t not_found_bin;
     points2bin(not_found,not_found_bin);
 
@@ -157,5 +200,7 @@ TEST_F(avl_tree, DISABLED_show)
     }
 */
 }
+
+
 
 }//namespace
