@@ -482,14 +482,16 @@ namespace Gomoku
 		data_t key;
 		data_t val;
 
-		for(r=first(key,val);r;r=next(key,val))
+        ObjectProgress::log_generator lg(true);
+
+		for(r=first(key,val);r;)
 		{
 			data_t child_base(key.begin(),key.begin()+parent.dir_key_len);
 			std::string sub_dir;
 			bin2hex(child_base,sub_dir);
 			fs::path full_path=fs::path(base_dir)/sub_dir;
 			fs::create_directory(full_path);
-            
+
 			file_node ch(parent,full_path.string(),key_len-parent.dir_key_len);
 			ch.disable_split=true;
 
