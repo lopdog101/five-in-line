@@ -136,7 +136,11 @@ namespace Gomoku
 		ss.key=val.key;
 		
 		if(!get(ss))
-			throw std::runtime_error("get_first_deep(): state not found: "+print_steps(ss.key));
+        {
+            steps_t sorted_key=ss.key;
+            sort_steps(sorted_key);
+			throw std::runtime_error("get_first_deep(): state not found: "+print_steps(ss.key)+" sorted="+print_steps(sorted_key));
+        }
 			
 		if(ss.use_count==0)return false;
 		if(ss.state!=ss_solved)return true;
