@@ -1,3 +1,4 @@
+#include <fstream>
 #include "gtest/gtest.h"
 #include <boost/filesystem/operations.hpp>
 namespace fs=boost::filesystem;
@@ -108,6 +109,53 @@ TEST_F(avl_tree, check_sol_state_pack)
 	sol_state_t nst;
 	nst.unpack(bin);
 	bin=bin;
+}
+
+TEST_F(avl_tree, DISABLED_show)
+{
+    steps_t not_found=scan_steps("(-1,1:X);(0,0:X);(1,-1:X);(1,0:O);(1,1:O);(-2,2:O);(2,-2:X);(3,-3:O);(-2,0:X);(-2,3:O);(-2,1:X);(-2,4:O)");
+    sort_steps(not_found);
+
+    steps_t writed_steps=scan_steps("(-3,-2:O);(-2,0:X);(-2,2:O);(-2,4:O);(-1,1:X);(0,0:X);(0,1:X);(1,-1:X);(1,0:O);(1,1:O);(2,-2:X);(3,-3:O)");
+    sort_steps(writed_steps);
+
+    std::cout<<print_steps(not_found)<<std::endl<<print_steps(writed_steps)<<std::endl;
+
+    
+
+    
+    data_t not_found_bin;
+    points2bin(not_found,not_found_bin);
+
+    std::string not_found_str;
+    bin2hex(not_found_bin,not_found_str);
+
+    data_t cut_bin(not_found_bin.begin()+2,not_found_bin.end());
+    std::string cut_str;
+    bin2hex(cut_bin,cut_str);
+
+    std::cout<<"not_found: "<<not_found_str<<std::endl<<"cut: "<<cut_str<<std::endl;
+
+    
+/*
+    bin_index_t ind("D:\\1\\w",34);
+    	
+	data_t key;
+	data_t val;
+    std::string key_str;
+    std::string val_str;
+
+    std::ofstream fs("D:\\1\\w\\key_content.txt");
+
+    for(bool r=ind.first(key,val);r;r=ind.next(key,val))
+    {
+        bin2hex(key,key_str);
+        bin2hex(val,val_str);
+
+//        std::cout<<"key="<<key_str<<" val="<<val_str<<std::endl;
+        fs<<key_str<<std::endl;
+    }
+*/
 }
 
 }//namespace
