@@ -576,7 +576,7 @@ namespace Gomoku
 		sol_state_t::unpack(bin,key,from);
 
 		size_t neitrals_counts=0;
-		if(from+sizeof(neitrals_counts)>=bin.size())
+		if(from+sizeof(neitrals_counts)>bin.size())
 			throw std::runtime_error("deep_solve_t::unpack(): unpack neitrals_counts failed");
 		neitrals_counts=*(const size_t*)(&bin[from]);
 		from+=sizeof(neitrals_counts);
