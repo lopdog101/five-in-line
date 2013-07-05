@@ -744,6 +744,20 @@ namespace Gomoku
 		indexes[steps_count]=ind;
 		return *ind;
 	}
+    
+    bin_index_t* bin_indexes_t::find_index(unsigned steps_count)
+    {
+		indexes_t::const_iterator it=indexes.find(steps_count);
+		if(it!=indexes.end())return &*it->second;
+
+		fs::path dir_name=fs::path(base_dir)/("S"+boost::lexical_cast<std::string>(steps_count));
+		if(!fs::exists(dir_name))
+            return nullptr;
+
+		item_ptr ind(new bin_index_t(dir_name.string(),steps_count*len_per_level));
+		indexes[steps_count]=ind;
+		return &*ind;
+    }
 
 	unsigned bin_indexes_t::get_root_level() const
 	{

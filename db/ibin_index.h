@@ -24,6 +24,7 @@ public:
 	virtual ~ibin_indexes_t(){}
 	virtual unsigned get_root_level() const=0;
 	virtual ibin_index_t& get_index(unsigned steps_count)=0;
+	virtual ibin_index_t* find_index(unsigned steps_count)=0;
 };
 
 }//namespace

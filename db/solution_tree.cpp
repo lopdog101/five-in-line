@@ -73,7 +73,8 @@ namespace Gomoku
 
 	bool solution_tree_t::get(sol_state_t& res) const
 	{
-		ibin_index_t& idx=indexes.get_index(res.key.size());
+		ibin_index_t* idx=indexes.find_index(res.key.size());
+        if(!idx)return false;
 
 		steps_t key=res.key;
 		sort_steps(key);
@@ -82,7 +83,7 @@ namespace Gomoku
 		points2bin(key,bin_key);
 
 		data_t bin;
-		if(!idx.get(bin_key,bin))return false;
+		if(!idx->get(bin_key,bin))return false;
 
 		res.unpack(bin);
 		return true;

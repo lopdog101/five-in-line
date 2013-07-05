@@ -248,6 +248,7 @@ public:
 
   unsigned get_root_level() const;
   bin_index_t& get_index(unsigned steps_count);
+  bin_index_t* find_index(unsigned steps_count);
 };
 
 
