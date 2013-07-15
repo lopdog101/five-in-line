@@ -33,157 +33,6 @@ BOOST_CLASS_EXPORT(ThreadPlayer)
 BOOST_CLASS_EXPORT(mfcPlayer)
 BOOST_CLASS_EXPORT(NullPlayer)
 
-// CAboutDlg dialog used for App About
-
-class CAboutDlg : public CDialog
-{
-public:
-	CAboutDlg();
-
-// Dialog Data
-	enum { IDD = IDD_ABOUTBOX };
-
-	protected:
-	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV support
-
-// Implementation
-protected:
-	DECLARE_MESSAGE_MAP()
-};
-
-CAboutDlg::CAboutDlg() : CDialog(CAboutDlg::IDD)
-{
-}
-
-void CAboutDlg::DoDataExchange(CDataExchange* pDX)
-{
-	CDialog::DoDataExchange(pDX);
-}
-
-BEGIN_MESSAGE_MAP(CAboutDlg, CDialog)
-END_MESSAGE_MAP()
-
-
-void mfcPlayer::init(Gomoku::game_t& _gm,Gomoku::Step _cl)
-{
-	Gomoku::iplayer_t::init(_gm,_cl);
-	fd=&dynamic_cast<CMfcField&>(gm->field());
-	if(!inited)
-	{
-		if(color()==Gomoku::st_krestik)bmp.LoadBitmap(IDB_KRESTIK_HI);
-		else bmp.LoadBitmap(IDB_NOLIK_HI);
-		inited=true;
-	}
-}
-
-
-void mfcPlayer::fieldLMouseUp(Gomoku::point pos)
-{
-	if(gm->field().at(pos)!=Gomoku::st_empty)return;
-    hld_mouse_down.disconnect();
-	hld_mouse_up.disconnect();
-	hld_mouse_move.disconnect();
-	hld_after_draw.disconnect();
-	gm->make_step(*this,pos);
-}
-
-void mfcPlayer::afterDraw(CDC& dc)
-{
-	CPoint pos=fd->mouse_pos();
-	Gomoku::point pt=fd->pix2world(pos);
-	if(gm->field().at(pt)!=Gomoku::st_empty)return;
-	pos=fd->world2pix(pt);
-
-	CDC bmp_dc;
-	bmp_dc.CreateCompatibleDC(&dc);
-	bmp_dc.SelectObject(bmp);
-	dc.BitBlt(pos.x,pos.y,CMfcField::box_size,CMfcField::box_size,&bmp_dc,0,0,SRCCOPY);
-}
-
-void mfcPlayer::fieldMouseMove(Gomoku::point pos)
-{
-	fd->Invalidate();
-}
-
-void mfcPlayer::fieldLMouseDown(Gomoku::point pos)
-{
-	hld_mouse_up=fd->OnLMouseUp.connect(boost::bind(&mfcPlayer::fieldLMouseUp,this,_1) );
-}
-
-void mfcPlayer::delegate_step()
-{
-	hld_mouse_down=fd->OnLMouseDown.connect(boost::bind(&mfcPlayer::fieldLMouseDown,this,_1) );
-	hld_mouse_move=fd->on_mouse_move.connect(boost::bind(&mfcPlayer::fieldMouseMove,this,_1) );
-	hld_after_draw=fd->on_after_paint.connect(boost::bind(&mfcPlayer::afterDraw,this,_1) );
-}
-
-// ThreadPlayer
-void ThreadPlayer::clear()
-{
-    hld_execute.disconnect();
-    hld_complete.disconnect();
-    hld_errors.disconnect();
-	if(pl)pl->cancel();
-	processor.stop();
-}
-
-
-
-void ThreadPlayer::init(Gomoku::game_t& _gm,Gomoku::Step _cl)
-{
-	clear();
-
-	Gomoku::iplayer_t::init(_gm,_cl);
-	mirror_gm.field()=_gm.field();
-
-	null_player=Gomoku::player_ptr(new NullPlayer);
-	
-	if(_cl==Gomoku::st_krestik)
-	{
-		mirror_gm.set_krestik(pl);
-		mirror_gm.set_nolik(null_player);
-	}
-	else
-	{
-		mirror_gm.set_krestik(null_player);
-		mirror_gm.set_nolik(pl);
-	}
-
-	pl->init(mirror_gm,_cl);
-
-	hld_execute=processor.OnExecute.connect(boost::bind(&ThreadPlayer::MirrorExecute,this) );
-	hld_complete=processor.OnComplete.connect(boost::bind(&ThreadPlayer::TaskComplete,this) );
-	hld_errors=processor.OnErrors.connect(boost::bind(&ThreadPlayer::TaskErrors,this,_1) );
-
-	processor.start();
-}
-
-void ThreadPlayer::delegate_step()
-{
-	pl->cancel();
-	processor.cancel_job();
-
-	pl->begin_game();
-
-
-	mirror_gm.field()=gm->field();
-	processor.start_job();
-}
-
-void ThreadPlayer::MirrorExecute()
-{
-	pl->delegate_step();
-}
-
-void ThreadPlayer::TaskComplete()
-{
-	gm->make_step(*this,mirror_gm.field().back());
-}
-
-void ThreadPlayer::TaskErrors(const CThreadProcessor::errors_t& vals)
-{
-	AfxMessageBox(vals.front().message.c_str());
-}
 
 // CgomokuDlg dialog
 
@@ -229,6 +78,7 @@ BEGIN_MESSAGE_MAP(CgomokuDlg, CDialog)
 	ON_COMMAND(ID_EDIT_SHOWMOVENUMBER, OnEditShowmovenumber)
 	ON_WM_INITMENUPOPUP()
 	ON_WM_CLOSE()
+	ON_COMMAND(ID_TAPE_START, OnTapeStart)
 END_MESSAGE_MAP()
 
 
@@ -252,8 +102,20 @@ BOOL CgomokuDlg::OnInitDialog()
 	GetDlgItem(IDC_FIELD_PLACE)->GetWindowRect(&rc);
 	ScreenToClient(&rc);
 	m_field->Create(0,"",WS_VISIBLE|WS_CHILD|WS_TABSTOP|WS_BORDER,rc,this,IDC_FIELD);
+    
+	if (!m_wndToolBar.CreateEx(this,TBSTYLE_FLAT | TBSTYLE_TRANSPARENT, WS_CHILD | WS_VISIBLE | CBRS_TOP | CBRS_GRIPPER | CBRS_HIDE_INPLACE)
+        ||!m_wndToolBar.LoadToolBar(IDR_TOOLBAR1,IDB_TB,0,0,IDB_TB_DIS,0,IDB_TB))
+	{
+		TRACE0("Failed to create toolbar\n");
+		return -1;      // fail to create
+	}
 
-	szr.Init(m_hWnd);
+    m_wndToolBar.SetPaneStyle( m_wndToolBar.GetPaneStyle() & ~(CBRS_GRIPPER | CBRS_SIZE_DYNAMIC | CBRS_BORDER_ANY) );
+    CSize sz = m_wndToolBar.CalcFixedLayout( FALSE, TRUE );
+    m_wndToolBar.SetWindowPos( NULL, 0, 0, sz.cx+2, sz.cy,SWP_NOACTIVATE | SWP_NOZORDER );
+
+
+    szr.Init(m_hWnd);
 	szr.Fix(m_field->m_hWnd,szr.kLeftRight,szr.kTopBottom);
 	szr.Fix(IDC_START,szr.kWidthRight,szr.kHeightTop);
 	szr.Fix(IDC_STOP,szr.kWidthRight,szr.kHeightTop);
@@ -267,19 +129,6 @@ BOOL CgomokuDlg::OnInitDialog()
 	check_state();
 
 	return TRUE;  // return TRUE  unless you set the focus to a control
-}
-
-void CgomokuDlg::OnSysCommand(UINT nID, LPARAM lParam)
-{
-	if ((nID & 0xFFF0) == IDM_ABOUTBOX)
-	{
-		CAboutDlg dlgAbout;
-		dlgAbout.DoModal();
-	}
-	else
-	{
-		CDialog::OnSysCommand(nID, lParam);
-	}
 }
 
 // If you add a minimize button to your dialog, you will need the code below
@@ -388,7 +237,8 @@ void CgomokuDlg::check_state()
 	mPlayer1.SetCurSel(player2index(*game.get_krestik()));
 	mPlayer2.SetCurSel(player2index(*game.get_nolik()));
 
-	m_Start.EnableWindow(!started&&mPlayer1.GetCurSel()!=-1&&mPlayer2.GetCurSel()!=-1);
+    bool isStartEnabled=!started&&mPlayer1.GetCurSel()!=-1&&mPlayer2.GetCurSel()!=-1;
+	m_Start.EnableWindow(isStartEnabled);
 }
 
 void CgomokuDlg::OnBnClickedStop()
@@ -593,4 +443,9 @@ void CgomokuDlg::OnCancel()
 void CgomokuDlg::OnClose()
 {
 	EndDialog(IDCLOSE);
+}
+
+void CgomokuDlg::OnTapeStart()
+{
+    OnBnClickedStart();
 }
