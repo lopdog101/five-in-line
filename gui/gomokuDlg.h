@@ -14,6 +14,8 @@ class CgomokuDlg : public CDialog
 public:
 	typedef boost::shared_ptr<CMfcField> field_ptr;
 
+    static const DWORD WM_CHECK_STATE=WM_USER+1;
+
 	CgomokuDlg(CWnd* pParent = NULL);	// standard constructor
 
 // Dialog Data
@@ -32,6 +34,8 @@ private:
 	void gameNextStep(const Gomoku::game_t&);
 	void start_game();
 	void check_state();
+    void enable_button(int ButtonId,bool val);
+
 	Gomoku::player_ptr create_player(const CComboBox& cb,Gomoku::Step st);
 	int player2index(Gomoku::iplayer_t& pl);
 
@@ -68,6 +72,7 @@ public:
 	afx_msg void OnEditShowmovenumber();
 	afx_msg void OnInitMenuPopup(CMenu* pPopupMenu, UINT nIndex, BOOL bSysMenu);
 	afx_msg void OnTapeStart();
+    afx_msg LRESULT OnPostCheck(WPARAM, LPARAM);
 protected:
 	virtual void OnOK();
 	virtual void OnCancel();

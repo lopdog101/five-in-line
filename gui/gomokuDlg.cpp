@@ -79,6 +79,7 @@ BEGIN_MESSAGE_MAP(CgomokuDlg, CDialog)
 	ON_WM_INITMENUPOPUP()
 	ON_WM_CLOSE()
 	ON_COMMAND(ID_TAPE_START, OnTapeStart)
+    ON_MESSAGE(WM_CHECK_STATE,OnPostCheck)
 END_MESSAGE_MAP()
 
 
@@ -103,7 +104,7 @@ BOOL CgomokuDlg::OnInitDialog()
 	ScreenToClient(&rc);
 	m_field->Create(0,"",WS_VISIBLE|WS_CHILD|WS_TABSTOP|WS_BORDER,rc,this,IDC_FIELD);
     
-	if (!m_wndToolBar.CreateEx(this,TBSTYLE_FLAT | TBSTYLE_TRANSPARENT, WS_CHILD | WS_VISIBLE | CBRS_TOP | CBRS_GRIPPER | CBRS_HIDE_INPLACE)
+    if (!m_wndToolBar.CreateEx(this,TBSTYLE_FLAT | TBSTYLE_TRANSPARENT, WS_CHILD | WS_VISIBLE | CBRS_TOP | CBRS_GRIPPER | CBRS_HIDE_INPLACE,CRect(1,1,1,1),100)
         ||!m_wndToolBar.LoadToolBar(IDR_TOOLBAR1,IDB_TB,0,0,IDB_TB_DIS,0,IDB_TB))
 	{
 		TRACE0("Failed to create toolbar\n");
@@ -232,6 +233,11 @@ int CgomokuDlg::player2index(Gomoku::iplayer_t& pl)
 
 void CgomokuDlg::check_state()
 {
+    PostMessage(WM_CHECK_STATE,0,0);
+}
+
+LRESULT CgomokuDlg::OnPostCheck(WPARAM, LPARAM)
+{
 	bool started=game.is_play();
 	mStop.EnableWindow(started);
 	mPlayer1.SetCurSel(player2index(*game.get_krestik()));
@@ -239,7 +245,26 @@ void CgomokuDlg::check_state()
 
     bool isStartEnabled=!started&&mPlayer1.GetCurSel()!=-1&&mPlayer2.GetCurSel()!=-1;
 	m_Start.EnableWindow(isStartEnabled);
+
+    CMFCToolBarButton* bt=m_wndToolBar.GetButton(2);
+    bt->SetImage(isStartEnabled? 2:5);
+    m_wndToolBar.InvalidateButton(2);
+
+    enable_button(ID_TAPE_START,isStartEnabled);    
+
+    return 0;
 }
+
+
+void CgomokuDlg::enable_button(int ButtonId,bool val)
+{
+    int idx = m_wndToolBar.CommandToIndex (ButtonId);
+    if (idx == -1) return;  // not in this toolbar
+    UINT iStyle = m_wndToolBar.GetButtonStyle (idx);
+    if (val)m_wndToolBar.SetButtonStyle (idx, iStyle & !TBBS_DISABLED);
+    else m_wndToolBar.SetButtonStyle (idx, TBBS_DISABLED);
+}
+
 
 void CgomokuDlg::OnBnClickedStop()
 {
