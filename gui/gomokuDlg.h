@@ -31,7 +31,7 @@ private:
     ObjectProgress::logout_file log_file;
 	
 	
-	void gameNextStep(const Gomoku::game_t&);
+	void gameNextStep(const Gomoku::iplayer_t& pl,const Gomoku::point& pt);
 	void start_game();
 	void check_state();
     void enable_button(int ButtonId,bool val);

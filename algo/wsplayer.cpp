@@ -17,17 +17,14 @@ wsplayer_t::wsplayer_t()
 	predict_processed=0;
     treat_check_count=0;
     treat_check_rebuild_tree_count=0;
-}
-
-void wsplayer_t::begin_game()
-{
-	iplayer_t::begin_game();
-	root=item_ptr();
+    thinking=0;
 }
 
 void wsplayer_t::delegate_step()
 {
-	field=gm->field();
+    incer_t<int> hld_thinking(thinking);
+
+	field=game().field();
 	root=item_ptr(new item_t(*this,field.back()));
 
 	ObjectProgress::log_generator lg(true);
@@ -41,6 +38,9 @@ void wsplayer_t::delegate_step()
 	catch(e_cancel&)
 	{
 		lg<<"canceled";
+        hld_thinking.reset();
+        game().OnCheckPlayerState(*this);
+        throw;
 	}
 
 	if(root->win)lg<<"wsplayer_t::delegate_step(): find win chain_depth="<<root->win->get_chain_depth()<<": "<<print_chain(root->win);
@@ -48,12 +48,12 @@ void wsplayer_t::delegate_step()
 		<<": "<<print_chain(root->fail);
 
 	point p=*root->get_next_step();
-	gm->make_step(*this,p);
+    game().OnNextStep(*this,p);
 }
 
 void wsplayer_t::solve()
 {
-	field=gm->field();
+	field=game().field();
 	wide_item_t* wr=new wide_item_t(*this,field.back());
 	root=item_ptr(wr);
 

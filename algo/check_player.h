@@ -8,9 +8,9 @@ namespace Gomoku
 	{
 		steps_t steps;
     public:
-		void begin_game(){}
 		void delegate_step();
 
+        bool is_thinking() const;
 		void set_steps(const steps_t& val){steps=val;}
 
         template<class Archive>

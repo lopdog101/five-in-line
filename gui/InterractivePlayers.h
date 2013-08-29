@@ -7,8 +7,10 @@
 #include "../extern/object_progress.hpp"
 #include "mfc_field.h"
 
+namespace Gomoku
+{
 
-class mfcPlayer : public Gomoku::iplayer_t
+class mfcPlayer : public iplayer_t
 {
 	CMfcField* fd;
 	CBitmap bmp;
@@ -19,16 +21,21 @@ class mfcPlayer : public Gomoku::iplayer_t
 	boost::signals::scoped_connection hld_mouse_move;
 	boost::signals::scoped_connection hld_after_draw;
 
-	void fieldLMouseDown(Gomoku::point pos);
-	void fieldLMouseUp(Gomoku::point pos);
-	void fieldMouseMove(Gomoku::point pos);
+    void reset_handlers();
+
+	void fieldLMouseDown(point pos);
+	void fieldLMouseUp(point pos);
+	void fieldMouseMove(point pos);
 	void afterDraw(CDC& dc);
 public:
 	mfcPlayer(){fd=0;inited=false;}
 	mfcPlayer(const mfcPlayer& rhs){fd=0;}
 	
-	void init(Gomoku::game_t& _gm,Gomoku::Step _cl);
-	void delegate_step();
+	virtual void init(game_t& _gm,Step _cl);
+	virtual void delegate_step();
+
+    virtual void cancel();
+    virtual bool is_thinking() const;
 
     template<class Archive>
     void serialize(Archive &ar, const unsigned int version)
@@ -39,34 +46,41 @@ public:
 	POLIMVAR_IMPLEMENT_CLONE(mfcPlayer )
 };
 
-class ThreadPlayer : public Gomoku::iplayer_t
+class ThreadPlayer : public iplayer_t
 {
 public:
 private:
 	CThreadProcessor processor;
-	Gomoku::player_ptr pl;
-	Gomoku::player_ptr null_player;
-	Gomoku::game_t mirror_gm;
-	Gomoku::step_t last_step;
+	player_ptr pl;
+	player_ptr null_player;
+	game_t mirror_gm;
+	step_t last_step;
+    
+    point answer_point;
+    bool answer_complete;
 
 	boost::signals::scoped_connection hld_execute;
 	boost::signals::scoped_connection hld_complete;
 	boost::signals::scoped_connection hld_errors;
+    boost::signals::scoped_connection hld_mirror_next_step;
 
 	void MirrorExecute();
 	void TaskComplete();
 	void TaskErrors(const CThreadProcessor::errors_t& vals);
+    void mirrorNextStep(const iplayer_t& pl,const point& pt);
 
 	void clear();
 public:
 	ThreadPlayer(){}
+	ThreadPlayer(const player_ptr& _pl){pl=_pl;}
+	ThreadPlayer(const ThreadPlayer& rhs){if(rhs.pl)pl=player_ptr(rhs.pl->clone());}
 	~ThreadPlayer(){clear();}
-	ThreadPlayer(const Gomoku::player_ptr& _pl){pl=_pl;}
-	ThreadPlayer(const ThreadPlayer& rhs){if(rhs.pl)pl=Gomoku::player_ptr(rhs.pl->clone());}
 	
-	void init(Gomoku::game_t& _gm,Gomoku::Step _cl);
+	void init(game_t& _gm,Step _cl);
 	void delegate_step();
-	Gomoku::player_ptr get_player() const{return pl;}
+    bool is_thinking() const;
+
+    player_ptr get_player() const{return pl;}
 
     template<class Archive>
     void serialize(Archive &ar, const unsigned int version)
@@ -79,13 +93,14 @@ public:
 };
 
 
-class NullPlayer : public Gomoku::iplayer_t
+class NullPlayer : public iplayer_t
 {
 public:
 	NullPlayer(){}
 	
-	void init(Gomoku::game_t& _gm,Gomoku::Step _cl){}
+	void init(game_t& _gm,Step _cl){}
 	void delegate_step(){}
+    bool is_thinking() const{return false;}
 
     template<class Archive>
     void serialize(Archive &ar, const unsigned int version)
@@ -95,3 +110,5 @@ public:
 
 	POLIMVAR_IMPLEMENT_CLONE(NullPlayer)
 };
+
+}//namespace

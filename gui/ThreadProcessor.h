@@ -47,6 +47,7 @@ public:
 	void start_job();
 	void cancel_job();
 	bool is_cancelling() const;
+    bool is_job_in_progress() const;
 
 	boost::signal<void ()> OnExecute;
 	boost::signal<void ()> OnComplete;

@@ -29,9 +29,9 @@ namespace fs=boost::filesystem;
 
 BOOST_CLASS_EXPORT(Gomoku::check_player_t)
 BOOST_CLASS_EXPORT(Gomoku::WsPlayer::wsplayer_t)
-BOOST_CLASS_EXPORT(ThreadPlayer)
-BOOST_CLASS_EXPORT(mfcPlayer)
-BOOST_CLASS_EXPORT(NullPlayer)
+BOOST_CLASS_EXPORT(Gomoku::ThreadPlayer)
+BOOST_CLASS_EXPORT(Gomoku::mfcPlayer)
+BOOST_CLASS_EXPORT(Gomoku::NullPlayer)
 
 
 // CgomokuDlg dialog
@@ -180,22 +180,32 @@ void CgomokuDlg::OnBnClickedStart()
 	check_state();
 }
 
-void CgomokuDlg::gameNextStep(const Gomoku::game_t&)
+void CgomokuDlg::gameNextStep(const Gomoku::iplayer_t& pl,const Gomoku::point& pt)
 {
+    game.make_step(pl,pt);
+
 	check_state();
 	m_field->set_scroll_bars();
 	m_field->Invalidate();
 	m_field->UpdateWindow();
-	if(!game.is_game_over())return;
-	hld_step.disconnect();
+
+    if(!game.is_game_over())
+    {
+        game.delegate_next_step();
+        return;
+    }
+	
+    hld_step.disconnect();
 	if(game.field().size()%2)MessageBox("krestik win",MB_OK);
 	else MessageBox("nolik win",MB_OK);
 }
 
 void CgomokuDlg::start_game()
 {
-	hld_step=game.OnNextStep.connect(boost::bind(&CgomokuDlg::gameNextStep,this,_1) );
-	game.begin_play();
+	hld_step=game.OnNextStep.connect(boost::bind(&CgomokuDlg::gameNextStep,this,_1,_2) );
+	game.reset_field();
+	game.init_players();
+	game.delegate_next_step();
 	m_field->Invalidate();
 }
 
@@ -204,11 +214,11 @@ Gomoku::player_ptr CgomokuDlg::create_player(const CComboBox& cb,Gomoku::Step st
 	Gomoku::player_ptr ret;
 	switch(cb.GetCurSel())
 	{
-	case 0:ret=Gomoku::player_ptr(new mfcPlayer);break;
+    case 0:ret=Gomoku::player_ptr(new Gomoku::mfcPlayer);break;
 	default:
 	{
 		Gomoku::player_ptr sub(new Gomoku::WsPlayer::wsplayer_t);
-		ret=Gomoku::player_ptr(new ThreadPlayer(sub));
+		ret=Gomoku::player_ptr(new Gomoku::ThreadPlayer(sub));
 		break;
 	}
 
@@ -218,9 +228,9 @@ Gomoku::player_ptr CgomokuDlg::create_player(const CComboBox& cb,Gomoku::Step st
 
 int CgomokuDlg::player2index(Gomoku::iplayer_t& pl)
 {
-	if(dynamic_cast<mfcPlayer*>(&pl)!=0)return 0;
+	if(dynamic_cast<Gomoku::mfcPlayer*>(&pl)!=0)return 0;
 
-	ThreadPlayer* tpl=dynamic_cast<ThreadPlayer*>(&pl);
+	Gomoku::ThreadPlayer* tpl=dynamic_cast<Gomoku::ThreadPlayer*>(&pl);
 	if(!tpl)return -1;
 
 	Gomoku::player_ptr sub=tpl->get_player();
@@ -238,7 +248,7 @@ void CgomokuDlg::check_state()
 
 LRESULT CgomokuDlg::OnPostCheck(WPARAM, LPARAM)
 {
-	bool started=game.is_play();
+	bool started=game.is_somebody_thinking();
 	mStop.EnableWindow(started);
 	mPlayer1.SetCurSel(player2index(*game.get_krestik()));
 	mPlayer2.SetCurSel(player2index(*game.get_nolik()));
@@ -268,7 +278,7 @@ void CgomokuDlg::enable_button(int ButtonId,bool val)
 
 void CgomokuDlg::OnBnClickedStop()
 {
-	game.end_play();
+//+++	game.end_play();
 	m_field->Invalidate();
 	check_state();
 }
@@ -277,14 +287,14 @@ void CgomokuDlg::OnCbnSelchangePlayer1()
 {
 	game.set_krestik(create_player(mPlayer1,Gomoku::st_krestik));
 	check_state();
-	if(game.is_play())game.continue_play();
+//+++	if(game.is_play())game.continue_play();
 }
 
 void CgomokuDlg::OnCbnSelchangePlayer2()
 {
 	game.set_nolik(create_player(mPlayer2,Gomoku::st_nolik));
 	check_state();
-	if(game.is_play())game.continue_play();
+//+++	if(game.is_play())game.continue_play();
 }
 
 void CgomokuDlg::OnLoadGame()
@@ -307,11 +317,11 @@ void CgomokuDlg::OnLoadGame()
         m_field->Invalidate();
         m_field->UpdateWindow();
         check_state();
-        if(game.is_play())
-        {
-            hld_step=game.OnNextStep.connect(boost::bind(&CgomokuDlg::gameNextStep,this,_1) );
-	        game.continue_play();
-        }
+//+++        if(game.is_play())
+//        {
+//            hld_step=game.OnNextStep.connect(boost::bind(&CgomokuDlg::gameNextStep,this,_1) );
+//	        game.continue_play();
+//        }
     }
     catch(std::exception& e)
     {
@@ -363,8 +373,8 @@ void CgomokuDlg::OnEditUndo()
 	check_state();
 	if(game_over)
 	{
-		hld_step=game.OnNextStep.connect(boost::bind(&CgomokuDlg::gameNextStep,this,_1) );
-		game.continue_play();
+		hld_step=game.OnNextStep.connect(boost::bind(&CgomokuDlg::gameNextStep,this,_1,_2) );
+//+++		game.continue_play();
 	}
 }
 

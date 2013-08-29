@@ -17,29 +17,41 @@ namespace Gomoku
 	class iplayer_t 
 	{
 		Step color_;
-	protected:
+		bool cancel_requested;
 		game_t* gm;
-	private:
-		bool canceled;
-	public:
-		inline Step color() const{return color_;}
 
-		iplayer_t() {gm=0;color_=st_krestik;canceled=false;}
+    protected:
+        
+        bool is_cancel_requested() const{return cancel_requested;}
+		void check_cancel(){if(is_cancel_requested())throw e_cancel();}
+
+    public:
+		inline Step color() const{return color_;}
+        inline const game_t& game() const{return *gm;}
+
+		iplayer_t()
+        {
+            gm=0;
+            color_=st_krestik;
+            cancel_requested=false;
+        }
+
 		virtual ~iplayer_t(){}
 
-		virtual void begin_game(){canceled=false;}
-		virtual void delegate_step()=0;
+		virtual void init(game_t& _gm,Step _cl)
+        {
+            gm=&_gm;color_=_cl;
+        }
 
-		virtual void init(game_t& _gm,Step _cl){gm=&_gm;color_=_cl;}
-		inline const game_t& game() const{return *gm;}
+        virtual void delegate_step()=0;
 
-		inline bool is_canceled() const{return canceled;}
-		virtual void cancel()
+		virtual void request_cancel(bool val)
 		{
-			canceled=true;
+			cancel_requested=val;
 		}
-		void check_cancel(){if(is_canceled())throw e_cancel();}
 
+        virtual bool is_thinking() const=0;
+        
         template<class Archive>
         void serialize(Archive &ar, const unsigned int version)
         {
@@ -62,10 +74,10 @@ namespace Gomoku
 
 		game_t();
 
-		void begin_play();
-		void continue_play();
-		void end_play();
-		bool is_play() const;
+		void reset_field();
+        void init_players();
+		void delegate_next_step();
+		bool is_somebody_thinking() const;
 		void make_step(const iplayer_t& pl,const point& pt);
 		bool is_game_over() const;
 		
@@ -75,8 +87,9 @@ namespace Gomoku
 		player_ptr get_krestik() const{return krestik;}
 		player_ptr get_nolik() const{return nolik;}
 
-		boost::signal< void (const game_t&)> OnNextStep;
-	};
+        boost::signal< void (const iplayer_t& pl,const point& pt)> OnNextStep;
+        boost::signal< void (const iplayer_t& pl)> OnCheckPlayerState;
+    };
 
 }//namespace Gomoku
 

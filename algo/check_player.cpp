@@ -7,6 +7,9 @@ namespace Gomoku
 
 void check_player_t::delegate_step()
 {
+    if(is_cancel_requested())
+        return;
+
 	const steps_t& game_stp=game().field().get_steps();
 
 	if(game_stp.size()>=steps.size()||
@@ -15,7 +18,13 @@ void check_player_t::delegate_step()
 
 	const step_t& s=steps[game_stp.size()];
 
-	gm->make_step(*this,s);
+	game().OnNextStep(*this,s);
 }
+
+bool check_player_t::is_thinking() const
+{
+    return false;
+}
+
 
 }

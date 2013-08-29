@@ -126,6 +126,12 @@ void CThreadProcessor::start_job()
 	cond.notify_all();
 }
 
+bool CThreadProcessor::is_job_in_progress() const
+{
+    lkt lk(mtx);
+    return state==st_new_task || state==st_execute_task;
+}
+
 void CThreadProcessor::cancel_job()
 {
 	lkt lk(mtx);

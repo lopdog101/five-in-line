@@ -1,6 +1,7 @@
 #ifndef gomoku_wsplayer_commonH
 #define gomoku_wsplayer_commonH
 #include "game.h"
+#include "algo_utils.h"
 #include <boost/shared_ptr.hpp>
 
 namespace Gomoku { namespace WsPlayer
@@ -28,12 +29,7 @@ namespace Gomoku { namespace WsPlayer
 
 	typedef std::vector<atack_t> atacks_t;
 
-	struct inc_t
-	{
-		unsigned & val;
-		inc_t(unsigned & _val):val(_val) {++val;}
-		~inc_t(){--val;}
-	};
+    typedef incer_t<unsigned> inc_t;
 
 	struct maxn_near_point_pr : public near_point_pr
 	{

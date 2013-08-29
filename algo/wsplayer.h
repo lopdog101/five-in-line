@@ -33,6 +33,8 @@ namespace Gomoku { namespace WsPlayer
         unsigned treat_check_count;
         unsigned treat_check_rebuild_tree_count;
 
+        int thinking;
+
 		void init_states();
 		inline state_t& get_state(){return *states[current_state];}
 		inline const state_t& get_state() const {return *states[current_state];}
@@ -47,9 +49,11 @@ namespace Gomoku { namespace WsPlayer
 
 		wsplayer_t();
 
-		void begin_game();
-		void delegate_step();
+		virtual void delegate_step();
+        virtual bool is_thinking() const{return thinking>0;}
+
 		void solve();
+
 
         template<class Archive>
         void serialize(Archive &ar, const unsigned int version)
