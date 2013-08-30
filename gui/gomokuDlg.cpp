@@ -245,6 +245,7 @@ LRESULT CgomokuDlg::OnPostCheck(WPARAM, LPARAM)
 
     enable_button(ID_TAPE_START,steps.size()>1);
     enable_button(ID_TAPE_REWIND,steps.size()>1);
+    enable_button(ID_TAPE_PLAY,!game.is_game_over());
     enable_button(ID_TAPE_FAST_FORWARD,!redo_steps.empty());
     enable_button(ID_TAPE_END,!redo_steps.empty());
 
