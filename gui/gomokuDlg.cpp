@@ -469,39 +469,7 @@ void CgomokuDlg::OnLoadStringField()
 
         Gomoku::steps_t steps=Gomoku::scan_steps(str);
 
-        Gomoku::steps_t krestik_steps(steps.size());
-        krestik_steps.erase(
-            std::copy_if(steps.begin(),steps.end(),krestik_steps.begin(),Gomoku::step_kind_pr(Gomoku::st_krestik)),
-            krestik_steps.end());
-
-        Gomoku::steps_t nolik_steps(steps.size());
-        nolik_steps.erase(
-            std::copy_if(steps.begin(),steps.end(),nolik_steps.begin(),Gomoku::step_kind_pr(Gomoku::st_nolik)),
-            nolik_steps.end());
-
-        if(krestik_steps.empty()&&nolik_steps.empty())
-            throw std::runtime_error("String field does not contain valid steps");
-
-        if(krestik_steps.size()!=nolik_steps.size() &&
-            krestik_steps.size()!=nolik_steps.size()+1)
-        {
-            throw std::runtime_error("Game not synced");
-        }
-
-        Gomoku::steps_t::iterator it=std::find(krestik_steps.begin(),krestik_steps.end(),Gomoku::step_t(Gomoku::st_krestik,0,0));
-        if(it!=krestik_steps.end())
-        {
-            std::swap(krestik_steps.front(),*it);
-        }
-
-        steps.resize(0);
-        for(unsigned i=0;i<krestik_steps.size();i++)
-        {
-            steps.push_back(krestik_steps[i]);
-            if(i<nolik_steps.size())
-                steps.push_back(nolik_steps[i]);
-        }
-        
+        reorder_state_to_game_order(steps);
 
         pause();
         redo_steps.clear();

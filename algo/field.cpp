@@ -91,7 +91,7 @@ namespace Gomoku
 	{
 		if(at(st)!=st.step)return false;
 
-		Gomoku::point p=st;
+		point p=st;
 		unsigned j=0;
 
 		for(;j<4;j++)
@@ -229,4 +229,40 @@ std::string print_field(const steps_t& val)
 
 		return ret;
 	}
+
+    void reorder_state_to_game_order(steps_t& steps)
+    {
+        steps_t krestik_steps(steps.size());
+        krestik_steps.erase(
+            std::copy_if(steps.begin(),steps.end(),krestik_steps.begin(),step_kind_pr(st_krestik)),
+            krestik_steps.end());
+
+        steps_t nolik_steps(steps.size());
+        nolik_steps.erase(
+            std::copy_if(steps.begin(),steps.end(),nolik_steps.begin(),step_kind_pr(st_nolik)),
+            nolik_steps.end());
+
+        if(krestik_steps.empty()&&nolik_steps.empty())
+            throw std::runtime_error("String field does not contain valid steps");
+
+        if(krestik_steps.size()!=nolik_steps.size() &&
+            krestik_steps.size()!=nolik_steps.size()+1)
+        {
+            throw std::runtime_error("Game not synced");
+        }
+
+        steps_t::iterator it=std::find(krestik_steps.begin(),krestik_steps.end(),step_t(st_krestik,0,0));
+        if(it!=krestik_steps.end())
+        {
+            std::swap(krestik_steps.front(),*it);
+        }
+
+        steps.resize(0);
+        for(unsigned i=0;i<krestik_steps.size();i++)
+        {
+            steps.push_back(krestik_steps[i]);
+            if(i<nolik_steps.size())
+                steps.push_back(nolik_steps[i]);
+        }
+    }
 }

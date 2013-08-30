@@ -208,6 +208,7 @@ namespace Gomoku
 	steps_t scan_steps(const std::string& str);
 
 	inline void sort_steps(steps_t& val){std::sort(val.begin(),val.end(),less_point_pr() );}
+    void reorder_state_to_game_order(steps_t& steps);
 
 }//namespace gomoku
 
