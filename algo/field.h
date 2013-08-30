@@ -72,6 +72,18 @@ namespace Gomoku
 		}
 	};
 
+	class step_kind_pr
+	{
+        Step cl;
+    public:
+        step_kind_pr(Step _cl){cl=_cl;}
+
+		inline bool operator()(const step_t& val) const
+		{
+            return val.step ==cl;
+		}
+	};
+
 	template<class Value>
 	class matrix
 	{

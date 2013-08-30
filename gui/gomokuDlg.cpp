@@ -68,6 +68,7 @@ BEGIN_MESSAGE_MAP(CgomokuDlg, CDialog)
 	ON_CBN_SELCHANGE(IDC_PLAYER2, OnCbnSelchangePlayer2)
 	ON_COMMAND(ID_OPERATION_LOADGAME, OnLoadGame)
 	ON_COMMAND(ID_OPERATION_SAVEGAME, OnSaveGame)
+    ON_COMMAND(ID_OPERATION_LOADSTRINGFIELD, OnLoadStringField)
 	ON_COMMAND(ID_OPERATION_SAVESTRINGFIELD, OnSaveStringField)
 	ON_UPDATE_COMMAND_UI(ID_EDIT_SHOWMOVENUMBER, OnUpdateEditShowmovenumber)
 	ON_COMMAND(ID_EDIT_SHOWMOVENUMBER, OnEditShowmovenumber)
@@ -327,9 +328,9 @@ void CgomokuDlg::OnTapeForward()
     pause();
 
 	Gomoku::steps_t st=game.field().get_steps();
-    st.push_back(redo_steps.front());
+    st.push_back(redo_steps.back());
 
-    redo_steps.erase(redo_steps.begin());
+    redo_steps.pop_back();
 
     game.field().set_steps(st);
 
@@ -345,7 +346,7 @@ void CgomokuDlg::OnTapeEnd()
     pause();
 
 	Gomoku::steps_t st=game.field().get_steps();
-    st.insert(st.end(),redo_steps.begin(),redo_steps.end());
+    st.insert(st.end(),redo_steps.rbegin(),redo_steps.rend());
 
     redo_steps.clear();
 
@@ -414,8 +415,6 @@ void CgomokuDlg::OnCbnSelchangePlayer2()
 
 void CgomokuDlg::OnLoadGame()
 {
-    hld_step.disconnect();
-
     try
     {
 	    CFileDialog dlg(TRUE,0,0,OFN_FILEMUSTEXIST,"Games (*.gm)|*.gm||");
@@ -424,7 +423,6 @@ void CgomokuDlg::OnLoadGame()
         pause();
         redo_steps.clear();
 
-    //    Xpat::load_from_xml_file(,game);
         std::ifstream ifs;
         ifs.exceptions( std::ifstream::failbit | std::ifstream::badbit );
         ifs.open(dlg.GetPathName().GetString());
@@ -439,7 +437,6 @@ void CgomokuDlg::OnLoadGame()
     {
         AfxMessageBox(e.what());
     }
-
 }
 
 void CgomokuDlg::OnSaveGame()
@@ -454,6 +451,69 @@ void CgomokuDlg::OnSaveGame()
 
     boost::archive::xml_oarchive oa(ofs);
     oa << BOOST_SERIALIZATION_NVP(game);
+}
+
+void CgomokuDlg::OnLoadStringField()
+{
+    try
+    {
+	    CFileDialog dlg(TRUE,0,0,OFN_FILEMUSTEXIST,"Strings (*.txt)|*.txt||");
+	    if(dlg.DoModal()!=IDOK)return;
+        
+        std::ifstream ifs;
+        ifs.exceptions( std::ifstream::failbit | std::ifstream::badbit );
+        ifs.open(dlg.GetPathName().GetString());
+
+        std::string str;
+        ifs>>str;
+
+        Gomoku::steps_t steps=Gomoku::scan_steps(str);
+
+        Gomoku::steps_t krestik_steps(steps.size());
+        krestik_steps.erase(
+            std::copy_if(steps.begin(),steps.end(),krestik_steps.begin(),Gomoku::step_kind_pr(Gomoku::st_krestik)),
+            krestik_steps.end());
+
+        Gomoku::steps_t nolik_steps(steps.size());
+        nolik_steps.erase(
+            std::copy_if(steps.begin(),steps.end(),nolik_steps.begin(),Gomoku::step_kind_pr(Gomoku::st_nolik)),
+            nolik_steps.end());
+
+        if(krestik_steps.empty()&&nolik_steps.empty())
+            throw std::runtime_error("String field does not contain valid steps");
+
+        if(krestik_steps.size()!=nolik_steps.size() &&
+            krestik_steps.size()!=nolik_steps.size()+1)
+        {
+            throw std::runtime_error("Game not synced");
+        }
+
+        Gomoku::steps_t::iterator it=std::find(krestik_steps.begin(),krestik_steps.end(),Gomoku::step_t(Gomoku::st_krestik,0,0));
+        if(it!=krestik_steps.end())
+        {
+            std::swap(krestik_steps.front(),*it);
+        }
+
+        steps.resize(0);
+        for(unsigned i=0;i<krestik_steps.size();i++)
+        {
+            steps.push_back(krestik_steps[i]);
+            if(i<nolik_steps.size())
+                steps.push_back(nolik_steps[i]);
+        }
+        
+
+        pause();
+        redo_steps.clear();
+        game.field().set_steps(steps);
+
+        restart_if_next_player_human();
+        invalidate_field_check_state();
+    }
+    catch(std::exception& e)
+    {
+        AfxMessageBox(e.what());
+    }
 }
 
 void CgomokuDlg::OnSaveStringField()

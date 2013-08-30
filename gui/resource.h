@@ -37,13 +37,16 @@
 #define ID_TAPE_PLAY                    32780
 #define ID_TAPE_FAST_FORWARD            32781
 #define ID_TAPE_END                     32782
+#define ID_OPERATION_LOADSTRINGFIELD    32783
+#define ID_EDIT_COPYSTATE               32784
+#define ID_EDIT_PASTESTATE              32785
 
 // Next default values for new objects
 // 
 #ifdef APSTUDIO_INVOKED
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        136
-#define _APS_NEXT_COMMAND_VALUE         32783
+#define _APS_NEXT_COMMAND_VALUE         32786
 #define _APS_NEXT_CONTROL_VALUE         1009
 #define _APS_NEXT_SYMED_VALUE           1109
 #endif

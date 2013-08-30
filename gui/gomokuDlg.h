@@ -66,6 +66,7 @@ public:
 	afx_msg void OnCbnSelchangePlayer2();
 	afx_msg void OnLoadGame();
 	afx_msg void OnSaveGame();
+	afx_msg void OnLoadStringField();
 	afx_msg void OnSaveStringField();
 	afx_msg void OnUpdateEditShowmovenumber(CCmdUI *pCmdUI);
 	afx_msg void OnEditShowmovenumber();

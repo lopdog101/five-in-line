@@ -88,10 +88,16 @@ BEGIN
     BEGIN
         MENUITEM "Load game...",                ID_OPERATION_LOADGAME
         MENUITEM "Save game...",                ID_OPERATION_SAVEGAME
+        MENUITEM "Load string field...",        ID_OPERATION_LOADSTRINGFIELD
         MENUITEM "Save string field...",        ID_OPERATION_SAVESTRINGFIELD
         MENUITEM SEPARATOR
     END
     POPUP "Edit"
+    BEGIN
+        MENUITEM "Copy state",                  ID_EDIT_COPYSTATE
+        MENUITEM "Paste state",                 ID_EDIT_PASTESTATE
+    END
+    POPUP "View"
     BEGIN
         MENUITEM "Show move number",            ID_EDIT_SHOWMOVENUMBER
     END
