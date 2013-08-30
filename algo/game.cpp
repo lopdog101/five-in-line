@@ -46,10 +46,16 @@ bool game_t::is_game_over() const
 
 bool game_t::is_somebody_thinking() const
 {
-	return 
-        !is_game_over()&&
-        (krestik!=nullptr&&krestik->is_thinking() ||
-         nolik!=nullptr&&nolik->is_thinking() );
+    if(is_game_over())
+        return false;
+
+    if(krestik&&krestik->is_thinking())
+        return true;
+
+    if(nolik&&nolik->is_thinking())
+        return true;
+
+    return false;
 }
 
 }//namespace Gomoku

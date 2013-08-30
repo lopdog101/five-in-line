@@ -48,15 +48,14 @@ CgomokuDlg::CgomokuDlg(CWnd* pParent /*=NULL*/)
     log_file.open();
 
 	game.fieldp=m_field;
+    game.reset_field();
 }
 
 void CgomokuDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialog::DoDataExchange(pDX);
-	DDX_Control(pDX, IDC_STOP, mStop);
 	DDX_Control(pDX, IDC_PLAYER1, mPlayer1);
 	DDX_Control(pDX, IDC_PLAYER2, mPlayer2);
-	DDX_Control(pDX, IDC_START, m_Start);
 }
 
 BEGIN_MESSAGE_MAP(CgomokuDlg, CDialog)
@@ -65,21 +64,21 @@ BEGIN_MESSAGE_MAP(CgomokuDlg, CDialog)
 	ON_WM_QUERYDRAGICON()
 	//}}AFX_MSG_MAP
 	ON_WM_SIZE()
-	ON_BN_CLICKED(IDC_START, OnBnClickedStart)
-	ON_BN_CLICKED(IDC_STOP, OnBnClickedStop)
 	ON_CBN_SELCHANGE(IDC_PLAYER1, OnCbnSelchangePlayer1)
 	ON_CBN_SELCHANGE(IDC_PLAYER2, OnCbnSelchangePlayer2)
 	ON_COMMAND(ID_OPERATION_LOADGAME, OnLoadGame)
 	ON_COMMAND(ID_OPERATION_SAVEGAME, OnSaveGame)
 	ON_COMMAND(ID_OPERATION_SAVESTRINGFIELD, OnSaveStringField)
-	ON_COMMAND(ID_EDIT_UNDO, OnEditUndo)
-	ON_UPDATE_COMMAND_UI(ID_EDIT_UNDO, OnUpdateEditUndo)
 	ON_UPDATE_COMMAND_UI(ID_EDIT_SHOWMOVENUMBER, OnUpdateEditShowmovenumber)
 	ON_COMMAND(ID_EDIT_SHOWMOVENUMBER, OnEditShowmovenumber)
 	ON_WM_INITMENUPOPUP()
 	ON_WM_CLOSE()
-	ON_COMMAND(ID_TAPE_START, OnTapeStart)
     ON_MESSAGE(WM_CHECK_STATE,OnPostCheck)
+	ON_COMMAND(ID_TAPE_START, OnTapeStart)
+	ON_COMMAND(ID_TAPE_REWIND, OnTapeRewind)
+	ON_COMMAND(ID_TAPE_PLAY, OnTapePlay)
+	ON_COMMAND(ID_TAPE_FAST_FORWARD, OnTapeForward)
+	ON_COMMAND(ID_TAPE_END, OnTapeEnd)
 END_MESSAGE_MAP()
 
 
@@ -127,7 +126,8 @@ BOOL CgomokuDlg::OnInitDialog()
 
 	mPlayer1.SetCurSel(2);game.set_krestik(create_player(mPlayer1,Gomoku::st_krestik));
 	mPlayer2.SetCurSel(0);game.set_nolik(create_player(mPlayer2,Gomoku::st_nolik));
-	check_state();
+	restart_if_next_player_human();
+    check_state();
 
 	return TRUE;  // return TRUE  unless you set the focus to a control
 }
@@ -174,40 +174,6 @@ void CgomokuDlg::OnSize(UINT nType, int cx, int cy)
 	szr.OnSize();
 }
 
-void CgomokuDlg::OnBnClickedStart()
-{
-	start_game();
-	check_state();
-}
-
-void CgomokuDlg::gameNextStep(const Gomoku::iplayer_t& pl,const Gomoku::point& pt)
-{
-    game.make_step(pl,pt);
-
-	check_state();
-	m_field->set_scroll_bars();
-	m_field->Invalidate();
-	m_field->UpdateWindow();
-
-    if(!game.is_game_over())
-    {
-        game.delegate_next_step();
-        return;
-    }
-	
-    hld_step.disconnect();
-	if(game.field().size()%2)MessageBox("krestik win",MB_OK);
-	else MessageBox("nolik win",MB_OK);
-}
-
-void CgomokuDlg::start_game()
-{
-	hld_step=game.OnNextStep.connect(boost::bind(&CgomokuDlg::gameNextStep,this,_1,_2) );
-	game.reset_field();
-	game.init_players();
-	game.delegate_next_step();
-	m_field->Invalidate();
-}
 
 Gomoku::player_ptr CgomokuDlg::create_player(const CComboBox& cb,Gomoku::Step st)
 {
@@ -240,6 +206,23 @@ int CgomokuDlg::player2index(Gomoku::iplayer_t& pl)
 	return -1;
 }
 
+void CgomokuDlg::gameNextStep(const Gomoku::iplayer_t& pl,const Gomoku::point& pt)
+{
+    game.make_step(pl,pt);
+    redo_steps.clear();
+
+    invalidate_field_check_state();
+
+    if(!game.is_game_over())
+    {
+        game.delegate_next_step();
+        return;
+    }
+	
+    hld_step.disconnect();
+	if(game.field().size()%2)MessageBox("krestik win",MB_OK);
+	else MessageBox("nolik win",MB_OK);
+}
 
 void CgomokuDlg::check_state()
 {
@@ -248,23 +231,33 @@ void CgomokuDlg::check_state()
 
 LRESULT CgomokuDlg::OnPostCheck(WPARAM, LPARAM)
 {
-	bool started=game.is_somebody_thinking();
-	mStop.EnableWindow(started);
 	mPlayer1.SetCurSel(player2index(*game.get_krestik()));
 	mPlayer2.SetCurSel(player2index(*game.get_nolik()));
 
+    bool started=game.is_somebody_thinking();
     bool isStartEnabled=!started&&mPlayer1.GetCurSel()!=-1&&mPlayer2.GetCurSel()!=-1;
-	m_Start.EnableWindow(isStartEnabled);
 
     CMFCToolBarButton* bt=m_wndToolBar.GetButton(2);
     bt->SetImage(isStartEnabled? 2:5);
     m_wndToolBar.InvalidateButton(2);
 
-    enable_button(ID_TAPE_START,isStartEnabled);    
+    const Gomoku::field_t::steps_t& steps=game.field().get_steps();
+
+    enable_button(ID_TAPE_START,steps.size()>1);
+    enable_button(ID_TAPE_REWIND,steps.size()>1);
+    enable_button(ID_TAPE_FAST_FORWARD,!redo_steps.empty());
+    enable_button(ID_TAPE_END,!redo_steps.empty());
 
     return 0;
 }
 
+void CgomokuDlg::invalidate_field_check_state()
+{
+	m_field->set_scroll_bars();
+    m_field->Invalidate();
+	m_field->UpdateWindow();
+	check_state();
+}
 
 void CgomokuDlg::enable_button(int ButtonId,bool val)
 {
@@ -275,26 +268,147 @@ void CgomokuDlg::enable_button(int ButtonId,bool val)
     else m_wndToolBar.SetButtonStyle (idx, TBBS_DISABLED);
 }
 
-
-void CgomokuDlg::OnBnClickedStop()
+void CgomokuDlg::OnTapeStart()
 {
-//+++	game.end_play();
-	m_field->Invalidate();
-	check_state();
+	if(game.field().get_steps().size()<2)
+        return;
+
+    pause();
+
+	Gomoku::steps_t st=game.field().get_steps();
+
+    redo_steps.insert(redo_steps.end(),st.rbegin(),st.rend()-1);
+
+    st.resize(1);
+	game.field().set_steps(st);
+
+    restart_if_next_player_human();
+    invalidate_field_check_state();
 }
+
+void CgomokuDlg::OnTapeRewind()
+{
+	if(game.field().get_steps().size()<2)
+        return;
+
+    pause();
+
+	Gomoku::steps_t st=game.field().get_steps();
+
+    redo_steps.push_back(st.back());
+
+    st.pop_back();
+	game.field().set_steps(st);
+
+    restart_if_next_player_human();
+    invalidate_field_check_state();
+}
+
+void CgomokuDlg::OnTapePlay()
+{
+    if(!game.is_somebody_thinking())
+    {
+        start();
+    }
+    else
+    {
+        pause();
+    }
+    
+    invalidate_field_check_state();
+}
+
+void CgomokuDlg::OnTapeForward()
+{
+	if(redo_steps.empty())
+        return;
+
+    pause();
+
+	Gomoku::steps_t st=game.field().get_steps();
+    st.push_back(redo_steps.front());
+
+    redo_steps.erase(redo_steps.begin());
+
+    game.field().set_steps(st);
+
+    restart_if_next_player_human();
+    invalidate_field_check_state();
+}
+
+void CgomokuDlg::OnTapeEnd()
+{
+	if(redo_steps.empty())
+        return;
+
+    pause();
+
+	Gomoku::steps_t st=game.field().get_steps();
+    st.insert(st.end(),redo_steps.begin(),redo_steps.end());
+
+    redo_steps.clear();
+
+    game.field().set_steps(st);
+
+    restart_if_next_player_human();
+    invalidate_field_check_state();
+}
+
+void CgomokuDlg::start()
+{
+    if(game.is_game_over())
+        return;
+
+	hld_step=game.OnNextStep.connect(boost::bind(&CgomokuDlg::gameNextStep,this,_1,_2) );
+	game.init_players();
+	game.delegate_next_step();
+}
+
+void CgomokuDlg::pause()
+{
+	Gomoku::player_ptr kr=game.get_krestik();
+    if(kr&&kr->is_thinking())
+    {
+        kr->request_cancel(true);
+        kr->request_cancel(false);
+    }
+
+    Gomoku::player_ptr nl=game.get_nolik();
+    if(nl&&nl->is_thinking())
+    {
+        nl->request_cancel(true);
+        nl->request_cancel(false);
+    }
+}
+
+void CgomokuDlg::restart_if_next_player_human()
+{
+    Gomoku::player_ptr next_player;
+
+    if(game.field().size()%2==0) next_player=game.get_krestik();
+    else  next_player=game.get_nolik();
+
+    if(!dynamic_cast<Gomoku::mfcPlayer*>(next_player.get()))
+        return;
+
+    start();
+}
+
 
 void CgomokuDlg::OnCbnSelchangePlayer1()
 {
+    pause();
 	game.set_krestik(create_player(mPlayer1,Gomoku::st_krestik));
+    restart_if_next_player_human();
 	check_state();
-//+++	if(game.is_play())game.continue_play();
 }
 
 void CgomokuDlg::OnCbnSelchangePlayer2()
 {
+    pause();
 	game.set_nolik(create_player(mPlayer2,Gomoku::st_nolik));
+    restart_if_next_player_human();
 	check_state();
-//+++	if(game.is_play())game.continue_play();
 }
 
 void CgomokuDlg::OnLoadGame()
@@ -305,6 +419,9 @@ void CgomokuDlg::OnLoadGame()
     {
 	    CFileDialog dlg(TRUE,0,0,OFN_FILEMUSTEXIST,"Games (*.gm)|*.gm||");
 	    if(dlg.DoModal()!=IDOK)return;
+        
+        pause();
+        redo_steps.clear();
 
     //    Xpat::load_from_xml_file(,game);
         std::ifstream ifs;
@@ -313,15 +430,9 @@ void CgomokuDlg::OnLoadGame()
         boost::archive::xml_iarchive ia(ifs);
 
         ia >> BOOST_SERIALIZATION_NVP(game);
-
-        m_field->Invalidate();
-        m_field->UpdateWindow();
-        check_state();
-//+++        if(game.is_play())
-//        {
-//            hld_step=game.OnNextStep.connect(boost::bind(&CgomokuDlg::gameNextStep,this,_1) );
-//	        game.continue_play();
-//        }
+        
+        restart_if_next_player_human();
+        invalidate_field_check_state();
     }
     catch(std::exception& e)
     {
@@ -357,30 +468,6 @@ void CgomokuDlg::OnSaveStringField()
     ofs.open(dlg.GetPathName().GetString());
     ofs.exceptions( std::ifstream::failbit | std::ifstream::badbit );
     ofs<<str;
-}
-
-
-
-void CgomokuDlg::OnEditUndo()
-{
-	if(game.field().get_steps().size()<2)return;
-	bool game_over=game.is_game_over();
-	Gomoku::steps_t st=game.field().get_steps();
-	st.resize(st.size()-2);
-	game.field().set_steps(st);
-	m_field->Invalidate();
-	m_field->UpdateWindow();
-	check_state();
-	if(game_over)
-	{
-		hld_step=game.OnNextStep.connect(boost::bind(&CgomokuDlg::gameNextStep,this,_1,_2) );
-//+++		game.continue_play();
-	}
-}
-
-void CgomokuDlg::OnUpdateEditUndo(CCmdUI *pCmdUI)
-{
-	pCmdUI->Enable(game.field().get_steps().size()>=2);
 }
 
 void CgomokuDlg::OnUpdateEditShowmovenumber(CCmdUI *pCmdUI)
@@ -478,9 +565,4 @@ void CgomokuDlg::OnCancel()
 void CgomokuDlg::OnClose()
 {
 	EndDialog(IDCLOSE);
-}
-
-void CgomokuDlg::OnTapeStart()
-{
-    OnBnClickedStart();
 }

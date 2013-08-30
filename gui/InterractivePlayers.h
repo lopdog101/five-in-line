@@ -34,7 +34,7 @@ public:
 	virtual void init(game_t& _gm,Step _cl);
 	virtual void delegate_step();
 
-    virtual void cancel();
+    virtual void request_cancel(bool val);
     virtual bool is_thinking() const;
 
     template<class Archive>
@@ -76,9 +76,11 @@ public:
 	ThreadPlayer(const ThreadPlayer& rhs){if(rhs.pl)pl=player_ptr(rhs.pl->clone());}
 	~ThreadPlayer(){clear();}
 	
-	void init(game_t& _gm,Step _cl);
-	void delegate_step();
-    bool is_thinking() const;
+	virtual void init(game_t& _gm,Step _cl);
+	virtual void delegate_step();
+
+    virtual void request_cancel(bool val);
+    virtual bool is_thinking() const;
 
     player_ptr get_player() const{return pl;}
 

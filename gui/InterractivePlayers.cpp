@@ -65,8 +65,10 @@ void mfcPlayer::delegate_step()
 	hld_after_draw=fd->on_after_paint.connect(boost::bind(&mfcPlayer::afterDraw,this,_1) );
 }
 
-void mfcPlayer::cancel()
+void mfcPlayer::request_cancel(bool val)
 {
+    if(!val)return;
+
     reset_handlers();
     game().OnCheckPlayerState(*this);
 }
@@ -128,6 +130,15 @@ void ThreadPlayer::delegate_step()
 	mirror_gm.field()=game().field();
     answer_complete = false;
 	processor.start_job();
+}
+
+void ThreadPlayer::request_cancel(bool val)
+{
+    if(!val)return;
+
+    pl->request_cancel(true);
+	processor.cancel_job();
+    pl->request_cancel(false);
 }
 
 bool ThreadPlayer::is_thinking() const
