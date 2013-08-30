@@ -22,7 +22,7 @@ public:
 	};
 	typedef std::vector<error_t> errors_t;
 
-	enum State{st_stopped,st_wait_task,st_new_task,st_execute_task,st_cancelling,st_stopping};
+	enum State{st_stopped,st_wait_task,st_new_task,st_execute_task,st_stopping};
 
 	static const DWORD WM_COMPLETE=WM_USER+1;
 private:
@@ -46,7 +46,6 @@ public:
 	bool is_started() const{return thrd;}
 	void start_job();
 	void cancel_job();
-	bool is_cancelling() const;
     bool is_job_in_progress() const;
 
 	boost::signal<void ()> OnExecute;

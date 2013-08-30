@@ -88,7 +88,6 @@ namespace Gomoku
 		player_ptr get_nolik() const{return nolik;}
 
         boost::signal< void (const iplayer_t& pl,const point& pt)> OnNextStep;
-        boost::signal< void (const iplayer_t& pl)> OnCheckPlayerState;
     };
 
 }//namespace Gomoku

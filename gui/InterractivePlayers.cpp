@@ -70,7 +70,6 @@ void mfcPlayer::request_cancel(bool val)
     if(!val)return;
 
     reset_handlers();
-    game().OnCheckPlayerState(*this);
 }
 
 bool mfcPlayer::is_thinking() const

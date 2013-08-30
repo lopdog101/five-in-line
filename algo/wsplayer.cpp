@@ -39,7 +39,6 @@ void wsplayer_t::delegate_step()
 	{
 		lg<<"canceled";
         hld_thinking.reset();
-        game().OnCheckPlayerState(*this);
         throw;
 	}
 

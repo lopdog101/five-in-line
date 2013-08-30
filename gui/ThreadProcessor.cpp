@@ -79,6 +79,7 @@ void CThreadProcessor::execute()
 				if(state==st_stopping)return;
 				state=st_wait_task;
 				PostMessage(WM_COMPLETE,0,0);
+                cond.notify_all();
 			}
 		}
 	}
@@ -138,26 +139,21 @@ void CThreadProcessor::cancel_job()
 	switch(state)
 	{
 	case st_wait_task:
-	case st_cancelling:
 		return;
 	case st_new_task:
 		state=st_wait_task;
 		return;
 	case st_execute_task:
-		return;
+		break;
+    default:
+        throw std::runtime_error("CThreadProcessor::cancel_job(): invalid state");
 	}
 
-	throw std::runtime_error("CThreadProcessor::cancel_job(): invalid state");
+    while(state==st_execute_task)
+    {
+        cond.wait(lk);
+    }
 }
-
-bool CThreadProcessor::is_cancelling() const
-{
-	lkt lk(mtx);
-	return state==st_cancelling||state==st_stopping;
-}
-
-
-
 
 void CThreadProcessor::add_message(const error_t& mess)
 {
