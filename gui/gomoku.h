@@ -16,6 +16,7 @@
 
 class CgomokuApp : public CWinApp
 {
+    HACCEL m_hAccel;
 public:
 	CgomokuApp();
 
@@ -26,6 +27,7 @@ public:
 // Implementation
 
 	DECLARE_MESSAGE_MAP()
+    virtual BOOL ProcessMessageFilter(int code, LPMSG lpMsg);
 };
 
 extern CgomokuApp theApp;

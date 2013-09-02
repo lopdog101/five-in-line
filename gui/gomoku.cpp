@@ -20,6 +20,7 @@ END_MESSAGE_MAP()
 
 CgomokuApp::CgomokuApp()
 {
+    m_hAccel = NULL;
 }
 
 
@@ -36,7 +37,9 @@ BOOL CgomokuApp::InitInstance()
 {
 	CWinApp::InitInstance();
 
-	CgomokuDlg dlg;
+    m_hAccel=LoadAccelerators(AfxGetInstanceHandle(), MAKEINTRESOURCE(IDR_MAINFRAME));
+
+    CgomokuDlg dlg;
 	m_pMainWnd = &dlg;
 	INT_PTR nResponse = dlg.DoModal();
 	if (nResponse == IDOK)
@@ -53,4 +56,16 @@ BOOL CgomokuApp::InitInstance()
 	// Since the dialog has been closed, return FALSE so that we exit the
 	//  application, rather than start the application's message pump.
 	return FALSE;
+}
+
+
+BOOL CgomokuApp::ProcessMessageFilter(int code, LPMSG lpMsg)
+{
+    if(m_hAccel)
+    {
+        if (::TranslateAccelerator(m_pMainWnd->m_hWnd, m_hAccel, lpMsg)) 
+            return TRUE;
+    }
+	
+    return CWinApp::ProcessMessageFilter(code, lpMsg);
 }

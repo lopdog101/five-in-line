@@ -58,6 +58,9 @@ protected:
 	afx_msg void OnPaint();
 	afx_msg HCURSOR OnQueryDragIcon();
 	DECLARE_MESSAGE_MAP()
+protected:
+	virtual void OnOK();
+	virtual void OnCancel();
 public:
 	CComboBox mPlayer1;
 	CComboBox mPlayer2;
@@ -77,9 +80,7 @@ public:
 	afx_msg void OnTapePlay();
 	afx_msg void OnTapeForward();
 	afx_msg void OnTapeEnd();
-protected:
-	virtual void OnOK();
-	virtual void OnCancel();
-public:
 	afx_msg void OnClose();
+    afx_msg void OnEditCopystate();
+    afx_msg void OnEditPastestate();
 };

@@ -80,6 +80,8 @@ BEGIN_MESSAGE_MAP(CgomokuDlg, CDialog)
 	ON_COMMAND(ID_TAPE_PLAY, OnTapePlay)
 	ON_COMMAND(ID_TAPE_FAST_FORWARD, OnTapeForward)
 	ON_COMMAND(ID_TAPE_END, OnTapeEnd)
+    ON_COMMAND(ID_EDIT_COPYSTATE, &CgomokuDlg::OnEditCopystate)
+    ON_COMMAND(ID_EDIT_PASTESTATE, &CgomokuDlg::OnEditPastestate)
 END_MESSAGE_MAP()
 
 
@@ -110,7 +112,7 @@ BOOL CgomokuDlg::OnInitDialog()
 		TRACE0("Failed to create toolbar\n");
 		return -1;      // fail to create
 	}
-
+    
     m_wndToolBar.SetPaneStyle( m_wndToolBar.GetPaneStyle() & ~(CBRS_GRIPPER | CBRS_SIZE_DYNAMIC | CBRS_BORDER_ANY) );
     CSize sz = m_wndToolBar.CalcFixedLayout( FALSE, TRUE );
     m_wndToolBar.SetWindowPos( NULL, 0, 0, sz.cx+2, sz.cy,SWP_NOACTIVATE | SWP_NOZORDER );
@@ -130,7 +132,7 @@ BOOL CgomokuDlg::OnInitDialog()
 	restart_if_next_player_human();
     check_state();
 
-	return TRUE;  // return TRUE  unless you set the focus to a control
+    return TRUE;  // return TRUE  unless you set the focus to a control
 }
 
 // If you add a minimize button to your dialog, you will need the code below
@@ -497,6 +499,72 @@ void CgomokuDlg::OnSaveStringField()
     ofs.open(dlg.GetPathName().GetString());
     ofs.exceptions( std::ifstream::failbit | std::ifstream::badbit );
     ofs<<str;
+}
+
+
+void CgomokuDlg::OnEditCopystate()
+{
+    try
+    {
+	    Gomoku::steps_t steps=game.field().get_steps();
+	    std::string str=print_steps(steps);
+
+        HGLOBAL hMem =  GlobalAlloc(GMEM_MOVEABLE, str.size()+1);
+        memcpy(GlobalLock(hMem), str.c_str(), str.size()+1);
+        GlobalUnlock(hMem);
+        OpenClipboard();
+        EmptyClipboard();
+        SetClipboardData(CF_TEXT, hMem);
+        CloseClipboard();
+    }
+    catch(std::exception& e)
+    {
+        AfxMessageBox(e.what());
+    }
+}
+
+
+void CgomokuDlg::OnEditPastestate()
+{
+
+	if(!OpenClipboard())
+        return;
+
+    std::string str;
+
+    HGLOBAL hglb = GetClipboardData(CF_TEXT);
+    if(hglb != NULL)
+    {
+        LPTSTR lptstr = (LPTSTR)GlobalLock(hglb); 
+        if (lptstr != NULL) 
+        { 
+            str=lptstr;
+            GlobalUnlock(hglb); 
+        } 
+    }
+
+    CloseClipboard();
+
+    if(str.empty())
+        return;
+
+    try
+    {
+        Gomoku::steps_t steps=Gomoku::scan_steps(str);
+
+        reorder_state_to_game_order(steps);
+
+        pause();
+        redo_steps.clear();
+        game.field().set_steps(steps);
+
+        restart_if_next_player_human();
+        invalidate_field_check_state();
+    }
+    catch(std::exception& e)
+    {
+        AfxMessageBox(e.what());
+    }
 }
 
 void CgomokuDlg::OnUpdateEditShowmovenumber(CCmdUI *pCmdUI)

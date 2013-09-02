@@ -143,6 +143,20 @@ END
 
 IDB_TB                  PNG                     "res\\tb.png"
 IDB_TB_DIS              PNG                     "res\\tb_dis.png"
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// Accelerator
+//
+
+IDR_MAINFRAME ACCELERATORS
+BEGIN
+    "C",            ID_EDIT_COPYSTATE,      VIRTKEY, CONTROL, NOINVERT
+    "V",            ID_EDIT_PASTESTATE,     VIRTKEY, CONTROL, NOINVERT
+    VK_INSERT,      ID_EDIT_COPYSTATE,      VIRTKEY, CONTROL, NOINVERT
+    VK_INSERT,      ID_EDIT_PASTESTATE,     VIRTKEY, SHIFT, NOINVERT
+END
+
 #endif    // Ukrainian (Ukraine) resources
 /////////////////////////////////////////////////////////////////////////////
 
