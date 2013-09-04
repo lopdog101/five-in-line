@@ -53,7 +53,6 @@ void self_solve(solution_tree_t& tr,const steps_t& key)
 	WsPlayer::wsplayer_t pl;
 
 	pl.init(gm,other_step(last_step));
-	pl.begin_game();
 	pl.solve();
 
 	const WsPlayer::wide_item_t& r=static_cast<const WsPlayer::wide_item_t&>(*pl.root);
