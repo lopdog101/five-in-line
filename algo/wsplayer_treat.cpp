@@ -13,11 +13,8 @@ namespace Gomoku { namespace WsPlayer
 /////////////////////////////////////////////////////////////////////////////////////
 void treat_node_t::build_tree(Step cl,bool only_win,const treat_filter_t& tf,unsigned deep)
 {
-	static points_t empty_points;
-	player.field.get_empty_around(empty_points,2);
-
 	treats_t treats;
-	find_treats(empty_points,treats,cl,player.field,tf.get_steps_to_win());
+    find_treats_for_build_tree(cl,tf,treats);
 
 	for(unsigned i=0;i<treats.size();i++)
 	{
@@ -52,11 +49,8 @@ void treat_node_t::build_tree_same_line(const treat_t& b,Step cl,bool only_win,c
 {
 	temporary_treat_state hld_b(player.field,b,cl);
 
-	static points_t empty_points;
-	player.field.get_empty_around(empty_points,2);
-
 	treats_t treats;
-	find_treats(empty_points,treats,cl,player.field,tf.get_steps_to_win());
+    find_treats_for_build_tree(cl,tf,treats);
 
 	for(unsigned i=0;i<treats.size();i++)
 	{
@@ -95,6 +89,16 @@ void treat_node_t::build_tree_same_line(const treat_t& b,Step cl,bool only_win,c
 		}
 	}
 }
+
+void treat_node_t::find_treats_for_build_tree(Step cl,const treat_filter_t& tf,treats_t& treats)
+{
+	static points_t empty_points;
+	player.field.get_empty_around(empty_points,2);
+
+	find_one_step_win_treats(empty_points,treats,cl,player.field);
+	find_more_than_one_steps_win_treats(empty_points,treats,cl,player.field,tf.get_steps_to_win());
+}
+
 
 
 item_ptr treat_node_t::check_tree(Step cl,bool refind_one_step)
@@ -683,15 +687,20 @@ void print_treat_tree(treat_node_t& tr,std::string& res,std::string& offset_str)
 /////////////////////////////////////////////////////////////////////
 //
 //
-void find_treats(const points_t& empty_points,treats_t& res,Step cl,const field_t& field,unsigned steps_to_win)
+void find_one_step_win_treats(const points_t& empty_points,treats_t& res,Step cl,const field_t& field)
 {
 	find_treats(empty_points,cl,field,res,check_five_line);
+}
+
+void find_more_than_one_steps_win_treats(const points_t& empty_points,treats_t& res,Step cl,const field_t& field,unsigned steps_to_win)
+{
 	if(steps_to_win>=2)find_treats(empty_points,cl,field,res,check_open_four_line);
 	if(steps_to_win>=2)find_two_way_treats(empty_points,cl,field,res,check_four_line_hole_inside);
 	if(steps_to_win>=2)find_two_way_treats(empty_points,cl,field,res,check_four_line_zero_left_hole_right);
 	if(steps_to_win>=3)find_treats(empty_points,cl,field,res,check_open_three_line_two_cost);
 	if(steps_to_win>=3)find_two_way_treats(empty_points,cl,field,res,check_open_three_line_three_cost);
 }
+
 
 
 void find_treats(const points_t& pts,Step cl,const field_t& field,treats_t& results,treat_f f)
@@ -1090,7 +1099,7 @@ bool is_one_step_treat_exists(const point& pt,const field_t& field,Step cl)
 	empty_points.front()=pt;
 
 	treats_t treats;
-	find_treats(empty_points,treats,cl,field,1);
+	find_one_step_win_treats(empty_points,treats,cl,field);
 
 	return !treats.empty();
 }

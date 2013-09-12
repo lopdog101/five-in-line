@@ -93,6 +93,8 @@ namespace Gomoku { namespace WsPlayer
 		wsplayer_t& player;
 
 		void build_tree_same_line(const treat_t& b,Step cl,bool only_win,const treat_filter_t& tf,unsigned deep);
+
+        void find_treats_for_build_tree(Step cl,const treat_filter_t& tf,treats_t& treats);
 	public:
 		treat_nodes_t childs;
 		treat_nodes_t groups;
@@ -143,7 +145,9 @@ namespace Gomoku { namespace WsPlayer
 	void print_treat_tree(treat_node_t& tr,std::string& res,std::string& offset_str);
 
 
-	void find_treats(const points_t& empty_points,treats_t& res,Step cl,const field_t& field,unsigned steps_to_win);
+	void find_one_step_win_treats(const points_t& empty_points,treats_t& res,Step cl,const field_t& field);
+    void find_more_than_one_steps_win_treats(const points_t& empty_points,treats_t& res,Step cl,const field_t& field,unsigned steps_to_win);
+
 	typedef bool (* treat_f)(const step_t& st,const field_t& field,int dx,int dy,treat_t& tr);
 	void find_treats(const points_t& pts,Step cl,const field_t& field,treats_t& results,treat_f f);
 	void find_two_way_treats(const points_t& pts,Step cl,const field_t& field,treats_t& results,treat_f f);
