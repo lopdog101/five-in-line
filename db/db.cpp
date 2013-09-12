@@ -35,7 +35,7 @@ void print_use()
 void self_solve(solution_tree_t& tr,const steps_t& key)
 {
 	steps_t init_state=key;
-	Step last_step=(init_state.size()%2)==0? st_nolik:st_krestik;
+	Step last_step=last_color(init_state.size());
 
 	steps_t::iterator i=init_state.begin();
 	
@@ -52,7 +52,7 @@ void self_solve(solution_tree_t& tr,const steps_t& key)
 
 	WsPlayer::wsplayer_t pl;
 
-	pl.init(gm,other_step(last_step));
+	pl.init(gm,other_color(last_step));
 	pl.solve();
 
 	const WsPlayer::wide_item_t& r=static_cast<const WsPlayer::wide_item_t&>(*pl.root);

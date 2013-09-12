@@ -123,7 +123,7 @@ item_ptr treat_node_t::check_tree_one_group_step(Step cl,bool refind_one_step)
 	{
 		Step cur_cl=field.at(gain);
 
-		if(cur_cl==other_step(cl)) return item_ptr();
+		if(cur_cl==other_color(cl)) return item_ptr();
 
 		if(cur_cl==cl)
 		{
@@ -192,7 +192,7 @@ item_ptr treat_node_t::icheck_tree_one_group_step(Step cl,bool refind_one_step)
 
         if(refind_one_step)
 		{
-			if(ch.one_of_cost_have_color(field,other_step(cl)) )
+			if(ch.one_of_cost_have_color(field,other_color(cl)) )
 				continue;
 
 			if(ch.one_of_cost_have_color(field,cl) )
@@ -227,7 +227,7 @@ item_ptr treat_node_t::icheck_tree_one_group_step(Step cl,bool refind_one_step)
 			if(ch.get_steps_to_win()!=2||ch.cost_count!=2)
 				throw std::runtime_error("check_tree() open four expected");
 				
-			item_ptr f(new item_t(player,ch.cost[0],other_step(cl) ));
+			item_ptr f(new item_t(player,ch.cost[0],other_color(cl) ));
 			item_ptr w(new item_t(player,ch.cost[1],cl ));
 			f->win=w;
 
@@ -242,7 +242,7 @@ item_ptr treat_node_t::icheck_tree_one_group_step(Step cl,bool refind_one_step)
 		{
 			for(unsigned j=0;j<ch.cost_count;j++)
 			{
-				temporary_step hld_c(field,ch.cost[j],other_step(cl));
+				temporary_step hld_c(field,ch.cost[j],other_color(cl));
 
 				item_ptr cf=ch.check_tree(cl,refind_one_step);
 				if(!cf)return item_ptr();
@@ -250,7 +250,7 @@ item_ptr treat_node_t::icheck_tree_one_group_step(Step cl,bool refind_one_step)
 				unsigned depth=cf->get_chain_depth()+1;
 				if(!max_r||depth>max_depth)
 				{
-					max_r=item_ptr(new item_t(player,ch.cost[j],other_step(cl) ));
+					max_r=item_ptr(new item_t(player,ch.cost[j],other_color(cl) ));
 					max_r->win=cf;
 		
 					max_depth=depth;
@@ -267,7 +267,7 @@ bool treat_node_t::contra_steps_exists(Step cl,item_ptr& res)
 	unsigned min_steps_to_win=get_childs_min_steps_to_win();
 
 	treat_node_ptr ctree(new treat_node_t(player));
-	ctree->build_tree(other_step(cl),false,step_treat_filter_t(min_steps_to_win-1),0);
+	ctree->build_tree(other_color(cl),false,step_treat_filter_t(min_steps_to_win-1),0);
 	ctree->group_by_step();
 
 	unsigned max_depth=0;
@@ -305,7 +305,7 @@ item_ptr treat_node_t::contra_steps_exists_one_step(Step cl,treat_node_t& gr)
 	}
 
 	field_t& field=player.field;
-	temporary_step hld(field,gr.gain,other_step(cl));
+	temporary_step hld(field,gr.gain,other_color(cl));
 
 	item_ptr max_r;
 	unsigned max_depth=0;
@@ -320,7 +320,7 @@ item_ptr treat_node_t::contra_steps_exists_one_step(Step cl,treat_node_t& gr)
 			if(!is_one_step_treat_exists(ch.cost[j],player.field,cl))
 				continue;
 
-			item_ptr c(new item_t(player,gr.gain,other_step(cl) ));
+			item_ptr c(new item_t(player,gr.gain,other_color(cl) ));
 			item_ptr ca(new item_t(player,ch.cost[j],cl ));
 
 			c->win=ca;
@@ -334,7 +334,7 @@ item_ptr treat_node_t::contra_steps_exists_one_step(Step cl,treat_node_t& gr)
 			item_ptr res=icheck_tree_one_group_step(cl,true);
 			if(!res)continue;
 			
-			item_ptr c(new item_t(player,gr.gain,other_step(cl) ));
+			item_ptr c(new item_t(player,gr.gain,other_color(cl) ));
 			item_ptr ca(new item_t(player,ch.cost[j],cl ));
 
 			c->win=ca;
@@ -577,7 +577,7 @@ bool is_on_same_line_and_can_make_five(const field_t& field,const point& a,const
 
 	Step s;
 	unsigned j=0;
-	Step ocl=other_step(cl);
+	Step ocl=other_color(cl);
 
 	Gomoku::point p=a;
 	for(;j<3;j++)
@@ -933,7 +933,7 @@ bool check_four_line_zero_left_hole_right(const step_t& st,const field_t& field,
 		s=field.at(p);
 	}
 
-	if(s!=other_step(st.step))
+	if(s!=other_color(st.step))
 		return false;
 
 	p=st;

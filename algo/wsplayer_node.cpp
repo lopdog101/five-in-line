@@ -96,10 +96,10 @@ Result item_t::process_predictable_move(bool need_fill_neitrals,unsigned lookup_
 
 	const state_t& state=player.get_state();
 
-	const points_t& a5_pts=state.get_make_five(other_step(step));
+	const points_t& a5_pts=state.get_make_five(other_color(step));
 	if(!a5_pts.empty())
 	{
-		win=item_ptr(new item_t(player,a5_pts.front(),other_step(step) ));
+		win=item_ptr(new item_t(player,a5_pts.front(),other_color(step) ));
 		return r_fail;
 	}
 
@@ -109,11 +109,11 @@ Result item_t::process_predictable_move(bool need_fill_neitrals,unsigned lookup_
 		if(d5_pts.size()>1)
 		{
 			fail=item_ptr(new item_t(player,d5_pts.front(),step ));
-			fail->win=item_ptr(new item_t(player,d5_pts[1],other_step(step) ));
+			fail->win=item_ptr(new item_t(player,d5_pts[1],other_color(step) ));
 			return r_win;
 		}
 
-		neitrals.push_back(item_ptr(new item_t(player,d5_pts.front(),other_step(step))) );
+		neitrals.push_back(item_ptr(new item_t(player,d5_pts.front(),other_color(step))) );
 
 		if(lookup_deep==0)return r_neitral;
 
@@ -130,26 +130,26 @@ Result item_t::process_predictable_move(bool need_fill_neitrals,unsigned lookup_
 
 	atacks_t open_four;
 
-	find_move_to_open_four(empty_points,other_step(step),player.field,open_four);
+	find_move_to_open_four(empty_points,other_color(step),player.field,open_four);
 	if(!open_four.empty())
 	{
-		win=item_ptr(new item_t(player,open_four.front().move,other_step(step) ));
+		win=item_ptr(new item_t(player,open_four.front().move,other_color(step) ));
 		win->fail=item_ptr(new item_t(player,open_four.front().open[0],step ));
-		win->fail->win=item_ptr(new item_t(player,open_four.front().open[1],other_step(step) ));
+		win->fail->win=item_ptr(new item_t(player,open_four.front().open[1],other_color(step) ));
 		return r_fail;
 	}
 
 	find_move_to_open_four(empty_points,step,player.field,open_four);
 
 	atacks_t close_four;
-	find_move_to_close_four(empty_points,other_step(step),player.field,close_four);
+	find_move_to_close_four(empty_points,other_color(step),player.field,close_four);
 	npoints_t ac4_pts;
 	set_attack_moves(close_four,ac4_pts);
 	npoints_t ac4_open_pts;
 	set_open_moves(close_four,ac4_open_pts,1);
 
 	atacks_t open_three;
-	find_move_to_open_three(empty_points,other_step(step),player.field,open_three);
+	find_move_to_open_three(empty_points,other_color(step),player.field,open_three);
 	npoints_t ao3_pts;
 	set_attack_moves(open_three,ao3_pts);
 	npoints_t ao3_open_pts;
@@ -400,7 +400,7 @@ Result item_t::process_treat_sequence()
 #endif
 
 		treat_node_ptr tr(new treat_node_t(player));
-		tr->build_tree(other_step(step),true,treat_filter_t(),cur_deep);
+		tr->build_tree(other_color(step),true,treat_filter_t(),cur_deep);
 
 		unsigned deep=tr->max_deep();
 
@@ -411,7 +411,7 @@ Result item_t::process_treat_sequence()
 		}
 
 #ifdef PRINT_TREAT_PERFOMANCE
-		lg<<"process_treat_sequence()1 build_tree(): "<<to_string(other_step(step))<<": deep="<<deep<<" cur_deep="<<cur_deep<<" win="<<tr->win<<" time="<<perf;
+		lg<<"process_treat_sequence()1 build_tree(): "<<to_string(other_color(step))<<": deep="<<deep<<" cur_deep="<<cur_deep<<" win="<<tr->win<<" time="<<perf;
 		perf.reset();
 #endif
         item_ptr r;
@@ -423,25 +423,25 @@ Result item_t::process_treat_sequence()
         
         try
         {
-            r=tr->check_tree(other_step(step),false);
+            r=tr->check_tree(other_color(step),false);
 
             max_check_reached=false;
         }
         catch(e_max_treat_check_rebuild_tree&)
         {
 #ifdef PRINT_TREAT_PERFOMANCE
-		lg<<"process_treat_sequence()1.1 check_tree(): "<<to_string(other_step(step))<<": e_max_treat_check_rebuild_tree";
+		lg<<"process_treat_sequence()1.1 check_tree(): "<<to_string(other_color(step))<<": e_max_treat_check_rebuild_tree";
 #endif
         }
         catch(e_max_treat_check_reached&)
         {
 #ifdef PRINT_TREAT_PERFOMANCE
-		lg<<"process_treat_sequence()1.2 check_tree(): "<<to_string(other_step(step))<<": e_max_treat_check_reached";
+		lg<<"process_treat_sequence()1.2 check_tree(): "<<to_string(other_color(step))<<": e_max_treat_check_reached";
 #endif
         }
 
 #ifdef PRINT_TREAT_PERFOMANCE
-		lg<<"process_treat_sequence()2 check_tree(): "<<to_string(other_step(step))<<": deep="<<deep<<" win="<<tr->win<<" childs.size()="<<tr->childs.size()
+		lg<<"process_treat_sequence()2 check_tree(): "<<to_string(other_color(step))<<": deep="<<deep<<" win="<<tr->win<<" childs.size()="<<tr->childs.size()
             <<" treat_check_count="<<player.treat_check_count<<" treat_check_rebuild_tree_count="<<player.treat_check_rebuild_tree_count<<" time="<<perf;
 		perf.reset();
 #endif
@@ -454,7 +454,7 @@ Result item_t::process_treat_sequence()
 #ifdef PRINT_TREAT_PERFOMANCE
 		if(r)
 		{
-			lg<<"process_treat_sequence()3 check_tree(): "<<to_string(other_step(step))<<": chain_depth="<<r->get_chain_depth()<<": "<<print_chain(r);
+			lg<<"process_treat_sequence()3 check_tree(): "<<to_string(other_color(step))<<": chain_depth="<<r->get_chain_depth()<<": "<<print_chain(r);
 			lg<<"process_treat_sequence()3.1 field: "<<print_steps(player.field.get_steps());
 			
 			lg<<"process_treat_sequence()3.2\r\n";
@@ -482,7 +482,7 @@ Result item_t::process_treat_sequence()
 	}
 	
 #ifdef PRINT_TREAT_PERFOMANCE
-	lg<<"process_treat_sequence()4: "<<to_string(other_step(step))<<": max deep reached";
+	lg<<"process_treat_sequence()4: "<<to_string(other_color(step))<<": max deep reached";
 #endif
 	return r_neitral;
 
@@ -559,7 +559,7 @@ template<class Points>
 void item_t::add_neitrals(const Points& pts)
 {
 	step_t s;
-	s.step=other_step(step);
+	s.step=other_color(step);
 
 	size_t exist_count=neitrals.size();
 

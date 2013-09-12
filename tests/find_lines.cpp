@@ -98,7 +98,7 @@ TEST_F(find_lines, check_four_left_zero)
 		Gomoku::step_t p(Gomoku::st_krestik,0,0);
 
 		p.x=-1;
-		fl.add(p,Gomoku::other_step(p.step));
+		fl.add(p,Gomoku::other_color(p.step));
 
 		for(unsigned k=0;k<5;k++)
 		{

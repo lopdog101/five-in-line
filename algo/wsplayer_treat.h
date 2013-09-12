@@ -38,7 +38,7 @@ namespace Gomoku { namespace WsPlayer
 		{
 			fd.add(tr.gain,st);
 			for(unsigned i=0;i<tr.cost_count;i++)
-				fd.add(tr.cost[i],other_step(st));
+				fd.add(tr.cost[i],other_color(st));
 
 		}
 

@@ -223,7 +223,7 @@ void CgomokuDlg::gameNextStep(const Gomoku::iplayer_t& pl,const Gomoku::point& p
     }
 	
     hld_step.disconnect();
-	if(game.field().size()%2)MessageBox("krestik win",MB_OK);
+	if(Gomoku::last_color(game.field().size()) == Gomoku::st_krestik )MessageBox("krestik win",MB_OK);
 	else MessageBox("nolik win",MB_OK);
 }
 
@@ -389,7 +389,7 @@ void CgomokuDlg::restart_if_next_player_human()
 {
     Gomoku::player_ptr next_player;
 
-    if(game.field().size()%2==0) next_player=game.get_krestik();
+    if( Gomoku::next_color(game.field().size()) == Gomoku::st_krestik) next_player=game.get_krestik();
     else  next_player=game.get_nolik();
 
     if(!dynamic_cast<Gomoku::mfcPlayer*>(next_player.get()))

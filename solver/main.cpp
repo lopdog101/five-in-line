@@ -52,7 +52,7 @@ int main(int argc,char** argv)
 			return 1;
 		}
 
-		Step last_step=(init_state.size()%2)==0? st_nolik:st_krestik;
+		Step last_step=last_color(init_state.size());
 
 		steps_t::iterator i=init_state.begin();
 		
@@ -73,8 +73,7 @@ int main(int argc,char** argv)
 
 		WsPlayer::wsplayer_t pl;
 
-		pl.init(gm,other_step(last_step));
-		pl.begin_game();
+		pl.init(gm,other_color(last_step));
 		pl.solve();
 
 		const WsPlayer::wide_item_t& r=static_cast<const WsPlayer::wide_item_t&>(*pl.root);

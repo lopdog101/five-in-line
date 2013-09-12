@@ -148,7 +148,7 @@ namespace Gomoku
 
 		if(ss.key.size()>=max_key_size)return false;
 
-		Step move_step=(val.key.size()%2)==0? st_krestik:st_nolik;
+		Step move_step=next_color(val.key.size());
 		
 		val.key.push_back(step_t(move_step,0,0));
 		val.neitrals.push_back(ss.neitrals);
@@ -242,7 +242,7 @@ namespace Gomoku
 				child.trunc_to_key_size(k.size());
 				child.key=p;
 				
-				Step move_step=(k.size()%2)==0? st_nolik:st_krestik;
+				Step move_step=last_color(k.size());
 				child.key.push_back(step_t(move_step,it->x,it->y));
                 
 
@@ -297,8 +297,7 @@ namespace Gomoku
 
 	void solution_tree_t::generate_new(const sol_state_t& base_st)
 	{
-		Step cur_step=(base_st.key.size()%2)==0? st_nolik:st_krestik;
-		Step next_step=other_step(cur_step);
+		Step next_step=next_color(base_st.key.size());
 		
 		sol_state_t new_st;
 		steps_t& key=new_st.key;
@@ -325,7 +324,7 @@ namespace Gomoku
 	void solution_tree_t::trunc_neitrals(const steps_t& key,points_t& neitrals,const npoints_t& win,const npoints_t& fails)
 	{
 		if(win_neitrals==0)return;
-		if((key.size()%2)!=0)return;
+		if(last_color(key.size())!=st_nolik)return;
 		if(!win.empty())return;
 
 		if(neitrals.size()<=win_neitrals)return;
@@ -336,7 +335,7 @@ namespace Gomoku
 
 	void solution_tree_t::relax(const sol_state_t& base_st)
 	{
-		Step cur_step=(base_st.key.size()%2)==0? st_nolik:st_krestik;
+		Step cur_step=last_color(base_st.key.size());
 		
 		sol_state_t prev_st;
 		steps_t& key=prev_st.key;
@@ -377,8 +376,8 @@ namespace Gomoku
 
 	void solution_tree_t::decrment_use_count(const sol_state_t& base_st)
 	{
-		Step cur_step=(base_st.key.size()%2)==0? st_nolik:st_krestik;
-		Step next_step=other_step(cur_step);
+		Step cur_step=last_color(base_st.key.size());
+		Step next_step=other_color(cur_step);
 		ObjectProgress::log_generator lg(true);
 
 		lg<<"decrment_use_count()1: "<<print_steps(base_st.key);
