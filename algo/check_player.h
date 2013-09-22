@@ -16,8 +16,10 @@ namespace Gomoku
         template<class Archive>
         void serialize(Archive &ar, const unsigned int version)
         {
+#ifdef BOOST_SERIALIZATION_NVP
             ar & BOOST_SERIALIZATION_BASE_OBJECT_NVP(iplayer_t);
             ar & BOOST_SERIALIZATION_NVP(steps);
+#endif
         }
 
         POLIMVAR_IMPLEMENT_CLONE( check_player_t )
