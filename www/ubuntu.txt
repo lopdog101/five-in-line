@@ -1,0 +1,41 @@
+1. Disable root login
+
+adduser shebeko
+
+mcedit /etc/sudoers
+Add line:
+shebeko            ALL = (ALL) ALL
+
+mcedit ~root/.profile
+Add lines:
+EDITOR=mcedit
+export EDITOR
+
+mcedit ~shebeko/.profile
+Add lines:
+EDITOR=mcedit
+export EDITOR
+
+vipw
+root:x:... -> root:*:...
+vipw -s
+root:x:... -> root:*:...
+
+2. Build application
+apt-get install mc
+apt-get install build-essential cmake libboost-dev
+
+3. Nginx + php fastcgi
+http://help.ubuntu.ru/wiki/nginx-phpfpm
+
+apt-get install nginx
+apt-get install php5-cli php5-common php5-fpm php5-cgi
+
+sudo service nginx stop
+sudo service php5-fpm stop
+
+mcedit /etc/php5/fpm/php.ini
+
+;cgi.fix_pathinfo = 1  -->  cgi.fix_pathinfo = 0
+
+service php5-fpm restart
