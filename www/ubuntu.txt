@@ -23,7 +23,8 @@ root:x:... -> root:*:...
 
 2. Build application
 apt-get install mc
-apt-get install build-essential cmake libboost-dev
+apt-get install build-essential cmake
+apt-get install libboost1.49-all-dev
 
 3. Nginx + php fastcgi
 http://help.ubuntu.ru/wiki/nginx-phpfpm
