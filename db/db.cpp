@@ -212,7 +212,7 @@ bool show_state(solution_tree_t& tr,steps_t req)
 	return true;
 }
 
-int main(char argc,char** argv)
+int main(int argc,char** argv)
 {
 	if(argc<3)
 	{

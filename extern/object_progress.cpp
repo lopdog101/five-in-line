@@ -1,6 +1,9 @@
 #ifdef _WIN32
-#include <windows.h>
+# include <windows.h>
+#else
+# include <sys/time.h>
 #endif
+
 #include "object_progress.hpp"
 #include <boost/bind.hpp>
 #include <iostream>
