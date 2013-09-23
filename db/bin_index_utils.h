@@ -4,10 +4,8 @@
 #include <vector>
 #include <string>
 #include <boost/shared_ptr.hpp>
+#include <boost/filesystem/path.hpp>
 
-namespace boost{namespace filesystem{
-	class path;
-}}//namespace
 
 namespace Gomoku
 {
