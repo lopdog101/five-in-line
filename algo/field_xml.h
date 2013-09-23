@@ -50,9 +50,9 @@ void load(Archive & ar, Gomoku::Step& v, const unsigned int version)
     std::string s;
     ar & s;
 
-    if(s == "empty") v=st_empty;
-    else if(s == "krestik") v=st_krestik;
-    else if(s == "nolik") v=st_nolik;
+    if(s == "empty") v=Gomoku::st_empty;
+    else if(s == "krestik") v=Gomoku::st_krestik;
+    else if(s == "nolik") v=Gomoku::st_nolik;
     else throw std::runtime_error("load<Step>(): invalid value: "+s);
 }
 
