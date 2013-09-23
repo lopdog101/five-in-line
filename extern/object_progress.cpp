@@ -119,7 +119,7 @@ namespace ObjectProgress
 
     void logout_file::open()
     {
-        file.open(file_name, std::ios_base::binary);
+        file.open(file_name.c_str(), file.binary);
         ilogout::open();
     }
 
