@@ -1,7 +1,13 @@
 #ifdef _WIN32
 #  include <windows.h>
 #endif
+
 #include <stdio.h>
+
+#ifndef _WIN32
+#  include <signal.h>
+#endif
+
 #include <boost/filesystem/operations.hpp>
 namespace fs=boost::filesystem;
 #include "solution_tree.h"
