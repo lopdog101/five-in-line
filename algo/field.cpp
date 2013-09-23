@@ -232,14 +232,15 @@ std::string print_field(const steps_t& val)
 
     void reorder_state_to_game_order(steps_t& steps)
     {
-        steps_t krestik_steps(steps.size());
+        steps_t krestik_steps(steps);
+
         krestik_steps.erase(
-            std::copy_if(steps.begin(),steps.end(),krestik_steps.begin(),step_kind_pr(st_krestik)),
+            std::remove_if(krestik_steps.begin(),krestik_steps.end(),step_kind_pr(st_nolik)),
             krestik_steps.end());
 
-        steps_t nolik_steps(steps.size());
+        steps_t nolik_steps(steps);
         nolik_steps.erase(
-            std::copy_if(steps.begin(),steps.end(),nolik_steps.begin(),step_kind_pr(st_nolik)),
+            std::remove_if(nolik_steps.begin(),nolik_steps.end(),step_kind_pr(st_krestik)),
             nolik_steps.end());
 
         if(krestik_steps.empty()&&nolik_steps.empty())
