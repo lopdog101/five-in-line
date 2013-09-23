@@ -50,7 +50,11 @@ namespace ObjectProgress
 	    unsigned micr=static_cast<unsigned>(v%1000000);
 
 	    char buf[128];
+#ifdef _WIN32
 	    sprintf(buf,"%I64u",sec);
+#else
+	    sprintf(buf,"%llu",sec);
+#endif
 	    std::string ret=buf;
 
 	    switch(precision)
@@ -115,7 +119,7 @@ namespace ObjectProgress
 
     void logout_file::open()
     {
-        file.open(file_name,file.binary);
+        file.open(file_name, std::ios_base::binary);
         ilogout::open();
     }
 
