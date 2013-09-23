@@ -752,7 +752,7 @@ namespace Gomoku
 
 		fs::path dir_name=fs::path(base_dir)/("S"+boost::lexical_cast<std::string>(steps_count));
 		if(!fs::exists(dir_name))
-            return nullptr;
+            return 0;
 
 		item_ptr ind(new bin_index_t(dir_name.string(),steps_count*len_per_level));
 		indexes[steps_count]=ind;
