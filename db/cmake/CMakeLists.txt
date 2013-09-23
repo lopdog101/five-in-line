@@ -2,8 +2,6 @@ cmake_minimum_required (VERSION 2.6)
 
 if(MSVC)
     link_directories($ENV{BOOST}/stage/lib)
-else()
-      TARGET_LINK_LIBRARIES(db ${Boost_LIBRARIES} )
 endif()
 
 project (db)
@@ -36,7 +34,11 @@ add_executable(db ${SRC_ALGO_FILES} ${SRC_DB_FILES} ${SRC_EXTERN_FILES})
 
 add_definitions(-D_CRT_SECURE_NO_WARNINGS)
 
-if(MSVC)
+#if(!MSVC)
+      TARGET_LINK_LIBRARIES(db boost_filesystem boost_signals boost_system)
+#endif()
+
+if( $<NOT:MSVC>)
     include_directories($ENV{BOOST})
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP")
 endif()
