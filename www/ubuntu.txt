@@ -40,3 +40,5 @@ mcedit /etc/php5/fpm/php.ini
 ;cgi.fix_pathinfo = 1  -->  cgi.fix_pathinfo = 0
 
 service php5-fpm restart
+
+mkdir /var/www/fiveinline

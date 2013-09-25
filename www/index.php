@@ -7,8 +7,9 @@
 </head>
 <body>
 <?
-$BASE_DIR='/home/shebeko/src/gomoku';
-$DB_PATH='/a/f5/db';
+$EXEC_PATH='/home/shebeko/bin/db';
+$DB_PATH='/home/shebeko/f5/root';
+$OWN_PATH='http://fiveinline.info/solutions/root/';
 $x1=-7;
 $y1=-7;
 $x2=7;
@@ -229,7 +230,7 @@ else
 	$cmd="view_hex ".escapeshellarg($hex_state);
 }
 
-$cmd=$BASE_DIR."/db/db ".$DB_PATH." ".$cmd;
+$cmd=$EXEC_PATH." ".$DB_PATH." ".$cmd;
 exec($cmd,$output);
 
 foreach($output as $s)
@@ -314,7 +315,7 @@ for($y=$y1;$y<=$y2;$y++)
 			else $o->step=st_nolik;
 		
 			$h=$hex_state.step2hex($o);
-			$cnt='<a href="http://f5.vnetgis.com/?st='.$h.'">n</a>';
+			$cnt='<a href="'.$OWN_PATH.'?st='.$h.'">n</a>';
 		}
 		else if($solved_wins[$skey])
 		{
@@ -338,7 +339,7 @@ for($y=$y1;$y<=$y2;$y++)
 			else $o->step=st_nolik;
 		
 			$h=$hex_state.step2hex($o);
-			$cnt='<a href="http://f5.vnetgis.com/?st='.$h.'">'."W".$p->n.'</a>';
+			$cnt='<a href="'.$OWN_PATH.'?st='.$h.'">'."W".$p->n.'</a>';
 		}
 		else if($tree_fails[$skey])
 		{
@@ -352,7 +353,7 @@ for($y=$y1;$y<=$y2;$y++)
 			else $o->step=st_nolik;
 		
 			$h=$hex_state.step2hex($o);
-			$cnt='<a href="http://f5.vnetgis.com/?st='.$h.'">'."F".$p->n.'</a>';
+			$cnt='<a href="'.$OWN_PATH.'?st='.$h.'">'."F".$p->n.'</a>';
 		}
 
 		echo '<td width="32" align="center" valign="middle">';
@@ -366,6 +367,7 @@ for($y=$y1;$y<=$y2;$y++)
 
 <pre>
 <?
+echo $cmd;
 passthru($cmd,$r);
 ?>
 </pre>
