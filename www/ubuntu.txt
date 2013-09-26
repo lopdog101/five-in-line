@@ -39,6 +39,11 @@ mcedit /etc/php5/fpm/php.ini
 
 ;cgi.fix_pathinfo = 1  -->  cgi.fix_pathinfo = 0
 
+mcedit /etc/php5/fpm/pool.d/www.conf
+pm = static
+pm.max_children = 1
+
+
 service php5-fpm restart
 
 mkdir /var/www/fiveinline

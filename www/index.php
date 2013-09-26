@@ -367,7 +367,6 @@ for($y=$y1;$y<=$y2;$y++)
 
 <pre>
 <?
-echo $cmd;
 passthru($cmd,$r);
 ?>
 </pre>
