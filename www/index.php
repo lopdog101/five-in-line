@@ -275,7 +275,7 @@ for($y=$y1;$y<=$y2;$y++)
 		$skey=$x."_".$y;
 		$cnt="";
 		
-		if($key_steps[$skey])
+		if(array_key_exists($skey,$key_steps))
 		{
 			$p=$key_steps[$skey];
 			
@@ -303,7 +303,7 @@ for($y=$y1;$y<=$y2;$y++)
 				else $cnt="O";
 			}
 		}
-		else if($neitrals[$skey])
+		else if(array_key_exists($skey,$neitrals))
 		{
 			$p=$neitrals[$skey];
 
@@ -317,17 +317,17 @@ for($y=$y1;$y<=$y2;$y++)
 			$h=$hex_state.step2hex($o);
 			$cnt='<a href="'.$OWN_PATH.'?st='.$h.'">n</a>';
 		}
-		else if($solved_wins[$skey])
+		else if(array_key_exists($skey,$solved_wins))
 		{
 			$p=$solved_wins[$skey];
 			$cnt="w".$p->n;
 		}
-		else if($solved_fails[$skey])
+		else if(array_key_exists($skey,$solved_fails))
 		{
 			$p=$solved_fails[$skey];
 			$cnt="f".$p->n;
 		}
-		else if($tree_wins[$skey])
+		else if(array_key_exists($skey,$tree_wins))
 		{
 			$p=$tree_wins[$skey];
 			
@@ -341,7 +341,7 @@ for($y=$y1;$y<=$y2;$y++)
 			$h=$hex_state.step2hex($o);
 			$cnt='<a href="'.$OWN_PATH.'?st='.$h.'">'."W".$p->n.'</a>';
 		}
-		else if($tree_fails[$skey])
+		else if(array_key_exists($skey,$tree_fails))
 		{
 			$p=$tree_fails[$skey];
 			
