@@ -1,6 +1,6 @@
 <?
-$BASE_DIR='/home/shebeko/src/gomoku';
-$DB_PATH='/a/f5/db';
+$EXEC_PATH='/home/shebeko/bin/db';
+$DB_PATH='/home/shebeko/f5/root';
 
 if (count($_GET)>0) $HTTP_VARS=$_GET;
 else $HTTP_VARS=$_POST;
@@ -9,7 +9,7 @@ $cmd=$HTTP_VARS["cmd"];
 
 if($cmd=='get_job')
 {
-	passthru($BASE_DIR."/db/db ".$DB_PATH." ".escapeshellarg($cmd),$r);
+	passthru($EXEC_PATH." ".$DB_PATH." ".escapeshellarg($cmd),$r);
 }
 else if($cmd=='save_job')
 {
@@ -21,7 +21,7 @@ else if($cmd=='save_job')
 	if($key==''||$n==''||$w==''||$f=='')echo "invalid params<br>";
 	else
 	{
-		passthru($BASE_DIR."/db/db ".$DB_PATH
+		passthru($EXEC_PATH." ".$DB_PATH
 			." ".escapeshellarg($cmd)
 			." ".escapeshellarg($key)
 			." ".escapeshellarg($n)
@@ -35,5 +35,4 @@ else
   echo 'five in line solve database<br>';
 }
 
-//if($r) throw new Exception("prepare_tmp(): remove old failed");
 ?>
