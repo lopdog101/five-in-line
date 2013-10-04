@@ -1,4 +1,13 @@
-﻿<?
+﻿<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+"http://www.w3.org/TR/html4/loose.dtd">
+<html>
+<head>
+<title>Five in line solver database</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+</head>
+<body>
+<h3><a href="solver.zip">Participate in solving</a></h3>
+<?
 $EXEC_PATH='/home/shebeko/bin/db';
 $x1=-7;
 $y1=-7;
