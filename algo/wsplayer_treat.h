@@ -159,6 +159,7 @@ namespace Gomoku { namespace WsPlayer
 	bool check_open_three_line_three_cost(const step_t& st,const field_t& field,int dx,int dy,treat_t& tr);
 
 	bool is_one_step_treat_exists(const point& pt,const field_t& field,Step cl);
+    void treats_gains_and_costs_to_points(const treats_t& treats,points_t& res);
 } }//namespace Gomoku
 
 #endif

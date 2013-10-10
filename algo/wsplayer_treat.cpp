@@ -96,6 +96,19 @@ void treat_node_t::find_treats_for_build_tree(Step cl,const treat_filter_t& tf,t
 	player.field.get_empty_around(empty_points,2);
 
 	find_one_step_win_treats(empty_points,treats,cl,player.field);
+
+    treats_t oponent_make_five_treats;
+    find_one_step_win_treats(empty_points,oponent_make_five_treats,other_color(cl),player.field);
+
+    points_t oponent_make_five_points;
+    treats_gains_and_costs_to_points(oponent_make_five_treats,oponent_make_five_points);
+    
+    if(oponent_make_five_points.size()>2)
+        return;
+
+    if(!oponent_make_five_points.empty())
+        empty_points=oponent_make_five_points;
+
 	find_more_than_one_steps_win_treats(empty_points,treats,cl,player.field,tf.get_steps_to_win());
 }
 
@@ -1104,6 +1117,20 @@ bool is_one_step_treat_exists(const point& pt,const field_t& field,Step cl)
 	return !treats.empty();
 }
 
+void treats_gains_and_costs_to_points(const treats_t& treats,points_t& res)
+{
+    res.resize(0);
+    res.reserve(treats.size()*4);
+
+    for(unsigned i=0;i<treats.size();i++)
+    {
+        const treat_t& t=treats[i];
+        res.push_back(t.gain);
+
+        for(unsigned j=0;j<t.cost_count;j++)
+            res.push_back(t.cost[j]);
+    }
+}
 
 } }//namespace Gomoku
 

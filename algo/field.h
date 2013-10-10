@@ -202,6 +202,7 @@ namespace Gomoku
 	std::string print_field(const steps_t& val);
 	std::string print_steps(const steps_t& val);
 
+	std::string print_point(const point& p);
 	std::string print_points(const points_t& vals);
 	std::string print_points(const npoints_t& vals);
 

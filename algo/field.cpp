@@ -158,6 +158,13 @@ std::string print_field(const steps_t& val)
 		return ret;
 	}
 
+	std::string print_point(const point& p)
+    {
+		char tmp[256];
+		sprintf(tmp,"(%d,%d)",p.x,p.y);
+		return std::string(tmp);
+    }
+
 	std::string print_points(const points_t& vals)
 	{
 		std::string ret;

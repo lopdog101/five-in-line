@@ -383,11 +383,6 @@ Result item_t::process_treat_sequence()
 	ObjectProgress::log_generator lg(true);
 #endif
 
-    if(is_defence_five_exists())
-    {
-        return r_neitral;
-    }
-
     unsigned const start_deep=4;
     
     int last_treat_check_count=0;
