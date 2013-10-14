@@ -13,6 +13,8 @@ namespace Gomoku
 	{
         SolState state;
 		size_t use_count;
+        unsigned long long wins_count;
+        unsigned long long fails_count;
 		steps_t key;
 
 		points_t neitrals;
@@ -25,6 +27,8 @@ namespace Gomoku
 		{
 			state=ss_not_solved;
 			use_count=1;
+            wins_count = 0;
+            fails_count = 0;
 		}
 
 		void pack(data_t& bin) const;

@@ -27,6 +27,24 @@ void save_file(const boost::filesystem::path& file_name,const data_t& res);
 
 void hex2bin(const std::string& str,data_t& bin);
 void bin2hex(const data_t& bin,std::string& str);
+
+template<typename T>
+inline void pack_raw(const T& val,data_t& bin)
+{
+    const unsigned char* p=reinterpret_cast<const unsigned char*>(&val);
+	bin.insert(bin.end(),p,p+sizeof(T));
+}
+
+template<typename T>
+inline void unpack_raw(const data_t& bin,T& val,size_t& from,const char* throw_message)
+{
+	if(from+sizeof(T)>=bin.size())
+		throw std::runtime_error(throw_message);
+	
+    val=*(const T*)(&bin[from]);
+	from+=sizeof(T);
+}
+
 }//namespace
 
 #endif

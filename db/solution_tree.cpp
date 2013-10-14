@@ -408,8 +408,9 @@ namespace Gomoku
 		bin.resize(0);
 		bin.push_back((unsigned char)state);
 
-        const unsigned char* p=reinterpret_cast<const unsigned char*>(&use_count);
-		bin.insert(bin.end(),p,p+sizeof(use_count));
+        pack_raw(use_count,bin);
+        pack_raw(wins_count,bin);
+        pack_raw(fails_count,bin);
 
 		pack(key,bin);
 		pack(neitrals,bin);
@@ -428,10 +429,9 @@ namespace Gomoku
 		state=(SolState)bin[from];
 		++from;
 
-		if(from+sizeof(use_count)>=bin.size())
-			throw std::runtime_error("sol_state_t::unpack(): unpack use count failed");
-		use_count=*(const size_t*)(&bin[from]);
-		from+=sizeof(use_count);
+		unpack_raw(bin,use_count,from,"sol_state_t::unpack(): unpack use_count failed");
+		unpack_raw(bin,wins_count,from,"sol_state_t::unpack(): unpack wins_count failed");
+		unpack_raw(bin,fails_count,from,"sol_state_t::unpack(): unpack fails_count failed");
 
 		unpack(bin,key,from);
 		unpack(bin,neitrals,from);
