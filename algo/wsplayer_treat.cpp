@@ -109,6 +109,22 @@ void treat_node_t::find_treats_for_build_tree(Step cl,const treat_filter_t& tf,t
     if(!oponent_make_five_points.empty())
         empty_points=oponent_make_five_points;
 
+    find_open_four_win_treats(empty_points,treats,cl,player.field,tf.get_steps_to_win());
+
+    if(oponent_make_five_points.empty())
+    {
+        treats_t oponent_open_four_treats;
+        find_open_four_win_treats(empty_points,oponent_open_four_treats,other_color(cl),player.field,2);
+
+        points_t oponent_open_four_points;
+        treats_gains_and_costs_to_points(oponent_open_four_treats,oponent_open_four_points);
+
+        if(!oponent_open_four_points.empty())
+        {
+            empty_points=oponent_open_four_points;
+        }
+    }
+
 	find_more_than_one_steps_win_treats(empty_points,treats,cl,player.field,tf.get_steps_to_win());
 }
 
@@ -705,9 +721,13 @@ void find_one_step_win_treats(const points_t& empty_points,treats_t& res,Step cl
 	find_treats(empty_points,cl,field,res,check_five_line);
 }
 
-void find_more_than_one_steps_win_treats(const points_t& empty_points,treats_t& res,Step cl,const field_t& field,unsigned steps_to_win)
+void find_open_four_win_treats(const points_t& empty_points,treats_t& res,Step cl,const field_t& field,unsigned steps_to_win)
 {
 	if(steps_to_win>=2)find_treats(empty_points,cl,field,res,check_open_four_line);
+}
+
+void find_more_than_one_steps_win_treats(const points_t& empty_points,treats_t& res,Step cl,const field_t& field,unsigned steps_to_win)
+{
 	if(steps_to_win>=2)find_two_way_treats(empty_points,cl,field,res,check_four_line_hole_inside);
 	if(steps_to_win>=2)find_two_way_treats(empty_points,cl,field,res,check_four_line_zero_left_hole_right);
 	if(steps_to_win>=3)find_treats(empty_points,cl,field,res,check_open_three_line_two_cost);
@@ -1130,6 +1150,8 @@ void treats_gains_and_costs_to_points(const treats_t& treats,points_t& res)
         for(unsigned j=0;j<t.cost_count;j++)
             res.push_back(t.cost[j]);
     }
+
+    make_unique(res);
 }
 
 } }//namespace Gomoku

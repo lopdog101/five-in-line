@@ -146,6 +146,7 @@ namespace Gomoku { namespace WsPlayer
 
 
 	void find_one_step_win_treats(const points_t& empty_points,treats_t& res,Step cl,const field_t& field);
+    void find_open_four_win_treats(const points_t& empty_points,treats_t& res,Step cl,const field_t& field,unsigned steps_to_win);
     void find_more_than_one_steps_win_treats(const points_t& empty_points,treats_t& res,Step cl,const field_t& field,unsigned steps_to_win);
 
 	typedef bool (* treat_f)(const step_t& st,const field_t& field,int dx,int dy,treat_t& tr);
