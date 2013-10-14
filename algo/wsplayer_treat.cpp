@@ -300,6 +300,8 @@ bool treat_node_t::contra_steps_exists(Step cl,item_ptr& res)
 	unsigned min_steps_to_win=get_childs_min_steps_to_win();
 
 	treat_node_ptr ctree(new treat_node_t(player));
+    //actually we collect only plain treats deep=0
+    //with treat less then attacker step_treat_filter_t(min_steps_to_win-1)
 	ctree->build_tree(other_color(cl),false,step_treat_filter_t(min_steps_to_win-1),0);
 	ctree->group_by_step();
 
