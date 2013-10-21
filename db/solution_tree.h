@@ -13,14 +13,20 @@ namespace Gomoku
 	{
         SolState state;
 		size_t use_count;
+        //wins for next step from state key
         unsigned long long wins_count;
+        //fails for next step from state key
         unsigned long long fails_count;
 		steps_t key;
 
-		points_t neitrals;
+        points_t neitrals;
+        //step from state key is a win
 		npoints_t solved_wins;
+        //step from state key is a fail
 		npoints_t solved_fails;
+        //step from state key is a win
 		npoints_t tree_wins;
+        //step from state key is a fail
 		npoints_t tree_fails;
 
 		sol_state_t()
@@ -84,9 +90,11 @@ namespace Gomoku
         bool rewind_to_not_solved(bool first_rewind,deep_solve_t& key);
 		void mark_solving(const steps_t& key);
 
-		void relax(const sol_state_t& base_st);
+		void relax(const sol_state_t& child_st);
 		void generate_new(const sol_state_t& base_st);
 		void decrment_use_count(const sol_state_t& base_st);
+        void scan_already_solved_neitrals(sol_state_t& base_st);
+        void update_base_wins_and_fails(const sol_state_t& child_st,unsigned long long delta_wins,unsigned long long delta_fails);
 		
 		bool get_root_first_deep(deep_solve_t& _val);
 		bool get_first_deep(deep_solve_t& val,unsigned max_key_size);

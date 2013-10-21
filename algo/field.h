@@ -29,7 +29,7 @@ namespace Gomoku
 	{
 		unsigned n;
 		npoint(){n=1;}
-		npoint(const point& rhs) : point(rhs){n=1;}
+		npoint(const point& rhs,unsigned _n=1) : point(rhs){n=_n;}
 		inline void operator=(const point& rhs){static_cast<point&>(*this)=rhs;}
 		inline bool is_same_point(const point& p) const{return static_cast<const point&>(*this)==p;}
 	};

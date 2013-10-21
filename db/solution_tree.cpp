@@ -282,6 +282,11 @@ namespace Gomoku
 		st.solved_fails=fails;
 		st.state=ss_solved;
 
+        st.wins_count=st.solved_wins.size();
+        st.fails_count=st.solved_fails.size();
+
+        scan_already_solved_neitrals(st);
+
 		set(st);
 
 		if(first_solving.get_sorted_key()==st.key)
@@ -293,6 +298,9 @@ namespace Gomoku
 
 		if(st.neitrals.empty()||st.is_win())relax(st);
 		else if(st.use_count>0)generate_new(st);
+
+        if(st.wins_count!=0 || st.fails_count!=0)
+            update_base_wins_and_fails(st,st.wins_count,st.fails_count);
 	}
 
 	void solution_tree_t::generate_new(const sol_state_t& base_st)
@@ -330,26 +338,25 @@ namespace Gomoku
 		if(neitrals.size()<=win_neitrals)return;
 		neitrals.resize(win_neitrals);
 	}
+    
 
-
-
-	void solution_tree_t::relax(const sol_state_t& base_st)
+	void solution_tree_t::relax(const sol_state_t& child_st)
 	{
-		Step cur_step=last_color(base_st.key.size());
+		Step cur_step=last_color(child_st.key.size());
 		
 		sol_state_t prev_st;
 		steps_t& key=prev_st.key;
 
 		unsigned n;
-		if(base_st.is_win())n=base_st.min_win_chain()+1;
-		else n=base_st.max_fail_chain()+1;
+		if(child_st.is_win())n=child_st.min_win_chain()+1;
+		else n=child_st.max_fail_chain()+1;
 
-		for(size_t i=0;i<base_st.key.size();i++)
+		for(size_t i=0;i<child_st.key.size();i++)
 		{
-			const step_t& st=base_st.key[i];
+			const step_t& st=child_st.key[i];
 			if(st.step!=cur_step)continue;
 
-			key=base_st.key;
+			key=child_st.key;
 			key.erase(key.begin()+i);
 
 			if(!get(prev_st))continue;
@@ -357,7 +364,7 @@ namespace Gomoku
 			prev_st.neitrals.erase(
 				std::remove(prev_st.neitrals.begin(),prev_st.neitrals.end(),st),prev_st.neitrals.end());
 
-			npoints_t& solved=base_st.is_win()? prev_st.tree_fails:prev_st.tree_wins;
+			npoints_t& solved=child_st.is_win()? prev_st.tree_fails:prev_st.tree_wins;
 
 			npoint p(st);
 			p.n=n;
@@ -398,6 +405,75 @@ namespace Gomoku
 			lg<<"decrment_use_count()2.1: i="<<i<<" use_count="<<new_st.use_count<<" "<<print_steps(key);
 			set(new_st);
 			if(new_st.use_count==0)decrment_use_count(new_st);
+		}
+	}
+
+    void solution_tree_t::scan_already_solved_neitrals(sol_state_t& base_st)
+    {
+		Step next_step=next_color(base_st.key.size());
+        
+        sol_state_t st;
+		steps_t& key=st.key;
+
+		for(size_t ii=base_st.neitrals.size();ii>0;ii--)
+		{
+            size_t i=ii-1;
+			const point& p=base_st.neitrals[i];
+			
+			key=base_st.key;
+			key.push_back(step_t(next_step,p.x,p.y));
+
+            if(!get(st))
+                continue;
+
+            if(st.state!=ss_solved)
+                continue;
+            
+            if(st.neitrals.empty())
+            {
+                unsigned n=st.max_fail_chain()+1;
+                base_st.tree_wins.push_back(npoint(p,n));
+                base_st.neitrals.erase(base_st.neitrals.begin()+i);
+            }
+            else if(st.is_win())
+            {
+                unsigned n=base_st.min_win_chain()+1;
+                base_st.tree_fails.push_back(npoint(p,n));
+                base_st.neitrals.erase(base_st.neitrals.begin()+i);
+            }
+
+            base_st.wins_count+=st.fails_count;
+            base_st.fails_count+=st.wins_count;
+		}
+    }
+
+	void solution_tree_t::update_base_wins_and_fails(const sol_state_t& child_st,unsigned long long delta_wins,unsigned long long delta_fails)
+	{
+		Step cur_step=last_color(child_st.key.size());
+		
+		sol_state_t prev_st;
+		steps_t& key=prev_st.key;
+
+		unsigned n;
+		if(child_st.is_win())n=child_st.min_win_chain()+1;
+		else n=child_st.max_fail_chain()+1;
+
+		for(size_t i=0;i<child_st.key.size();i++)
+		{
+			const step_t& st=child_st.key[i];
+			if(st.step!=cur_step)continue;
+
+			key=child_st.key;
+			key.erase(key.begin()+i);
+
+			if(!get(prev_st))continue;
+
+            prev_st.wins_count+=delta_fails;
+            prev_st.fails_count+=delta_wins;
+
+			set(prev_st);
+
+            update_base_wins_and_fails(prev_st,delta_fails,delta_wins);
 		}
 	}
 
