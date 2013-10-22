@@ -270,6 +270,10 @@ namespace Gomoku
 
 	void solution_tree_t::save_job(const steps_t& key,const points_t& neitrals,const npoints_t& win,const npoints_t& fails)
 	{
+        check_really_unique(key,neitrals,"neitrals");
+        check_really_unique(key,win,"win");
+        check_really_unique(key,fails,"fails");
+
 		sol_state_t st;
 		st.key=key;
 		if(!get(st))return;
@@ -476,6 +480,15 @@ namespace Gomoku
             update_base_wins_and_fails(prev_st,delta_fails,delta_wins);
 		}
 	}
+
+    template<typename T>
+    void solution_tree_t::check_really_unique(const steps_t& key,const std::vector<T>& vals,const std::string& vals_name)
+    {
+        std::vector<T> cp(vals);
+        make_unique(cp);
+        if(cp.size() != vals.size())
+            throw std::runtime_error("check_really_unique() failed: key="+print_steps(key)+" "+vals_name+"="+print_points(vals));
+    }
 
 /////////////////////////////////////////////////////////////////////////////////
 //

@@ -40,34 +40,6 @@ void increment_duplicate(npoints_t& dst,const npoints_t& src)
 	}
 }
 
-void make_unique(npoints_t& pts)
-{
-	if(pts.empty())return;
-	std::sort(pts.begin(),pts.end(),less_point_pr());
-
-	npoints_t::iterator i=pts.begin(),endi=pts.end();
-	npoints_t::iterator j=i;
-
-	for(++i;i!=endi;++i)
-	if(j->is_same_point(*i))j->n+=i->n;
-	else
-	{
-		++j;
-		*j=*i;
-	}
-
-	++j;
-	pts.erase(j,endi);
-}
-
-void make_unique(points_t& pts)
-{
-	std::sort(pts.begin(),pts.end(),less_point_pr());
-	pts.erase(
-		std::unique(pts.begin(),pts.end()),
-		pts.end());
-}
-
 void erase_from_sorted_points(points_t& pts,const point& p)
 {
 	points_t::iterator it=binary_find(pts.begin(),pts.end(),p,less_point_pr());

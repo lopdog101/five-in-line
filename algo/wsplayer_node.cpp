@@ -297,7 +297,12 @@ Result item_t::process_predictable_move(bool need_fill_neitrals,unsigned lookup_
 	npoints_t do3_open_pts;
 	set_open_moves(open_three,do3_open_pts,3);
 
-	increment_duplicate(do3_pts,do3_open_pts);
+	//Open points could be other then do3_open_pts
+    exclude_exists(ac4_pts,do3_open_pts);
+	exclude_exists(ao3_pts,do3_open_pts);
+	exclude_exists(ao3_open_pts,do3_open_pts);
+
+    increment_duplicate(do3_pts,do3_open_pts);
 	exclude_exists(do3_pts,do3_open_pts);
 
 	exclude_exists(do3_pts,empty_points);

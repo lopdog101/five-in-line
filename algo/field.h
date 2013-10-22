@@ -211,6 +211,8 @@ namespace Gomoku
 	inline void sort_steps(steps_t& val){std::sort(val.begin(),val.end(),less_point_pr() );}
     void reorder_state_to_game_order(steps_t& steps);
 
+	void make_unique(npoints_t& pts);
+	void make_unique(points_t& pts);
 }//namespace gomoku
 
 namespace std

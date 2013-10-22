@@ -45,8 +45,6 @@ namespace Gomoku { namespace WsPlayer
 	
 	void set_attack_moves(const atacks_t& src,npoints_t& res);
 	void set_open_moves(const atacks_t& src,npoints_t& res,unsigned open_count);
-	void make_unique(npoints_t& pts);
-	void make_unique(points_t& pts);
 	void erase_from_sorted_points(points_t& pts,const point& p);
 	void sort_maxn_and_near_zero(npoints_t& pts);
 

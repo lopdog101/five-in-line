@@ -98,6 +98,9 @@ namespace Gomoku
 		
 		bool get_root_first_deep(deep_solve_t& _val);
 		bool get_first_deep(deep_solve_t& val,unsigned max_key_size);
+
+        template<typename T>
+        static void check_really_unique(const steps_t& key,const std::vector<T>& vals,const std::string& vals_name);
 	public:
 		static const char* first_solving_file_name;
 		static const char* last_solving_file_name;
