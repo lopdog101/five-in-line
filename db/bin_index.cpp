@@ -512,8 +512,8 @@ namespace Gomoku
 
 	void bin_index_t::file_node::close_files()
 	{
-		if(fi)fclose(fi);
-		if(fd)fclose(fd);
+        if(fi){fclose(fi);fi=0;}
+        if(fd){fclose(fd);fd=0;}
 	}
 
 	void bin_index_t::file_node::open_index_file() const
