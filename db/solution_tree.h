@@ -41,8 +41,12 @@ namespace Gomoku
 		void unpack(const data_t& bin);
 
 		bool is_win() const{return !solved_wins.empty()||!tree_wins.empty();}
+        bool is_completed() const{return state==ss_solved&&(is_win() || neitrals.empty());}
 		unsigned min_win_chain() const;
 		unsigned max_fail_chain() const;
+
+        inline double get_win_rate() const{return static_cast<double>(wins_count+1)/(fails_count+1);}
+        inline bool is_win_fail_stat_empty() const{return wins_count==0&&fails_count==0;}
 	public:
 		static void pack(const points_t& pts,data_t& bin);
 		static void unpack(const data_t& bin,points_t& pts,size_t& from);
@@ -101,6 +105,9 @@ namespace Gomoku
 
         template<typename T>
         static void check_really_unique(const steps_t& key,const std::vector<T>& vals,const std::string& vals_name);
+
+        bool get_ant_job(const sol_state_t& base_st,steps_t& result_key);
+        void load_all_childs(const sol_state_t base_st,std::vector<sol_state_t>& childs);
 	public:
 		static const char* first_solving_file_name;
 		static const char* last_solving_file_name;
@@ -113,6 +120,7 @@ namespace Gomoku
 		void create_init_tree(const steps_t& key);
 
 		bool get_job(steps_t& key);
+		bool get_ant_job(steps_t& key);
 		void save_job(const steps_t& key,const points_t& neitrals,const npoints_t& win,const npoints_t& fails);
 		static void trunc_neitrals(const steps_t& key,points_t& neitrals,const npoints_t& win,const npoints_t& fails);
 

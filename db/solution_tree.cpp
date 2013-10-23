@@ -1,9 +1,11 @@
 #include "solution_tree.h"
+#include <functional>
 #include <boost/filesystem/operations.hpp>
 #include <stdexcept>
 #include "../extern/binary_find.h"
 #include <boost/lexical_cast.hpp>
 #include "../extern/object_progress.hpp"
+#include "../extern/pair_comparator.h"
 
 namespace fs=boost::filesystem;
 
@@ -300,7 +302,7 @@ namespace Gomoku
 			save_solve(first_solving,first_solving_file_name);
 		}
 
-		if(st.neitrals.empty()||st.is_win())relax(st);
+		if(st.is_completed())relax(st);
 		else if(st.use_count>0)generate_new(st);
 
         if(st.wins_count!=0 || st.fails_count!=0)
@@ -378,7 +380,7 @@ namespace Gomoku
 
 			set(prev_st);
 
-			if((prev_st.neitrals.empty()||prev_st.is_win())&&prev_st.key.size()>1)
+			if(prev_st.is_completed()&&prev_st.key.size()>1)
 				relax(prev_st);
 
 			if(prev_st.is_win())decrment_use_count(prev_st);
@@ -488,6 +490,127 @@ namespace Gomoku
         make_unique(cp);
         if(cp.size() != vals.size())
             throw std::runtime_error("check_really_unique() failed: key="+print_steps(key)+" "+vals_name+"="+print_points(vals));
+    }
+
+	bool solution_tree_t::get_ant_job(steps_t& key)
+	{
+        sol_state_t st;
+        st.key=get_root_key();
+        if(st.key.empty()) return false;
+
+        if(!get(st))
+        {
+			throw std::runtime_error("get_ant_job(key): state not found: "+print_steps(st.key));
+        }
+
+        if(st.is_completed())
+            return false;
+
+        return get_ant_job(st,key);
+	}
+
+    bool solution_tree_t::get_ant_job(const sol_state_t& base_st,steps_t& result_key)
+    {
+        if(base_st.state!=ss_solved)
+        {
+            result_key=base_st.key;
+            
+            if(base_st.state==ss_not_solved)
+            {
+                sol_state_t st(base_st);
+                st.state=ss_solving;
+                set(st);
+            }
+
+            return true;
+        }
+
+        std::vector<sol_state_t> childs;
+        load_all_childs(base_st,childs);
+
+        childs.erase(
+            std::remove_if(childs.begin(),childs.end(),std::mem_fun_ref(&sol_state_t::is_completed)),
+            childs.end());
+
+        typedef std::pair<double,size_t> mark_t;
+        typedef std::vector<mark_t> marks_t;
+
+        marks_t marks(childs.size());
+        double max_rate=0.0;
+
+        for(size_t i=0;i<marks.size();i++)
+        {
+            sol_state_t& ss=childs[i];
+            marks[i]=mark_t(1.0/ss.get_win_rate(),i);
+            max_rate+=marks[i].first;
+        }
+
+        double v=0.0f;
+        for(size_t i=0;i<marks.size();i++)
+        {
+            double adj=marks[i].first/=max_rate;
+            marks[i].first=v;
+            v+=adj;
+        }
+
+        size_t shift;
+
+        if(base_st.is_win_fail_stat_empty())shift=0;
+        else
+        {
+            double r=static_cast<double>(rand())/RAND_MAX;
+
+            marks_t::const_iterator it=std::lower_bound(marks.begin(),marks.end(),r,stdext::first_less_pr<double,size_t>());
+            if(it==marks.end() || (it->first!=r && it!=marks.begin()))
+                --it;
+
+            shift=it-marks.begin();
+        }
+
+        for(unsigned i=0;i<marks.size();i++)
+        {
+            size_t ii=(i+shift)%marks.size();
+            sol_state_t& ss=childs[ii];
+
+            if(ss.state==ss_solving)
+                continue;
+
+            if(get_ant_job(ss,result_key))
+                return true;
+        }
+
+        for(unsigned i=0;i<marks.size();i++)
+        {
+            size_t ii=(i+shift)%marks.size();
+            sol_state_t& ss=childs[ii];
+
+            if(ss.state!=ss_solving)
+                continue;
+
+            if(get_ant_job(ss,result_key))
+                return true;
+        }
+
+        return false;
+    }
+    
+    void solution_tree_t::load_all_childs(const sol_state_t base_st,std::vector<sol_state_t>& childs)
+    {
+        size_t mi=base_st.neitrals.size();
+        childs.resize(mi);
+
+        steps_t k=base_st.key;
+        k.push_back(step_t(next_color(base_st.key.size()),0,0));
+
+        for(size_t i=0;i<mi;i++)
+        {
+            static_cast<point&>(k.back())=base_st.neitrals[i];
+            sol_state_t& st=childs[i];
+            st.key=k;
+
+            if(!get(st))
+                throw std::runtime_error("load_all_childs(): state not found: k="+print_steps(k)+" base_st="+print_steps(base_st.key));
+        }
     }
 
 /////////////////////////////////////////////////////////////////////////////////

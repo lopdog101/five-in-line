@@ -27,12 +27,14 @@ void print_use()
 {
 	printf("USE: \n");
 	printf("db <root_dir> get_job\n");
+	printf("db <root_dir> get_ant_job\n");
 	printf("db <root_dir> save_job <key> <neitrals|empty> <win|empty> <fail|empty>\n");
 	printf("db <root_dir> get <key>\n");
 	printf("db <root_dir> view <printable_steps>\n");
 	printf("db <root_dir> view_hex <printable_steps>\n");
 	printf("db <root_dir> view_root\n");
 	printf("db <root_dir> solve_level [iteration_count]\n");
+	printf("db <root_dir> solve_ant [iteration_count]\n");
 	printf("db <root_dir> init_state <printable_steps>\n");
     Gomoku::print_enviropment_variables_hint();
 	printf("win_neitrals (default: %u)\n",solution_tree_t::win_neitrals);
@@ -110,7 +112,7 @@ void sig_handler(int v)
 }
 #endif
 
-void self_solve(solution_tree_t& tr,size_t iteration_count)
+void self_solve(solution_tree_t& tr,size_t iteration_count,bool use_ant=false)
 {
     scan_enviropment_variables();
 
@@ -148,23 +150,29 @@ void self_solve(solution_tree_t& tr,size_t iteration_count)
 		}
 
 		steps_t key;
-		if(!tr.get_job(key))
+        bool r;
+        if(use_ant)r=tr.get_ant_job(key);
+        else r=tr.get_job(key);
+
+		if(!r)
 		{
 			printf("no job anymore\n");
 			return;
 		}
 
-		if(key_len==0)key_len=key.size();
-		else if(key.size()!=key_len)
-		{
-			printf("level %d succesefully solved\n",key_len);
-			return;
-		}
+        if(!use_ant)
+        {
+		    if(key_len==0)key_len=key.size();
+		    else if(key.size()!=key_len)
+		    {
+			    printf("level %d succesefully solved\n",key_len);
+			    return;
+		    }
+        }
+
 		self_solve(tr,key);
 	}
 }
-
-void test();
 
 bool show_state(solution_tree_t& tr,steps_t req)
 {
@@ -249,10 +257,15 @@ int main(int argc,char** argv)
 		}
 
 
-		if(cmd=="get_job")
+		if(cmd=="get_job" ||cmd=="get_ant_job")
 		{
 			steps_t key;
-			if(!tr.get_job(key))
+            
+            bool r;
+            if(cmd=="get_job") r=tr.get_job(key);
+            else r=tr.get_ant_job(key);
+
+			if(!r)
 			{
 				printf("no job anymore\n");
 				return 1;
@@ -405,6 +418,12 @@ int main(int argc,char** argv)
 			int iter_count=0;
 			if(argc>=4)iter_count=atol(argv[3]);
 			self_solve(tr,iter_count);
+		}
+		else if (cmd=="solve_ant")
+		{
+			int iter_count=0;
+			if(argc>=4)iter_count=atol(argv[3]);
+			self_solve(tr,iter_count,true);
 		}
 		else if(cmd=="init_state")
 		{
