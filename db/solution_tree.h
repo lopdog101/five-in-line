@@ -107,7 +107,10 @@ namespace Gomoku
         static void check_really_unique(const steps_t& key,const std::vector<T>& vals,const std::string& vals_name);
 
         bool get_ant_job(const sol_state_t& base_st,steps_t& result_key);
+        bool select_ant_job(const std::vector<sol_state_t>& childs,size_t shift,steps_t& result_key);
         void load_all_childs(const sol_state_t base_st,std::vector<sol_state_t>& childs);
+        size_t normalize_marks_select_shift(std::vector<double>& marks);
+
 	public:
 		static const char* first_solving_file_name;
 		static const char* last_solving_file_name;

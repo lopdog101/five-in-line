@@ -1,5 +1,6 @@
 #include "solution_tree.h"
 #include <functional>
+#include <numeric>
 #include <boost/filesystem/operations.hpp>
 #include <stdexcept>
 #include "../extern/binary_find.h"
@@ -532,45 +533,30 @@ namespace Gomoku
             std::remove_if(childs.begin(),childs.end(),std::mem_fun_ref(&sol_state_t::is_completed)),
             childs.end());
 
-        typedef std::pair<double,size_t> mark_t;
-        typedef std::vector<mark_t> marks_t;
+        if(base_st.is_win_fail_stat_empty())
+        {
+            return select_ant_job(childs,0,result_key);
+        }
 
-        marks_t marks(childs.size());
-        double max_rate=0.0;
+        std::vector<double> marks(childs.size());
 
         for(size_t i=0;i<marks.size();i++)
         {
             sol_state_t& ss=childs[i];
-            marks[i]=mark_t(1.0/ss.get_win_rate(),i);
-            max_rate+=marks[i].first;
+            marks[i]=1.0/ss.get_win_rate();
         }
+        
+        size_t shift=normalize_marks_select_shift(marks);
 
-        double v=0.0f;
-        for(size_t i=0;i<marks.size();i++)
+        return select_ant_job(childs,shift,result_key);
+    }
+    
+    bool solution_tree_t::select_ant_job(const std::vector<sol_state_t>& childs,size_t shift,steps_t& result_key)
+    {
+        for(unsigned i=0;i<childs.size();i++)
         {
-            double adj=marks[i].first/=max_rate;
-            marks[i].first=v;
-            v+=adj;
-        }
-
-        size_t shift;
-
-        if(base_st.is_win_fail_stat_empty())shift=0;
-        else
-        {
-            double r=static_cast<double>(rand())/RAND_MAX;
-
-            marks_t::const_iterator it=std::lower_bound(marks.begin(),marks.end(),r,stdext::first_less_pr<double,size_t>());
-            if(it==marks.end() || (it->first!=r && it!=marks.begin()))
-                --it;
-
-            shift=it-marks.begin();
-        }
-
-        for(unsigned i=0;i<marks.size();i++)
-        {
-            size_t ii=(i+shift)%marks.size();
-            sol_state_t& ss=childs[ii];
+            size_t ii=(i+shift)%childs.size();
+            const sol_state_t& ss=childs[ii];
 
             if(ss.state==ss_solving)
                 continue;
@@ -579,10 +565,10 @@ namespace Gomoku
                 return true;
         }
 
-        for(unsigned i=0;i<marks.size();i++)
+        for(unsigned i=0;i<childs.size();i++)
         {
-            size_t ii=(i+shift)%marks.size();
-            sol_state_t& ss=childs[ii];
+            size_t ii=(i+shift)%childs.size();
+            const sol_state_t& ss=childs[ii];
 
             if(ss.state!=ss_solving)
                 continue;
@@ -593,7 +579,7 @@ namespace Gomoku
 
         return false;
     }
-    
+
     void solution_tree_t::load_all_childs(const sol_state_t base_st,std::vector<sol_state_t>& childs)
     {
         size_t mi=base_st.neitrals.size();
@@ -611,6 +597,27 @@ namespace Gomoku
             if(!get(st))
                 throw std::runtime_error("load_all_childs(): state not found: k="+print_steps(k)+" base_st="+print_steps(base_st.key));
         }
+    }
+    
+    size_t solution_tree_t::normalize_marks_select_shift(std::vector<double>& marks)
+    {
+        double max_rate=std::accumulate(marks.begin(),marks.end(),0.0);
+
+        double adj=0;
+        for(size_t i=0;i<marks.size();i++)
+        {
+            double v=marks[i]/max_rate;
+            marks[i]=adj;
+            adj+=v;
+        }
+
+        double r=static_cast<double>(rand())/RAND_MAX;
+
+        std::vector<double>::const_iterator it=std::lower_bound(marks.begin(),marks.end(),r);
+        if(it==marks.end() || (*it!=r && it!=marks.begin()))
+            --it;
+
+        return it-marks.begin();
     }
 
 /////////////////////////////////////////////////////////////////////////////////
