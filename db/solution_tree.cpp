@@ -629,13 +629,15 @@ namespace Gomoku
         wins.resize(0);
         wins.reserve(base_st.solved_fails.size());
 
-        sol_state_t st;
-        st.key=base_st.key;
-        st.key.push_back(step_t(next_color(base_st.key.size()),0,0));
+        steps_t k=base_st.key;
+        k.push_back(step_t(next_color(base_st.key.size()),0,0));
 
         for(size_t i=0;i<mi;i++)
         {
-            static_cast<point&>(st.key.back())=base_st.tree_fails[i];
+            static_cast<point&>(k.back())=base_st.tree_fails[i];
+            
+            sol_state_t st;
+            st.key=k;
 
             if(!get(st))
                 throw std::runtime_error("load_all_fails_its_wins(): state not found: k="+print_steps(st.key)+" base_st="+print_steps(base_st.key));
