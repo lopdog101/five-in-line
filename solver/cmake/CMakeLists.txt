@@ -43,7 +43,7 @@ add_executable(solver ${SRC_ALGO_FILES} ${SRC_SOLVER_FILES} ${SRC_DB_FILES} ${SR
 add_definitions(-D_CRT_SECURE_NO_WARNINGS)
 
 if(NOT WIN32)
-      TARGET_LINK_LIBRARIES(solver boost_filesystem boost_signals boost_system)
+      TARGET_LINK_LIBRARIES(solver boost_filesystem.a boost_signals.a boost_system.a)
 endif()
 
 link_directories($ENV{BOOST}/stage/lib)
