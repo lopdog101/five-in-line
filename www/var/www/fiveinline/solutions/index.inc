@@ -6,7 +6,7 @@
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 </head>
 <body>
-<h3><a href="solver.zip">Participate in solving</a></h3>
+<h3>Participate in solving <a href="solver.zip">Windows</a> <a href="solver.tar.gz">Ubuntu</a></h3>
 <?
 $EXEC_PATH='/home/shebeko/bin/db';
 $x1=-7;
