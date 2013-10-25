@@ -236,6 +236,8 @@ int main(int argc,char** argv)
 
     ObjectProgress::log_generator lg(true);
 
+    srand(static_cast<unsigned>(time(0)));
+
 	try
 	{
 
