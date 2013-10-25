@@ -1,6 +1,8 @@
 cmake_minimum_required (VERSION 2.6)
 
-link_directories($ENV{BOOST}/stage/lib)
+if( WIN32)
+    link_directories($ENV{BOOST}/stage/lib)
+endif()
 
 project (solver)
 
@@ -39,8 +41,13 @@ SOURCE_GROUP(extern FILES ${SRC_EXTERN_FILES} )
 add_executable(solver ${SRC_ALGO_FILES} ${SRC_SOLVER_FILES} ${SRC_DB_FILES} ${SRC_EXTERN_FILES})
 
 add_definitions(-D_CRT_SECURE_NO_WARNINGS)
-include_directories($ENV{BOOST})
 
-if(MSVC)
+if(NOT WIN32)
+      TARGET_LINK_LIBRARIES(solver boost_filesystem boost_signals boost_system)
+endif()
+
+link_directories($ENV{BOOST}/stage/lib)
+if( MSVC)
+    include_directories($ENV{BOOST})
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP")
 endif()
