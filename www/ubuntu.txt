@@ -47,3 +47,7 @@ pm.max_children = 1
 service php5-fpm restart
 
 mkdir /var/www/fiveinline
+
+6. package for solver
+apt-get install daemon
+apt-get install wget
