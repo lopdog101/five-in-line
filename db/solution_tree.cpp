@@ -506,11 +506,13 @@ namespace Gomoku
 
         if(st.is_completed())
             return false;
+        
+        npoints_t empty_wins_hint;
 
-        return get_ant_job(st,key);
+        return get_ant_job(st,empty_wins_hint,key);
 	}
 
-    bool solution_tree_t::get_ant_job(const sol_state_t& base_st,steps_t& result_key)
+    bool solution_tree_t::get_ant_job(const sol_state_t& base_st,const npoints_t& wins_hint,steps_t& result_key)
     {
         if(base_st.state!=ss_solved)
         {
@@ -526,64 +528,83 @@ namespace Gomoku
             return true;
         }
 
-        std::vector<sol_state_t> childs;
-        load_all_childs(base_st,childs);
+        std::vector<sol_state_t> childs_states;
+        sol_state_refs_t childs;
+        load_all_childs_neitrals(base_st,childs_states,childs);
 
         childs.erase(
-            std::remove_if(childs.begin(),childs.end(),std::mem_fun_ref(&sol_state_t::is_completed)),
+            std::remove_if(childs.begin(),childs.end(),sol_state_ref_complete_pr()),
             childs.end());
 
-        if(base_st.is_win_fail_stat_empty())
+        npoints_t wins_hints_for_childs;
+        load_all_fails_its_wins(base_st,wins_hints_for_childs);
+
+
+        if(base_st.is_win_fail_stat_empty() && wins_hint.empty())
         {
-            return select_ant_job(childs,0,result_key);
+            return select_ant_job(childs,wins_hints_for_childs,0,result_key);
         }
 
         std::vector<double> marks(childs.size());
 
         for(size_t i=0;i<marks.size();i++)
         {
-            sol_state_t& ss=childs[i];
-            marks[i]=1.0/ss.get_win_rate();
+            sol_state_ref_t& ref=childs[i];
+            sol_state_t& ss=*ref.second;
+
+            double& mark=marks[i];
+            
+            mark=1.0/ss.get_win_rate();
+
+            if(!wins_hint.empty())
+            {
+                npoints_t::const_iterator it=binary_find(wins_hint.begin(),wins_hint.end(),ref.first,less_point_pr());
+                if(it!=wins_hint.end())
+                {
+                    mark*=it->n;
+                }
+            }
         }
         
         size_t shift=normalize_marks_select_shift(marks);
 
-        return select_ant_job(childs,shift,result_key);
+        return select_ant_job(childs,wins_hints_for_childs,shift,result_key);
     }
     
-    bool solution_tree_t::select_ant_job(const std::vector<sol_state_t>& childs,size_t shift,steps_t& result_key)
+    bool solution_tree_t::select_ant_job(const sol_state_refs_t& childs,const npoints_t& wins_hint,size_t shift,steps_t& result_key)
     {
-        for(unsigned i=0;i<childs.size();i++)
+        for(size_t i=0;i<childs.size();i++)
         {
             size_t ii=(i+shift)%childs.size();
-            const sol_state_t& ss=childs[ii];
+            const sol_state_t& ss=*childs[ii].second;
 
             if(ss.state==ss_solving)
                 continue;
 
-            if(get_ant_job(ss,result_key))
+            if(get_ant_job(ss,wins_hint,result_key))
                 return true;
         }
 
-        for(unsigned i=0;i<childs.size();i++)
+        for(size_t i=0;i<childs.size();i++)
         {
             size_t ii=(i+shift)%childs.size();
-            const sol_state_t& ss=childs[ii];
+            const sol_state_t& ss=*childs[ii].second;
 
             if(ss.state!=ss_solving)
                 continue;
 
-            if(get_ant_job(ss,result_key))
+            if(get_ant_job(ss,wins_hint,result_key))
                 return true;
         }
 
         return false;
     }
 
-    void solution_tree_t::load_all_childs(const sol_state_t base_st,std::vector<sol_state_t>& childs)
+    void solution_tree_t::load_all_childs_neitrals(const sol_state_t base_st,std::vector<sol_state_t>& childs,sol_state_refs_t& refs)
     {
         size_t mi=base_st.neitrals.size();
         childs.resize(mi);
+        refs.resize(mi);
 
         steps_t k=base_st.key;
         k.push_back(step_t(next_color(base_st.key.size()),0,0));
@@ -595,10 +616,37 @@ namespace Gomoku
             st.key=k;
 
             if(!get(st))
-                throw std::runtime_error("load_all_childs(): state not found: k="+print_steps(k)+" base_st="+print_steps(base_st.key));
+                throw std::runtime_error("load_all_childs_neitrals(): state not found: k="+print_steps(k)+" base_st="+print_steps(base_st.key));
+
+            refs[i]=sol_state_ref_t(k.back(),&st);
         }
     }
     
+    void solution_tree_t::load_all_fails_its_wins(const sol_state_t base_st,npoints_t& wins)
+    {
+        size_t mi=base_st.tree_fails.size();
+
+        wins.resize(0);
+        wins.reserve(base_st.solved_fails.size());
+
+        sol_state_t st;
+        st.key=base_st.key;
+        st.key.push_back(step_t(next_color(base_st.key.size()),0,0));
+
+        for(size_t i=0;i<mi;i++)
+        {
+            static_cast<point&>(st.key.back())=base_st.tree_fails[i];
+
+            if(!get(st))
+                throw std::runtime_error("load_all_fails_its_wins(): state not found: k="+print_steps(st.key)+" base_st="+print_steps(base_st.key));
+
+            wins.insert(wins.end(),st.solved_wins.begin(),st.solved_wins.end());
+            wins.insert(wins.end(),st.tree_wins.begin(),st.tree_wins.end());
+        }
+
+        make_unique(wins);
+    }
+
     size_t solution_tree_t::normalize_marks_select_shift(std::vector<double>& marks)
     {
         double max_rate=std::accumulate(marks.begin(),marks.end(),0.0);

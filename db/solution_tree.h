@@ -76,9 +76,19 @@ namespace Gomoku
 		const points_t& get_key_neitrals(size_t cur_key_size) const;
 		void trunc_to_key_size(size_t cur_key_size);
 		inline size_t get_root_key_size() const{return key.size()-neitrals.size();}
-
-
 	};
+
+    typedef std::pair<point,sol_state_t*> sol_state_ref_t;
+    typedef std::vector<sol_state_ref_t> sol_state_refs_t;
+
+    struct sol_state_ref_complete_pr
+    {
+        inline bool operator()(const sol_state_ref_t& val)
+        {
+            return val.second->is_completed();
+        }
+    };
+
 
 	class solution_tree_t
 	{
@@ -106,10 +116,11 @@ namespace Gomoku
         template<typename T>
         static void check_really_unique(const steps_t& key,const std::vector<T>& vals,const std::string& vals_name);
 
-        bool get_ant_job(const sol_state_t& base_st,steps_t& result_key);
-        bool select_ant_job(const std::vector<sol_state_t>& childs,size_t shift,steps_t& result_key);
-        void load_all_childs(const sol_state_t base_st,std::vector<sol_state_t>& childs);
+        bool get_ant_job(const sol_state_t& base_st,const npoints_t& wins_hint,steps_t& result_key);
+        bool select_ant_job(const sol_state_refs_t& childs,const npoints_t& wins_hint,size_t shift,steps_t& result_key);
+        void load_all_childs_neitrals(const sol_state_t base_st,std::vector<sol_state_t>& childs,sol_state_refs_t& refs);
         size_t normalize_marks_select_shift(std::vector<double>& marks);
+        void load_all_fails_its_wins(const sol_state_t base_st,npoints_t& wins);
 
 	public:
 		static const char* first_solving_file_name;
