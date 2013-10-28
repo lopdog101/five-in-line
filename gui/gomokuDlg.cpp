@@ -13,6 +13,7 @@
 #include <boost/serialization/shared_ptr.hpp>
 #include <boost/serialization/export.hpp>
 #include <boost/serialization/nvp.hpp>
+#include "../db/solution_tree_utils.h"
 
 #include "gomokuDlg.h"
 #include ".\gomokudlg.h"
@@ -550,7 +551,16 @@ void CgomokuDlg::OnEditPastestate()
 
     try
     {
-        Gomoku::steps_t steps=Gomoku::scan_steps(str);
+        Gomoku::steps_t steps;
+
+        if(str.front()=='(')steps=Gomoku::scan_steps(str);
+        else
+        {
+			Gomoku::data_t bin;
+			Gomoku::hex2bin(str,bin);
+
+			Gomoku::bin2points(bin,steps);
+        }
 
         reorder_state_to_game_order(steps);
 
