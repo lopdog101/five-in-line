@@ -216,7 +216,11 @@ function make_point_key_array($arr)
 if (count($_GET)>0) $HTTP_VARS=$_GET;
 else $HTTP_VARS=$_POST;
 
-$hex_state=$HTTP_VARS["st"];
+$hex_state=NULL;
+if(array_key_exists("st",$HTTP_VARS))
+{
+  $hex_state=$HTTP_VARS["st"];
+}
 
 if(!$hex_state)
 {
