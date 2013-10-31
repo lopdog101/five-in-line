@@ -27,6 +27,9 @@ server {
 		fastcgi_pass unix:/var/run/php5-fpm.sock;
 		fastcgi_index index.php;
 		include fastcgi_params;
+		fastcgi_connect_timeout 300s;
+		fastcgi_read_timeout 300s;
+		fastcgi_send_timeout 300s;
 	}
 
 	# deny access to .htaccess files, if Apache's document root
