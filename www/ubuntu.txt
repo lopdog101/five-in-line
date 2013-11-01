@@ -51,3 +51,11 @@ mkdir /var/www/fiveinline
 6. package for solver
 apt-get install daemon
 apt-get install wget
+
+7. Statistic database solving
+apt-get install postgresql
+sudo -u postgres -s
+createdb f5
+createuser www-data
+
+
