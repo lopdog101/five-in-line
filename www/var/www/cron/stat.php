@@ -5,10 +5,11 @@ class Item {
     public $ip = '';
     public $date = '';
     public $src_name='';
+	public $root_name='';
     public $rec_count=1;
 
     function getId() {
-        return $this->src_name."_".$this->date."_".$this->ip;
+        return $this->src_name."_".$this->date."_".$this->ip."_".$this->root_name;
     }
 }
 
@@ -43,9 +44,9 @@ while (($ln = fgets($handle, 4096)) !== false)
   $it=new Item;
 
   $it->ip=$lna[0];
-  $it->date=$lna[3];
-  $it->src_name=$lna[6];
+  $req=$lna[6];
 
+  $it->date=$lna[3];
   $it->date = substr($it->date,strpos($it->date,"[")+1);
 
   $ps=strpos($it->date,":");
@@ -56,6 +57,7 @@ while (($ln = fgets($handle, 4096)) !== false)
 
   $it->date=substr($it->date,0,$ps);
 
+  $it->src_name=$req;
   $ps=strpos($it->src_name,"src_name=");
   if($ps === false)
   {
@@ -63,14 +65,27 @@ while (($ln = fgets($handle, 4096)) !== false)
   }
 
   $it->src_name=substr($it->src_name,$ps+9);
-
   $ps=strpos($it->src_name,"&");
   if($ps === false)
   {
     continue;
   }
-
   $it->src_name=substr($it->src_name,0,$ps);
+
+  $it->root_name=$req;
+  $ps=strpos($it->root_name,"/solutions/");
+  if($ps === false)
+  {
+    continue;
+  }
+
+  $it->root_name=substr($it->root_name,$ps+11);
+  $ps=strpos($it->root_name,"/solve.php");
+  if($ps === false)
+  {
+    continue;
+  }
+  $it->root_name=substr($it->root_name,0,$ps);
 
   if(array_key_exists($it->getId(),$items))
   {
@@ -88,13 +103,23 @@ fclose($handle);
 $conn=pg_connect("dbname=f5");
 if($conn === FALSE)
 {
-  echo "Coudnt connect to f5 database\n";
+  echo "Could not connect to f5 database\n";
 }
 
 foreach($items as $k => $it)
 {
-  $sql="insert "
-  echo $it->ip." ".$it->date." ".$it->src_name." ".$it->rec_count."\n";
+  $sql="select insert_solve_stat(".
+    "'".pg_escape_string($conn,$it->src_name)."','".pg_escape_string($conn,$it->ip).
+	"','".pg_escape_string($conn,$it->root_name)."','".pg_escape_string($conn,$it->date)."'::date,".$it->rec_count.");";
+  
+  $res = pg_query($conn,$sql);
+  if($res === FALSE)
+  {  
+    echo "Error execute: ".$sql." error: ".pg_result_error($res);
+	continue;
+  }
+  
+  pg_free_result($res);
 }
 
 
