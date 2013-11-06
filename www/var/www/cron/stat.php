@@ -85,13 +85,20 @@ while (($ln = fgets($handle, 4096)) !== false)
 
 fclose($handle);
 
+$conn=pg_connect("dbname=f5");
+if($conn === FALSE)
+{
+  echo "Coudnt connect to f5 database\n";
+}
+
 foreach($items as $k => $it)
 {
+  $sql="insert "
   echo $it->ip." ".$it->date." ".$it->src_name." ".$it->rec_count."\n";
 }
 
 
-
+pg_close($conn);
 exit(0);
 
 ?>
