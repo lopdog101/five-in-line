@@ -36,7 +36,7 @@ if($conn === FALSE)
 <h3>Yesterday</h3>
 <table border="1px" cellPadding="4px" cellSpacing="0px">
 <?
-  $sql="select src_name, sum(solve_count) as sum_cnt from solve_stat where root_name='".$ROOT_NAME."' AND log_date>=now()::date-'2 day'::interval AND log_date<now()::date-'1 day'::interval group by src_name order by sum_cnt desc";
+  $sql="select src_name, sum(solve_count) as sum_cnt from solve_stat where root_name='".$ROOT_NAME."' AND log_date>=now()::date-'1 day'::interval AND log_date<now()::date group by src_name order by sum_cnt desc";
 
   $res = pg_query($conn,$sql);
   if($res === FALSE)
