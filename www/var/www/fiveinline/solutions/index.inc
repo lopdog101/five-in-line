@@ -225,11 +225,13 @@ if(array_key_exists("st",$HTTP_VARS))
 if(!$hex_state)
 {
 	$steps=Array();
-	$cmd="view_root";
+	if(isset($OWN_ROOT)) $cmd="view ".escapeshellarg($OWN_ROOT);
+	else $cmd="view_root";
 }
 else
 {
 	$steps=hex2steps($hex_state);
+	
 	$cmd="view_hex ".escapeshellarg($hex_state);
 }
 

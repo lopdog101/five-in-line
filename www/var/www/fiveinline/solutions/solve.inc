@@ -8,8 +8,15 @@ $cmd=$HTTP_VARS["cmd"];
 
 if($cmd=='get_job')
 {
-    if($USE_ANT)$cmd='get_ant_job';
-	passthru($EXEC_PATH." ".$DB_PATH." ".escapeshellarg($cmd),$r);
+	if($USE_ANT)
+		$cmd='get_ant_job';
+	
+	$cmd=$EXEC_PATH." ".$DB_PATH." ".escapeshellarg($cmd);
+
+	if(isset($OWN_ROOT))
+	  $cmd=$cmd." ".escapeshellarg($OWN_ROOT);
+
+	passthru($cmd,$r);
 }
 else if($cmd=='save_job')
 {

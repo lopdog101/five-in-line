@@ -17,6 +17,7 @@ function add_solution($path_name)
 
 add_solution("root");
 add_solution("v14");
+add_solution("v322");
 ?>
   
 </table>
