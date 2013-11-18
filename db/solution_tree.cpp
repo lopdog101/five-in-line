@@ -495,8 +495,13 @@ namespace Gomoku
 
 	bool solution_tree_t::get_ant_job(steps_t& key)
 	{
+        return get_ant_job(get_root_key(),key);
+	}
+    
+    bool solution_tree_t::get_ant_job(const steps_t& root_key,steps_t& key)
+    {
         sol_state_t st;
-        st.key=get_root_key();
+        st.key=root_key;
         if(st.key.empty()) return false;
 
         if(!get(st))
@@ -510,7 +515,8 @@ namespace Gomoku
         npoints_t empty_wins_hint;
 
         return get_ant_job(st,empty_wins_hint,key);
-	}
+    }
+
 
     bool solution_tree_t::get_ant_job(const sol_state_t& base_st,const npoints_t& wins_hint,steps_t& result_key)
     {

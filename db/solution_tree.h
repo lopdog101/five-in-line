@@ -135,6 +135,7 @@ namespace Gomoku
 
 		bool get_job(steps_t& key);
 		bool get_ant_job(steps_t& key);
+        bool get_ant_job(const steps_t& root_key,steps_t& key);
 		void save_job(const steps_t& key,const points_t& neitrals,const npoints_t& win,const npoints_t& fails);
 		static void trunc_neitrals(const steps_t& key,points_t& neitrals,const npoints_t& win,const npoints_t& fails);
 

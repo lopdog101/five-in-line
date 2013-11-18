@@ -27,14 +27,14 @@ void print_use()
 {
 	printf("USE: \n");
 	printf("db <root_dir> get_job\n");
-	printf("db <root_dir> get_ant_job\n");
+	printf("db <root_dir> get_ant_job [root_key]\n");
 	printf("db <root_dir> save_job <key> <neitrals|empty> <win|empty> <fail|empty>\n");
 	printf("db <root_dir> get <key>\n");
 	printf("db <root_dir> view <printable_steps>\n");
 	printf("db <root_dir> view_hex <printable_steps>\n");
 	printf("db <root_dir> view_root\n");
 	printf("db <root_dir> solve_level [iteration_count]\n");
-	printf("db <root_dir> solve_ant [iteration_count]\n");
+	printf("db <root_dir> solve_ant [root_key] [iteration_count]\n");
 	printf("db <root_dir> init_state <printable_steps>\n");
     Gomoku::print_enviropment_variables_hint();
 	printf("win_neitrals (default: %u)\n",solution_tree_t::win_neitrals);
@@ -112,7 +112,7 @@ void sig_handler(int v)
 }
 #endif
 
-void self_solve(solution_tree_t& tr,size_t iteration_count,bool use_ant=false)
+void self_solve(solution_tree_t& tr,size_t iteration_count,const steps_t& root_key=steps_t(),bool use_ant=false)
 {
     scan_enviropment_variables();
 
@@ -151,7 +151,12 @@ void self_solve(solution_tree_t& tr,size_t iteration_count,bool use_ant=false)
 
 		steps_t key;
         bool r;
-        if(use_ant)r=tr.get_ant_job(key);
+        if(use_ant)
+        {
+            if(!root_key.empty())r=tr.get_ant_job(root_key,key);
+            else r=tr.get_ant_job(key);
+
+        }
         else r=tr.get_job(key);
 
 		if(!r)
@@ -263,9 +268,18 @@ int main(int argc,char** argv)
 		{
 			steps_t key;
             
+            
             bool r;
             if(cmd=="get_job") r=tr.get_job(key);
-            else r=tr.get_ant_job(key);
+            else
+            {
+                if(argc<4)r=tr.get_ant_job(key);
+                else
+                {
+                    steps_t root_key=scan_steps(argv[3]);
+                    r=tr.get_ant_job(root_key,key);
+                }
+            }
 
 			if(!r)
 			{
@@ -418,14 +432,19 @@ int main(int argc,char** argv)
 		else if (cmd=="solve_level")
 		{
 			int iter_count=0;
+
 			if(argc>=4)iter_count=atol(argv[3]);
 			self_solve(tr,iter_count);
 		}
 		else if (cmd=="solve_ant")
 		{
 			int iter_count=0;
-			if(argc>=4)iter_count=atol(argv[3]);
-			self_solve(tr,iter_count,true);
+            steps_t root_key;
+			
+            if(argc>=4)root_key=scan_steps(argv[3]);
+            if(argc>=5)iter_count=atol(argv[4]);
+
+			self_solve(tr,iter_count,root_key,true);
 		}
 		else if(cmd=="init_state")
 		{
