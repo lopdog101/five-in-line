@@ -84,7 +84,18 @@ namespace Gomoku
 		}
 	};
 
-	template<class Value>
+	struct maxn_near_point_pr : public near_point_pr
+	{
+		maxn_near_point_pr(const point& _c) : near_point_pr(_c){}
+		inline bool operator()(const npoint& a,const npoint& b) const
+		{
+			if(a.n!=b.n)return a.n>b.n;
+			return near_point_pr::operator()(a,b);
+		}
+
+	};
+    
+    template<class Value>
 	class matrix
 	{
 	public:

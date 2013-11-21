@@ -31,18 +31,6 @@ namespace Gomoku { namespace WsPlayer
 
     typedef incer_t<unsigned> inc_t;
 
-	struct maxn_near_point_pr : public near_point_pr
-	{
-		maxn_near_point_pr(const point& _c) : near_point_pr(_c){}
-		inline bool operator()(const npoint& a,const npoint& b) const
-		{
-			if(a.n!=b.n)return a.n>b.n;
-			return near_point_pr::operator()(a,b);
-		}
-
-	};
-
-	
 	void set_attack_moves(const atacks_t& src,npoints_t& res);
 	void set_open_moves(const atacks_t& src,npoints_t& res,unsigned open_count);
 	void erase_from_sorted_points(points_t& pts,const point& p);
