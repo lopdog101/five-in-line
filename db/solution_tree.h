@@ -4,6 +4,7 @@
 #include "ibin_index.h"
 #include "solution_tree_utils.h"
 #include "../algo/field.h"
+#include "../extern/object_progress.hpp"
 
 namespace Gomoku
 {
@@ -89,6 +90,17 @@ namespace Gomoku
         }
     };
 
+    struct sol_state_visitor_pr
+    {
+        virtual ~sol_state_visitor_pr(){}
+
+        //return true if val changed
+        virtual bool on_change_node(sol_state_t& val) = 0;
+
+        virtual bool should_scan_neitrals(const sol_state_t& val){return true;}
+        virtual bool should_scan_tree_fails(const sol_state_t& val){return true;}
+        virtual bool should_scan_tree_wins(const sol_state_t& val){return true;}
+    };
 
 	class solution_tree_t
 	{
@@ -143,6 +155,9 @@ namespace Gomoku
 		void set(const sol_state_t& val);
 
 		steps_t get_root_key() const;
+
+        void depth_first_search(sol_state_visitor_pr& pr);
+        void depth_first_search(const steps_t& key,sol_state_visitor_pr& pr);
 	};
 
 }//namespace

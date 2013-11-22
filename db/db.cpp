@@ -11,6 +11,7 @@
 #include <boost/filesystem/operations.hpp>
 namespace fs=boost::filesystem;
 #include "solution_tree.h"
+#include "solution_tree_fix_zero_fails.h"
 #include "bin_index.h"
 #include <stdexcept>
 #include "../algo/wsplayer.h"
@@ -36,6 +37,7 @@ void print_use()
 	printf("db <root_dir> solve_level [iteration_count]\n");
 	printf("db <root_dir> solve_ant [root_key] [iteration_count]\n");
 	printf("db <root_dir> init_state <printable_steps>\n");
+	printf("db <root_dir> fix_zero_fails\n");
     Gomoku::print_enviropment_variables_hint();
 	printf("win_neitrals (default: %u)\n",solution_tree_t::win_neitrals);
 }
@@ -457,6 +459,12 @@ int main(int argc,char** argv)
 			std::string str=argv[3];
 			steps_t steps=scan_steps(str);
 			tr.create_init_tree(steps);
+		}
+		else if(cmd=="fix_zero_fails")
+		{
+            fix_zero_deep_fails pr;
+            tr.depth_first_search(pr);
+            lg<<"fix_zero_fails: fixed="<<pr.fixed_count;
 		}
 		else 
 		{

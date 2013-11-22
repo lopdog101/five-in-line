@@ -5,7 +5,6 @@
 #include <stdexcept>
 #include "../extern/binary_find.h"
 #include <boost/lexical_cast.hpp>
-#include "../extern/object_progress.hpp"
 #include "../extern/pair_comparator.h"
 
 namespace fs=boost::filesystem;
@@ -676,6 +675,55 @@ namespace Gomoku
         return it-marks.begin();
     }
 
+    void solution_tree_t::depth_first_search(sol_state_visitor_pr& pr)
+    {
+        return depth_first_search(get_root_key(),pr);
+    }
+
+    void solution_tree_t::depth_first_search(const steps_t& key,sol_state_visitor_pr& pr)
+    {
+        sol_state_t st;
+        st.key=key;
+
+        if(!get(st))
+            return;
+
+        if(pr.on_change_node(st))
+        {
+            set(st);
+        }
+
+        steps_t child_key(key);
+        child_key.push_back(step_t(next_color(key.size()),0,0));
+
+        if(pr.should_scan_neitrals(st))
+        {
+            for(size_t i=0;i<st.neitrals.size();i++)
+            {
+                static_cast<point&>(child_key.back())=st.neitrals[i];
+                depth_first_search(child_key,pr);
+            }
+        }
+
+        if(pr.should_scan_tree_fails(st))
+        {
+            for(size_t i=0;i<st.tree_fails.size();i++)
+            {
+                static_cast<point&>(child_key.back())=st.tree_fails[i];
+                depth_first_search(child_key,pr);
+            }
+        }
+
+        if(pr.should_scan_tree_wins(st))
+        {
+            for(size_t i=0;i<st.tree_wins.size();i++)
+            {
+                static_cast<point&>(child_key.back())=st.tree_wins[i];
+                depth_first_search(child_key,pr);
+            }
+        }
+    }
+
 /////////////////////////////////////////////////////////////////////////////////
 //
 	void sol_state_t::pack(data_t& bin) const
@@ -870,5 +918,4 @@ namespace Gomoku
 		if(idx>neitrals.size())throw std::runtime_error("get_key_neitrals(): invalid neitrals index");
 		neitrals.erase(neitrals.begin()+idx,neitrals.end());
 	}
-
 }//namespace
