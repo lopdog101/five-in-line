@@ -120,6 +120,17 @@ struct fix_zero_deep_fails_impls : public fix_zero_deep_fails
     virtual bool is_canceled(){return need_break;}
 };
 
+void set_ctrl_handler()
+{
+	need_break=false;
+#ifdef _WIN32
+	SetConsoleCtrlHandler(CtrlCHandlerRoutine,TRUE);
+#else
+  signal(SIGINT,sig_handler);
+	signal(SIGTSTP,sig_handler);
+#endif
+}
+
 void self_solve(solution_tree_t& tr,size_t iteration_count,const steps_t& root_key=steps_t(),bool use_ant=false)
 {
     scan_enviropment_variables();
@@ -132,13 +143,7 @@ void self_solve(solution_tree_t& tr,size_t iteration_count,const steps_t& root_k
 	print_used_enviropment_variables(lg);
     lg<<"win_neitrals="<<solution_tree_t::win_neitrals;
 
-	need_break=false;
-#ifdef _WIN32
-	SetConsoleCtrlHandler(CtrlCHandlerRoutine,TRUE);
-#else
-  signal(SIGINT,sig_handler);
-	signal(SIGTSTP,sig_handler);
-#endif
+    set_ctrl_handler();
 
 	size_t key_len=0;
 
@@ -468,6 +473,7 @@ int main(int argc,char** argv)
 		}
 		else if(cmd=="fix_zero_fails")
 		{
+            set_ctrl_handler();
             fix_zero_deep_fails_impls pr(tr);
 
             try
