@@ -682,13 +682,16 @@ namespace Gomoku
 
     void solution_tree_t::depth_first_search(const steps_t& key,sol_state_visitor_pr& pr)
     {
+        if(pr.is_canceled())
+            throw e_cancel();
+
         sol_state_t st;
         st.key=key;
 
         if(!get(st))
             return;
 
-        if(pr.on_change_node(st))
+        if(pr.on_enter_node(st))
         {
             set(st);
         }
@@ -721,6 +724,11 @@ namespace Gomoku
                 static_cast<point&>(child_key.back())=st.tree_wins[i];
                 depth_first_search(child_key,pr);
             }
+        }
+
+        if(pr.on_exit_node(st))
+        {
+            set(st);
         }
     }
 

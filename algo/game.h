@@ -12,8 +12,6 @@ namespace Gomoku
 {
 	class game_t;
 
-	struct e_cancel{};
-
 	class iplayer_t 
 	{
 		Step color_;

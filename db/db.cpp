@@ -114,6 +114,12 @@ void sig_handler(int v)
 }
 #endif
 
+struct fix_zero_deep_fails_impls : public fix_zero_deep_fails
+{
+    fix_zero_deep_fails_impls(solution_tree_t& _tree) : fix_zero_deep_fails(_tree) {}
+    virtual bool is_canceled(){return need_break;}
+};
+
 void self_solve(solution_tree_t& tr,size_t iteration_count,const steps_t& root_key=steps_t(),bool use_ant=false)
 {
     scan_enviropment_variables();
@@ -462,8 +468,17 @@ int main(int argc,char** argv)
 		}
 		else if(cmd=="fix_zero_fails")
 		{
-            fix_zero_deep_fails pr;
-            tr.depth_first_search(pr);
+            fix_zero_deep_fails_impls pr(tr);
+
+            try
+            {
+                tr.depth_first_search(pr);
+            }
+            catch(Gomoku::e_cancel& )
+            {
+                lg<<"fix_zero_fails canceled";
+            }
+
             lg<<"fix_zero_fails: fixed="<<pr.fixed_count;
 		}
 		else 

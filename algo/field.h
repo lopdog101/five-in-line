@@ -10,7 +10,9 @@
 
 namespace Gomoku
 {
-	struct step_t : public point
+	struct e_cancel{};
+
+    struct step_t : public point
 	{
 		Step step;
 		step_t(){step=st_empty;}

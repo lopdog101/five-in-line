@@ -95,11 +95,16 @@ namespace Gomoku
         virtual ~sol_state_visitor_pr(){}
 
         //return true if val changed
-        virtual bool on_change_node(sol_state_t& val) = 0;
+        virtual bool on_enter_node(sol_state_t& val){return false;}
+
+        //return true if val changed
+        virtual bool on_exit_node(sol_state_t& val){return false;}
 
         virtual bool should_scan_neitrals(const sol_state_t& val){return true;}
         virtual bool should_scan_tree_fails(const sol_state_t& val){return true;}
         virtual bool should_scan_tree_wins(const sol_state_t& val){return true;}
+
+        virtual bool is_canceled(){return false;}
     };
 
 	class solution_tree_t

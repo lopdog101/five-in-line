@@ -4,36 +4,24 @@
 
 namespace Gomoku
 {
-    struct fix_zero_deep_fails_point_checker
-    {
-        points_t& pts;
-        steps_t& cur_key;
-        ObjectProgress::log_generator& lg;
-        
-        fix_zero_deep_fails_point_checker(ObjectProgress::log_generator& _lg,points_t& _pts,steps_t& _cur_key) : lg(_lg),pts(_pts),cur_key(_cur_key)
-        {
-        }
-
-        bool operator()(const npoint& p);
-    };
-
     class fix_zero_deep_fails : public sol_state_visitor_pr
     {
         ObjectProgress::log_generator lg;
         points_t pts;
         const steps_t* cur_key;
+        solution_tree_t& tree;
 
         fix_zero_deep_fails(const fix_zero_deep_fails&);
         void operator=(const fix_zero_deep_fails&);
     public:
         unsigned long long fixed_count;
         
-        fix_zero_deep_fails() : lg(true)
+        fix_zero_deep_fails(solution_tree_t& _tree) : lg(true) , tree(_tree)
         {
             fixed_count=0;
         }
 
-        bool on_change_node(sol_state_t& val);
+        bool on_exit_node(sol_state_t& val);
     };
 }//namespace
 
