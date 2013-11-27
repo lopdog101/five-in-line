@@ -732,6 +732,42 @@ namespace Gomoku
         }
     }
 
+    void solution_tree_t::width_first_search_from_bottom_to_top(sol_state_width_pr& pr)
+    {
+        for(size_t l=retreive_next_after_max_level();l>0;l--)
+        {
+            ibin_index_t& idx=indexes.get_index(l-1);
+            width_first_search_from_bottom_to_top(pr,idx);
+        }
+    }
+
+    void solution_tree_t::width_first_search_from_bottom_to_top(sol_state_width_pr& pr,ibin_index_t& idx)
+    {
+		data_t bin_key,bin_data;
+
+        for(idx.first(bin_key,bin_data);;idx.next(bin_key,bin_data))
+        {
+            if(pr.is_canceled())
+                throw e_cancel();
+
+            sol_state_t st;
+            st.unpack(bin_data);
+
+            if(pr.on_enter_node(st))
+            {
+                set(st);
+            }
+        }
+    }
+    
+    size_t solution_tree_t::retreive_next_after_max_level() const
+    {
+        size_t ret=0;
+
+        while(indexes.find_index(ret)!=0){ret++;}
+        return ret;
+    }
+
 /////////////////////////////////////////////////////////////////////////////////
 //
 	void sol_state_t::pack(data_t& bin) const

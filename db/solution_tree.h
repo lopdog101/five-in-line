@@ -90,6 +90,16 @@ namespace Gomoku
         }
     };
 
+    struct sol_state_width_pr
+    {
+        virtual ~sol_state_width_pr(){}
+
+        //return true if val changed
+        virtual bool on_enter_node(sol_state_t& val){return false;}
+
+        virtual bool is_canceled(){return false;}
+    };
+
     struct sol_state_visitor_pr
     {
         virtual ~sol_state_visitor_pr(){}
@@ -107,7 +117,7 @@ namespace Gomoku
         virtual bool is_canceled(){return false;}
     };
 
-	class solution_tree_t
+    class solution_tree_t
 	{
 	private:
 		std::string base_dir;
@@ -139,6 +149,8 @@ namespace Gomoku
         size_t normalize_marks_select_shift(std::vector<double>& marks);
         void load_all_fails_its_wins(const sol_state_t base_st,npoints_t& wins);
 
+        size_t retreive_next_after_max_level() const;
+
 	public:
 		static const char* first_solving_file_name;
 		static const char* last_solving_file_name;
@@ -163,6 +175,9 @@ namespace Gomoku
 
         void depth_first_search(sol_state_visitor_pr& pr);
         void depth_first_search(const steps_t& key,sol_state_visitor_pr& pr);
+
+        void width_first_search_from_bottom_to_top(sol_state_width_pr& pr);
+        void width_first_search_from_bottom_to_top(sol_state_width_pr& pr,ibin_index_t& idx);
 	};
 
 }//namespace
