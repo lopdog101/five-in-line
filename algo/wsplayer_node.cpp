@@ -69,11 +69,8 @@ Result item_t::process(bool need_fill_neitrals,unsigned lookup_deep)
 
 		neitrals.clear();
 
-//		if(lookup_deep==0)
-//		{
-			r=process_treat_sequence();
-			if(r!=r_neitral)return r;
-//		}
+		r=process_treat_sequence();
+		if(r!=r_neitral)return r;
 
 		return process_predictable_move(need_fill_neitrals,lookup_deep);
 	}
@@ -503,6 +500,26 @@ bool item_t::is_defence_five_exists() const
     return !d5_pts.empty();
 }
 
+template<class Points>
+void item_t::add_neitrals(const Points& pts)
+{
+	step_t s;
+	s.step=other_color(step);
+
+	size_t exist_count=neitrals.size();
+
+	neitrals.resize(exist_count+pts.size());
+
+	typename Points::const_iterator i=pts.begin(),ei=pts.end();
+	items_t::iterator j=neitrals.begin()+exist_count;
+    
+	for(;i!=ei;++i,++j)
+	{
+		static_cast<point&>(s)=*i;
+		*j=item_ptr(new item_t(player,s));
+	}
+}
+
 ///////////////////////////////////////////////////////////////
 void wide_item_t::process_deep_common()
 {
@@ -553,26 +570,6 @@ void wide_item_t::process(bool need_fill_neitrals,unsigned lookup_deep)
 	}
 
 	neitrals.erase(std::remove(neitrals.begin(),neitrals.end(),item_ptr()),neitrals.end());
-}
-
-template<class Points>
-void item_t::add_neitrals(const Points& pts)
-{
-	step_t s;
-	s.step=other_color(step);
-
-	size_t exist_count=neitrals.size();
-
-	neitrals.resize(exist_count+pts.size());
-
-	typename Points::const_iterator i=pts.begin(),ei=pts.end();
-	items_t::iterator j=neitrals.begin()+exist_count;
-    
-	for(;i!=ei;++i,++j)
-	{
-		static_cast<point&>(s)=*i;
-		*j=item_ptr(new item_t(player,s));
-	}
 }
 
 /////////////////////////////////////////////////////////////////////////////////////
