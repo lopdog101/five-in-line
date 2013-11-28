@@ -1,4 +1,4 @@
-#include "solution_tree_fix_zero_fails.h"
+#include "solution_tree_fixes.h"
 #include <boost/filesystem/operations.hpp>
 #include "../extern/binary_find.h"
 
@@ -59,8 +59,23 @@ namespace Gomoku
             p.n=ch.max_fail_chain()+1;
             ret=true;
         }
+
+        if(ret)fixed_count++;
         
         return ret;
+    }
+    
+    bool fix_not_solved_wins::on_enter_node(sol_state_t& val)
+    {
+        if(val.state == ss_not_solved && !val.tree_wins.empty())
+        {
+            lg<<"fix_not_solved_wins::on_enter_node(): key="<<print_steps(val.key);
+            tree.relax(val);
+            fixed_count++;
+        }
+
+        //no changes in node itself
+        return false;
     }
 
 }//namespace

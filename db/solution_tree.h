@@ -131,7 +131,6 @@ namespace Gomoku
         bool rewind_to_not_solved(bool first_rewind,deep_solve_t& key);
 		void mark_solving(const steps_t& key);
 
-		void relax(const sol_state_t& child_st);
 		void generate_new(const sol_state_t& base_st);
 		void decrment_use_count(const sol_state_t& base_st);
         void scan_already_solved_neitrals(sol_state_t& base_st);
@@ -149,7 +148,7 @@ namespace Gomoku
         size_t normalize_marks_select_shift(std::vector<double>& marks);
         void load_all_fails_its_wins(const sol_state_t base_st,npoints_t& wins);
 
-        size_t retreive_next_after_max_level() const;
+        size_t retreive_max_level() const;
 
 	public:
 		static const char* first_solving_file_name;
@@ -172,6 +171,7 @@ namespace Gomoku
 		void set(const sol_state_t& val);
 
 		steps_t get_root_key() const;
+		void relax(const sol_state_t& child_st);
 
         void depth_first_search(sol_state_visitor_pr& pr);
         void depth_first_search(const steps_t& key,sol_state_visitor_pr& pr);

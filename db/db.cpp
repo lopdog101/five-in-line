@@ -11,7 +11,7 @@
 #include <boost/filesystem/operations.hpp>
 namespace fs=boost::filesystem;
 #include "solution_tree.h"
-#include "solution_tree_fix_zero_fails.h"
+#include "solution_tree_fixes.h"
 #include "bin_index.h"
 #include <stdexcept>
 #include "../algo/wsplayer.h"
@@ -38,6 +38,7 @@ void print_use()
 	printf("db <root_dir> solve_ant [root_key] [iteration_count]\n");
 	printf("db <root_dir> init_state <printable_steps>\n");
 	printf("db <root_dir> fix_zero_fails\n");
+	printf("db <root_dir> fix_not_solved_wins\n");
     Gomoku::print_enviropment_variables_hint();
 	printf("win_neitrals (default: %u)\n",solution_tree_t::win_neitrals);
 }
@@ -117,6 +118,12 @@ void sig_handler(int v)
 struct fix_zero_deep_fails_impls : public fix_zero_deep_fails
 {
     fix_zero_deep_fails_impls(solution_tree_t& _tree) : fix_zero_deep_fails(_tree) {}
+    virtual bool is_canceled(){return need_break;}
+};
+
+struct fix_not_solved_wins_impl : public fix_not_solved_wins
+{
+    fix_not_solved_wins_impl(solution_tree_t& _tree) : fix_not_solved_wins(_tree) {}
     virtual bool is_canceled(){return need_break;}
 };
 
@@ -486,6 +493,22 @@ int main(int argc,char** argv)
             }
 
             lg<<"fix_zero_fails: fixed="<<pr.fixed_count;
+		}
+		else if(cmd=="fix_not_solved_wins")
+		{
+            set_ctrl_handler();
+            fix_not_solved_wins_impl pr(tr);
+
+            try
+            {
+                tr.width_first_search_from_bottom_to_top(pr);
+            }
+            catch(Gomoku::e_cancel& )
+            {
+                lg<<"fix_not_solved_wins canceled";
+            }
+
+            lg<<"fix_not_solved_wins: fixed="<<pr.fixed_count;
 		}
 		else 
 		{

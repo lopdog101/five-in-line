@@ -734,9 +734,9 @@ namespace Gomoku
 
     void solution_tree_t::width_first_search_from_bottom_to_top(sol_state_width_pr& pr)
     {
-        for(size_t l=retreive_next_after_max_level();l>0;l--)
+        for(size_t l=retreive_max_level();l>0;l--)
         {
-            ibin_index_t& idx=indexes.get_index(l-1);
+            ibin_index_t& idx=indexes.get_index(l);
             width_first_search_from_bottom_to_top(pr,idx);
         }
     }
@@ -745,7 +745,7 @@ namespace Gomoku
     {
 		data_t bin_key,bin_data;
 
-        for(idx.first(bin_key,bin_data);;idx.next(bin_key,bin_data))
+        for(bool r=idx.first(bin_key,bin_data);r;r=idx.next(bin_key,bin_data))
         {
             if(pr.is_canceled())
                 throw e_cancel();
@@ -760,11 +760,11 @@ namespace Gomoku
         }
     }
     
-    size_t solution_tree_t::retreive_next_after_max_level() const
+    size_t solution_tree_t::retreive_max_level() const
     {
         size_t ret=0;
 
-        while(indexes.find_index(ret)!=0){ret++;}
+        while(indexes.find_index(ret+1)!=0){ret++;}
         return ret;
     }
 
