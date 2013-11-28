@@ -123,4 +123,17 @@ namespace Gomoku
 			p.n=bin[i*3+2];
 		}
 	}
+
+    void hex_or_str2points(const std::string& str,steps_t& pts)
+    {
+        if(str.front()=='(')pts=scan_steps(str);
+        else
+        {
+			Gomoku::data_t bin;
+			Gomoku::hex2bin(str,bin);
+
+			Gomoku::bin2points(bin,pts);
+        }
+    }
+
 }//namespace

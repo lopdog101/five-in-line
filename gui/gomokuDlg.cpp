@@ -553,15 +553,7 @@ void CgomokuDlg::OnEditPastestate()
     {
         Gomoku::steps_t steps;
 
-        if(str.front()=='(')steps=Gomoku::scan_steps(str);
-        else
-        {
-			Gomoku::data_t bin;
-			Gomoku::hex2bin(str,bin);
-
-			Gomoku::bin2points(bin,steps);
-        }
-
+        hex_or_str2points(str,steps);
         reorder_state_to_game_order(steps);
 
         pause();

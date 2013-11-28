@@ -296,7 +296,8 @@ int main(int argc,char** argv)
                 if(argc<4)r=tr.get_ant_job(key);
                 else
                 {
-                    steps_t root_key=scan_steps(argv[3]);
+                    steps_t root_key;
+                    hex_or_str2points(argv[3],root_key);
                     r=tr.get_ant_job(root_key,key);
                 }
             }
@@ -416,7 +417,8 @@ int main(int argc,char** argv)
 				return 1;
 			}
 
-			steps_t req=scan_steps(argv[3]);
+			steps_t req;
+            hex_or_str2points(argv[3],req);
 			if(!show_state(tr,req))
 				return 1;
 		}
@@ -461,7 +463,7 @@ int main(int argc,char** argv)
 			int iter_count=0;
             steps_t root_key;
 			
-            if(argc>=4)root_key=scan_steps(argv[3]);
+            if(argc>=4)hex_or_str2points(argv[3],root_key);
             if(argc>=5)iter_count=atol(argv[4]);
 
 			self_solve(tr,iter_count,root_key,true);
@@ -475,7 +477,8 @@ int main(int argc,char** argv)
 			}
 
 			std::string str=argv[3];
-			steps_t steps=scan_steps(str);
+            steps_t steps;
+            hex_or_str2points(str,steps);
 			tr.create_init_tree(steps);
 		}
 		else if(cmd=="fix_zero_fails")
