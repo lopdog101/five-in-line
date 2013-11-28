@@ -42,7 +42,7 @@ namespace Gomoku
 		void unpack(const data_t& bin);
 
 		bool is_win() const{return !solved_wins.empty()||!tree_wins.empty();}
-        bool is_completed() const{return state==ss_solved&&(is_win() || neitrals.empty());}
+        bool is_completed() const{return is_win() || state==ss_solved&&neitrals.empty();}
 		unsigned min_win_chain() const;
 		unsigned max_fail_chain() const;
 
