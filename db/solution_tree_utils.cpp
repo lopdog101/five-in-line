@@ -126,7 +126,13 @@ namespace Gomoku
 
     void hex_or_str2points(const std::string& str,steps_t& pts)
     {
-        if(str.front()=='(')pts=scan_steps(str);
+	if(str.empty())
+	{
+	    pts.clear();
+	    return;
+	}
+
+        if(str[0]=='(')pts=scan_steps(str);
         else
         {
 			Gomoku::data_t bin;
