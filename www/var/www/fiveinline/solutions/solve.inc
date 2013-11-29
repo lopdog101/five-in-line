@@ -12,8 +12,10 @@ if($cmd=='get_job')
 		$cmd='get_ant_job';
 	
 	$cmd=$EXEC_PATH." ".$DB_PATH." ".escapeshellarg($cmd);
-
-	if(isset($OWN_ROOT))
+	
+	if(array_key_exists("root",$HTTP_VARS))
+	  $cmd=$cmd." ".escapeshellarg($HTTP_VARS["root"]);
+	else if(isset($OWN_ROOT))
 	  $cmd=$cmd." ".escapeshellarg($OWN_ROOT);
 
 	passthru($cmd,$r);
