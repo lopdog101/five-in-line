@@ -1,7 +1,8 @@
 setlocal
 :begin
 
-..\..\wget\wget -O key_file "%url%?src_name=%src_name%&cmd=get_job"
+..\..\wget\wget -O key_file "%url%?src_name=%src_name%&cmd=get_job%own_root%"
+
 @if ERRORLEVEL 1 exit
 @for /F "tokens=* delims= " %%i in ('type key_file') do set jb=%%i
 @if ERRORLEVEL 1 exit
