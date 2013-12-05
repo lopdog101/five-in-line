@@ -318,8 +318,6 @@ Result item_t::process_predictable_move(bool need_fill_neitrals,unsigned lookup_
 
 Result item_t::process_neitrals(bool need_fill_neitrals,unsigned lookup_deep,unsigned from)
 {
-	field_t& field=player.field;
-
 	unsigned max_depth=0;
 	if(fail)max_depth=fail->get_chain_depth();
 
@@ -553,8 +551,6 @@ void wide_item_t::process(bool need_fill_neitrals,unsigned lookup_deep)
 		}
 		return;
 	}
-
-	field_t& field=player.field;
 
 	for(unsigned i=0;i<neitrals.size();i++)
 	{

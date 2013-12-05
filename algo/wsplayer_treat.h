@@ -60,7 +60,7 @@ namespace Gomoku { namespace WsPlayer
 	{
 		virtual ~treat_filter_t(){}
 		virtual unsigned get_steps_to_win() const{return 5;}
-		virtual bool operator()(const treat_t&tr) const{return true;}
+        virtual bool operator()(const treat_t&) const{return true;}
 	};
 	
 	class step_treat_filter_t : public treat_filter_t

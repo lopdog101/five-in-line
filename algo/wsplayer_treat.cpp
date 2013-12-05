@@ -343,7 +343,6 @@ item_ptr treat_node_t::contra_steps_exists_one_step(Step cl,treat_node_t& gr)
 	temporary_step hld(field,gr.gain,other_color(cl));
 
 	item_ptr max_r;
-	unsigned max_depth=0;
 
 	for(unsigned k=0;k<gr.childs.size();k++)
 	{
