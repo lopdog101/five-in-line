@@ -1,0 +1,254 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>400</width>
+    <height>300</height>
+   </rect>
+  </property>
+  <property name="sizePolicy">
+   <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+    <horstretch>0</horstretch>
+    <verstretch>0</verstretch>
+   </sizepolicy>
+  </property>
+  <property name="windowTitle">
+   <string>MainWindow</string>
+  </property>
+  <property name="toolButtonStyle">
+   <enum>Qt::ToolButtonIconOnly</enum>
+  </property>
+  <property name="documentMode">
+   <bool>false</bool>
+  </property>
+  <property name="tabShape">
+   <enum>QTabWidget::Rounded</enum>
+  </property>
+  <property name="unifiedTitleAndToolBarOnMac">
+   <bool>false</bool>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <property name="sizePolicy">
+    <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+     <horstretch>0</horstretch>
+     <verstretch>0</verstretch>
+    </sizepolicy>
+   </property>
+   <property name="maximumSize">
+    <size>
+     <width>16777215</width>
+     <height>16777215</height>
+    </size>
+   </property>
+   <layout class="QHBoxLayout" name="horizontalLayout">
+    <item>
+     <widget class="FieldWidget" name="widget" native="true">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
+      <property name="autoFillBackground">
+       <bool>false</bool>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <layout class="QVBoxLayout" name="verticalLayout">
+      <item>
+       <widget class="QLabel" name="label">
+        <property name="text">
+         <string>Player1:</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QComboBox" name="cbPlayer1">
+        <item>
+         <property name="text">
+          <string>human</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>computer</string>
+         </property>
+        </item>
+       </widget>
+      </item>
+      <item>
+       <widget class="QLabel" name="label_2">
+        <property name="text">
+         <string>Player2:</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QComboBox" name="cbPlayer2">
+        <item>
+         <property name="text">
+          <string>human</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>computer</string>
+         </property>
+        </item>
+       </widget>
+      </item>
+      <item>
+       <spacer name="verticalSpacer">
+        <property name="orientation">
+         <enum>Qt::Vertical</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>20</width>
+          <height>108</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+     </layout>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QMenuBar" name="menuBar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>400</width>
+     <height>21</height>
+    </rect>
+   </property>
+  </widget>
+  <widget class="QToolBar" name="mainToolBar">
+   <property name="enabled">
+    <bool>true</bool>
+   </property>
+   <property name="sizePolicy">
+    <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+     <horstretch>0</horstretch>
+     <verstretch>0</verstretch>
+    </sizepolicy>
+   </property>
+   <property name="maximumSize">
+    <size>
+     <width>16777215</width>
+     <height>16777215</height>
+    </size>
+   </property>
+   <property name="movable">
+    <bool>false</bool>
+   </property>
+   <property name="allowedAreas">
+    <set>Qt::LeftToolBarArea</set>
+   </property>
+   <property name="iconSize">
+    <size>
+     <width>32</width>
+     <height>32</height>
+    </size>
+   </property>
+   <property name="toolButtonStyle">
+    <enum>Qt::ToolButtonIconOnly</enum>
+   </property>
+   <property name="floatable">
+    <bool>false</bool>
+   </property>
+   <attribute name="toolBarArea">
+    <enum>TopToolBarArea</enum>
+   </attribute>
+   <attribute name="toolBarBreak">
+    <bool>false</bool>
+   </attribute>
+   <addaction name="actionTapeStart"/>
+   <addaction name="actionTapeRewind"/>
+   <addaction name="actionTapePlay"/>
+   <addaction name="actionTapeFastForward"/>
+   <addaction name="actionTapeEnd"/>
+  </widget>
+  <widget class="QStatusBar" name="statusBar"/>
+  <action name="actionTapeStart">
+   <property name="icon">
+    <iconset resource="qtgui_res.qrc">
+     <normaloff>:/Images/tape_icons/res/tape_icons/control_start_blue.png</normaloff>
+     <disabledoff>:/Images/tape_icons/res/tape_icons/control_start.png</disabledoff>:/Images/tape_icons/res/tape_icons/control_start_blue.png</iconset>
+   </property>
+   <property name="text">
+    <string>TapeStart</string>
+   </property>
+   <property name="toolTip">
+    <string>TapeStart</string>
+   </property>
+  </action>
+  <action name="actionTapeRewind">
+   <property name="icon">
+    <iconset resource="qtgui_res.qrc">
+     <normaloff>:/Images/tape_icons/res/tape_icons/control_rewind_blue.png</normaloff>
+     <disabledoff>:/Images/tape_icons/res/tape_icons/control_rewind.png</disabledoff>:/Images/tape_icons/res/tape_icons/control_rewind_blue.png</iconset>
+   </property>
+   <property name="text">
+    <string>TapeRewind</string>
+   </property>
+  </action>
+  <action name="actionTapePlay">
+   <property name="checkable">
+    <bool>false</bool>
+   </property>
+   <property name="checked">
+    <bool>false</bool>
+   </property>
+   <property name="icon">
+    <iconset resource="qtgui_res.qrc">
+     <normaloff>:/Images/tape_icons/res/tape_icons/control_play_blue.png</normaloff>
+     <normalon>:/Images/tape_icons/res/tape_icons/control_pause_blue.png</normalon>
+     <disabledoff>:/Images/tape_icons/res/tape_icons/control_play.png</disabledoff>
+     <disabledon>:/Images/tape_icons/res/tape_icons/control_pause.png</disabledon>:/Images/tape_icons/res/tape_icons/control_play_blue.png</iconset>
+   </property>
+   <property name="text">
+    <string>TapePlay</string>
+   </property>
+  </action>
+  <action name="actionTapeFastForward">
+   <property name="icon">
+    <iconset resource="qtgui_res.qrc">
+     <normaloff>:/Images/tape_icons/res/tape_icons/control_fastforward_blue.png</normaloff>
+     <disabledoff>:/Images/tape_icons/res/tape_icons/control_fastforward.png</disabledoff>:/Images/tape_icons/res/tape_icons/control_fastforward_blue.png</iconset>
+   </property>
+   <property name="text">
+    <string>TapeFastForward</string>
+   </property>
+  </action>
+  <action name="actionTapeEnd">
+   <property name="icon">
+    <iconset resource="qtgui_res.qrc">
+     <normaloff>:/Images/tape_icons/res/tape_icons/control_end_blue.png</normaloff>
+     <disabledoff>:/Images/tape_icons/res/tape_icons/control_end.png</disabledoff>:/Images/tape_icons/res/tape_icons/control_end_blue.png</iconset>
+   </property>
+   <property name="text">
+    <string>TapeEnd</string>
+   </property>
+  </action>
+ </widget>
+ <layoutdefault spacing="6" margin="11"/>
+ <customwidgets>
+  <customwidget>
+   <class>FieldWidget</class>
+   <extends>QWidget</extends>
+   <header>fieldwidget.h</header>
+   <container>1</container>
+  </customwidget>
+ </customwidgets>
+ <resources>
+  <include location="qtgui_res.qrc"/>
+ </resources>
+ <connections/>
+</ui>
