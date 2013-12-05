@@ -10,9 +10,9 @@ public:
     explicit FieldWidget(QWidget *parent = 0);
 protected:
     void paintEvent(QPaintEvent *event);
-signals:
+Q_SIGNALS:
 
-public slots:
+public Q_SLOTS:
 
 };
 

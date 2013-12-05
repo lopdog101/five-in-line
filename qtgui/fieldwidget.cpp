@@ -7,7 +7,7 @@ FieldWidget::FieldWidget(QWidget *parent) :
 {
 }
 
-void FieldWidget::paintEvent(QPaintEvent *event)
+void FieldWidget::paintEvent(QPaintEvent *)
 {
     static const QPoint hourHand[3] = {
        QPoint(7, 8),
