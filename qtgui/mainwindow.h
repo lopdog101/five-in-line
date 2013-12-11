@@ -25,7 +25,7 @@ private:
     Ui::MainWindow *ui;
 
 #ifndef Q_MOC_RUN
-    Gomoku::field_ptr m_field;
+    Gomoku::field_ptr field;
     Gomoku::game_t game;
     Gomoku::steps_t redo_steps;
 //    boost::signals::scoped_connection hld_step;

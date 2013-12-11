@@ -1,67 +1,75 @@
 #include "fieldwidget.h"
-#include <QtCore>
-#include <QtGui>
 
 FieldWidget::FieldWidget(QWidget *parent) :
-    QWidget(parent)
+    QWidget(parent),center(0,0)
 {
+    show_move_numbers=true;
+
+    bEmpty.load(":/Images/res/empty.bmp");
+    bKrestik.load(":/Images/res/krestik.bmp");
+    bNolik.load(":/Images/res/nolik.bmp");
+    bKrestikLast.load(":/Images/res/krestik_last.bmp");
+    bNolikLast.load(":/Images/res/nolik_last.bmp");
 }
 
 void FieldWidget::paintEvent(QPaintEvent *)
 {
-    static const QPoint hourHand[3] = {
-       QPoint(7, 8),
-       QPoint(-7, 8),
-       QPoint(0, -40)
-    };
-
-    static const QPoint minuteHand[3] = {
-       QPoint(7, 8),
-       QPoint(-7, 8),
-       QPoint(0, -70)
-    };
-
-    QColor hourColor(127, 0, 127);
-    QColor minuteColor(0, 127, 127, 191);
-
-    int side = qMin(width(), height());
-    QTime time = QTime::currentTime();
+    if(!field)
+        return;
 
     QPainter painter(this);
-    painter.setRenderHint(QPainter::Antialiasing);
-    painter.translate(width() / 2, height() / 2);
-    painter.scale(side / 200.0, side / 200.0);
 
-    painter.setPen(Qt::NoPen);
-    painter.setBrush(hourColor);
 
-    painter.save();
-    painter.rotate(30.0 * ((time.hour() + time.minute() / 60.0)));
-    painter.drawConvexPolygon(hourHand, 3);
-    painter.restore();
-    painter.setPen(hourColor);
+    QRect rc(0,0,width(),height());
+    painter.fillRect(rc,Qt::white);
 
-    for (int i = 0; i < 12; ++i)
+//    dc.SetTextColor(RGB(255,255,255));
+//    dc.SetBkMode(TRANSPARENT);
+//    CFont* def_font=dc.SelectObject(&m_font);
+
+    const Gomoku::field_t& fl=*field;
+    const Gomoku::steps_t& steps=fl.get_steps();
+
+    for(int y=0;y<height();y+=box_size)
+    for(int x=0;x<width();x+=box_size)
     {
-        painter.drawLine(88, 0, 96, 0);
-        painter.rotate(30.0);
+        Gomoku::point pos=pix2world(QPoint(x,y));
+        QPixmap* bmp;
+        bool last=false;
+
+        if(!fl.empty()&&pos==fl.back()||fl.size()>=2&&pos==steps[fl.size()-2])last=true;
+
+        Gomoku::Step step=fl.at(pos);
+
+        switch(step)
+        {
+        case Gomoku::st_krestik:bmp=last? &bKrestikLast:&bKrestik;break;
+        case Gomoku::st_nolik:bmp=last? &bNolikLast:&bNolik;break;
+        default:bmp=&bEmpty;
+        }
+
+        painter.drawPixmap(x,y,box_size,box_size,*bmp);
+
+        if(show_move_numbers&&step!=Gomoku::st_empty)
+        {
+            Gomoku::steps_t::const_iterator it=std::find(steps.begin(),steps.end(),Gomoku::step_t(step,pos.x,pos.y));
+            unsigned move_num=1+(it-steps.begin());
+
+            QString smove_num=QString::number(move_num);
+            painter.drawText(x,y,box_size,box_size,Qt::AlignCenter,smove_num);
+        }
     }
+//    on_after_paint(dc);
+}
 
-    painter.setPen(Qt::NoPen);
-    painter.setBrush(minuteColor);
+QPoint FieldWidget::world2pix(const Gomoku::point& pt) const
+{
+    QPoint ret((pt.x+center.x+width()/(box_size*2))*box_size,(pt.y+center.y+height()/(box_size*2))*box_size);
+    return ret;
+}
 
-    painter.save();
-    painter.rotate(6.0 * (time.minute() + time.second() / 60.0));
-    painter.drawConvexPolygon(minuteHand, 3);
-    painter.restore();
-
-    painter.setPen(minuteColor);
-
-    for (int j = 0; j < 60; ++j)
-    {
-       if ((j % 5) != 0)
-           painter.drawLine(92, 0, 96, 0);
-       painter.rotate(6.0);
-    }
-
+Gomoku::point FieldWidget::pix2world(const QPoint& pt) const
+{
+    Gomoku::point ret(pt.x()/box_size-center.x-width()/(box_size*2),pt.y()/box_size-center.y-height()/(box_size*2));
+    return ret;
 }

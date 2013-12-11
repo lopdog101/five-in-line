@@ -33,6 +33,10 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
 
+    field=Gomoku::field_ptr(new Gomoku::field_t);
+    game.fieldp=field;
+
+    ui->widget->field=field;
 }
 
 MainWindow::~MainWindow()
