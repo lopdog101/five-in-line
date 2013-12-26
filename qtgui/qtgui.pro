@@ -23,7 +23,8 @@ SOURCES += main.cpp\
     ../algo/game.cpp \
     ../algo/field.cpp \
     ../algo/check_player.cpp \
-    ../extern/object_progress.cpp
+    ../extern/object_progress.cpp \
+    interractive_players.cpp
 
 HEADERS  += mainwindow.h \
     fieldwidget.h \
@@ -45,7 +46,8 @@ HEADERS  += mainwindow.h \
     ../extern/pair_comparator.h \
     ../extern/object_progress.hpp \
     ../extern/exception_catch.h \
-    ../extern/binary_find.h
+    ../extern/binary_find.h \
+    interractive_players.h
 
 FORMS    += mainwindow.ui
 
