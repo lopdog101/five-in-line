@@ -199,7 +199,7 @@ item_ptr treat_node_t::check_tree_one_group_step(Step cl,bool refind_one_step)
 	if(!c)return item_ptr();
 
 	item_ptr ret(new item_t(player,gain,cl ));
-	ret->fail=c;
+	ret->add_fail(c);
 
 	return ret;
 }
@@ -262,7 +262,7 @@ item_ptr treat_node_t::icheck_tree_one_group_step(Step cl,bool refind_one_step)
 				
 			item_ptr f(new item_t(player,ch.cost[0],other_color(cl) ));
 			item_ptr w(new item_t(player,ch.cost[1],cl ));
-			f->win=w;
+			f->add_win(w);
 
 			unsigned depth=f->get_chain_depth();
 			if(!max_r||depth>max_depth)
@@ -284,7 +284,7 @@ item_ptr treat_node_t::icheck_tree_one_group_step(Step cl,bool refind_one_step)
 				if(!max_r||depth>max_depth)
 				{
 					max_r=item_ptr(new item_t(player,ch.cost[j],other_color(cl) ));
-					max_r->win=cf;
+					max_r->add_win(cf);
 		
 					max_depth=depth;
 				}
@@ -357,7 +357,7 @@ item_ptr treat_node_t::contra_steps_exists_one_step(Step cl,treat_node_t& gr)
 			item_ptr c(new item_t(player,gr.gain,other_color(cl) ));
 			item_ptr ca(new item_t(player,ch.cost[j],cl ));
 
-			c->win=ca;
+			c->add_win(ca);
 			return c;
 		}
 
@@ -371,8 +371,8 @@ item_ptr treat_node_t::contra_steps_exists_one_step(Step cl,treat_node_t& gr)
 			item_ptr c(new item_t(player,gr.gain,other_color(cl) ));
 			item_ptr ca(new item_t(player,ch.cost[j],cl ));
 
-			c->win=ca;
-			ca->fail=res;
+			c->add_win(ca);
+			ca->add_fail(res);
 			return c;
 		}
 	}

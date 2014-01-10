@@ -78,27 +78,14 @@ int main(int argc,char** argv)
 
 		const WsPlayer::wide_item_t& r=static_cast<const WsPlayer::wide_item_t&>(*pl.root);
 
-		points_t neitrals(r.neitrals.size());
-		for(unsigned i=0;i<r.neitrals.size();i++)
-			neitrals[i]=*r.neitrals[i];
+		points_t neitrals;
+		items2points(r.get_neitrals(),neitrals);
 
-		npoints_t wins(r.wins.size());
-		for(unsigned i=0;i<r.wins.size();i++)
-		{
-			npoint& p=wins[i];
-			WsPlayer::item_t& it=*r.wins[i];
-			p=it;
-			p.n=it.get_chain_depth();
-		}
+		npoints_t wins;
+		items2depth_npoints(r.get_wins().get_vals(),wins);
 
-		npoints_t fails(r.fails.size());
-		for(unsigned i=0;i<r.fails.size();i++)
-		{
-			npoint& p=fails[i];
-			WsPlayer::item_t& it=*r.fails[i];
-			p=it;
-			p.n=it.get_chain_depth();
-		}
+		npoints_t fails;
+		items2depth_npoints(r.get_fails().get_vals(),fails);
 
 		std::string str;
 
@@ -123,6 +110,12 @@ int main(int argc,char** argv)
 		else ret+=str;
 
 		printf("%s",ret.c_str());
+
+		ObjectProgress::log_generator lg(true);
+
+		lg<<"n="<<print_points(neitrals);
+		lg<<"w="<<print_points(wins);
+		lg<<"f="<<print_points(fails);
 	}
 	catch(std::exception& e)
 	{

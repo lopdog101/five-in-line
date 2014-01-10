@@ -42,9 +42,10 @@ void wsplayer_t::delegate_step()
         throw;
 	}
 
-	if(root->win)lg<<"wsplayer_t::delegate_step(): find win chain_depth="<<root->win->get_chain_depth()<<": "<<print_chain(root->win);
-	if(root->fail!=0&&root->neitrals.empty())lg<<"wsplayer_t::delegate_step(): find fail chain_depth="<<root->fail->get_chain_depth()
-		<<": "<<print_chain(root->fail);
+	if(!root->get_wins().empty())lg<<"wsplayer_t::delegate_step(): find win chain_depth="<<(root->get_chain_depth()-1)
+		<<": "<<print_chain(root->get_wins().get_best());
+	if(!root->get_fails().empty() && root->get_neitrals().empty())lg<<"wsplayer_t::delegate_step(): find fail chain_depth="<<root->get_chain_depth()
+		<<": "<<print_chain(root->get_fails().get_best());
 
 	point p=*root->get_next_step();
     game().OnNextStep(*this,p);
