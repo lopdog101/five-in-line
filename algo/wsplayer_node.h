@@ -8,22 +8,46 @@ namespace Gomoku { namespace WsPlayer
 	typedef boost::shared_ptr<item_t> item_ptr;
 	typedef std::vector<item_ptr> items_t;
 
-	class selected_childs
+	class selected_wins_childs
 	{
-		bool shortest_is_best;
+	protected:
 		unsigned current_chain_depth;
 		items_t vals;
 		item_ptr best_val;
 	public:
-		selected_childs(bool _shortest_is_best);
+		selected_wins_childs();
+		virtual ~selected_wins_childs(){}
 		
-		void add(const item_ptr& val);
-		void clear();
+		virtual void add(const item_ptr& val);
+		virtual void clear();
 		inline const item_ptr& get_best() const{return best_val;}
 		inline bool empty() const{return vals.empty();}
 		inline const items_t& get_vals() const{return vals;}
 		inline unsigned get_chain_depth() const{return current_chain_depth;}
 	};
+
+	class selected_fails_childs : public selected_wins_childs
+	{
+		npoints_t win_hints;
+
+		void add_wins_hint(const item_ptr& val);
+	public:
+		virtual void add(const item_ptr& val);
+		virtual void clear();
+		inline const npoints_t& get_win_hins() const{return win_hints;}
+	};
+
+
+	class existing_npoints_sort_pr
+	{
+		const npoints_t& ref;
+		less_point_pr pr;
+	public:
+		existing_npoints_sort_pr(const npoints_t& _ref) : ref(_ref){}
+		
+		bool operator()(const item_ptr& a,const item_ptr& b)const;
+	};
+
 
 	class item_t : public step_t
 	{
@@ -31,21 +55,23 @@ namespace Gomoku { namespace WsPlayer
 		void operator=(const item_t&);
 	protected:
 		items_t neitrals;
-		selected_childs wins;
-		selected_childs fails;
+		selected_wins_childs wins;
+		selected_fails_childs fails;
 
         template<class Points>
 		void add_neitrals(const Points& pts);
+
+		Result add_and_process_neitrals(const npoints_t& pts,unsigned lookup_deep,unsigned drop_generation);
 
 		void clear();
 
 		Result process_predictable_move(bool need_fill_neitrals,unsigned lookup_deep);
 		Result process_treat_sequence();
-		virtual Result process_neitrals(bool need_fill_neitrals,unsigned lookup_deep,unsigned from=0);
+		virtual Result process_neitrals(bool need_fill_neitrals,unsigned lookup_deep,unsigned from=0,const item_t* parent_node=0);
 		void drop_neitrals_and_fail_child(unsigned generation=0);
 		Result process_deep_stored();
-
         bool is_defence_five_exists() const;
+		void reorder_neitrals_as_neighbor_win_hint(unsigned from,const item_t* parent_node);
 	public:
 		wsplayer_t& player;
 
@@ -57,13 +83,13 @@ namespace Gomoku { namespace WsPlayer
 		item_ptr get_win_fail_step() const;
 		unsigned get_chain_depth() const;
 
-		Result process(bool need_fill_neitrals,unsigned lookup_deep);
+		Result process(bool need_fill_neitrals,unsigned lookup_deep,const item_t* parent_node=0);
 		Result process_deep_common();
 
 		inline void add_win(const item_ptr& val){wins.add(val);}
 		inline void add_fail(const item_ptr& val){fails.add(val);}
-		inline const selected_childs& get_wins() const{return wins;}
-		inline const selected_childs& get_fails() const{return fails;}
+		inline const selected_wins_childs& get_wins() const{return wins;}
+		inline const selected_fails_childs& get_fails() const{return fails;}
 		inline const items_t& get_neitrals() const{return neitrals;}
 	};
 
@@ -72,7 +98,7 @@ namespace Gomoku { namespace WsPlayer
 	protected:
 		void process(bool need_fill_neitrals,unsigned lookup_deep);
 		void process_deep_stored();
-		virtual Result process_neitrals(bool need_fill_neitrals,unsigned lookup_deep,unsigned from=0);
+		virtual Result process_neitrals(bool need_fill_neitrals,unsigned lookup_deep,unsigned from=0,const item_t* parent_node=0);
 	public:
 		wide_item_t(wsplayer_t& _player,const step_t& s) : item_t(_player,s){}
 		wide_item_t(wsplayer_t& _player,const Gomoku::point& p,Step s) : item_t(_player,p,s){}

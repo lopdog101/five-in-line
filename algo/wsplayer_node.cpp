@@ -13,18 +13,14 @@ namespace Gomoku { namespace WsPlayer
 
 item_t::item_t(wsplayer_t& _player,const step_t& s) : 
 	step_t(s),
-	player(_player),
-	wins(true),
-	fails(false)
+	player(_player)
 {
 	++nodes_count;
 }
 
 item_t::item_t(wsplayer_t& _player,const Gomoku::point& p,Step s) : 
 	step_t(s,p.x,p.y),
-	player(_player),
-	wins(true),
-	fails(false)
+	player(_player)
 {
 	++nodes_count;
 }
@@ -83,7 +79,7 @@ item_ptr item_t::get_win_fail_step() const
 }
 
 
-Result item_t::process(bool need_fill_neitrals,unsigned lookup_deep)
+Result item_t::process(bool need_fill_neitrals,unsigned lookup_deep,const item_t* parent_node)
 {
 	if(!wins.empty())
 		return r_fail;
@@ -104,7 +100,7 @@ Result item_t::process(bool need_fill_neitrals,unsigned lookup_deep)
 		return process_predictable_move(need_fill_neitrals,lookup_deep);
 	}
 
-	return process_neitrals(need_fill_neitrals,lookup_deep);
+	return process_neitrals(need_fill_neitrals,lookup_deep,0,parent_node);
 }
 
 Result item_t::process_predictable_move(bool need_fill_neitrals,unsigned lookup_deep)
@@ -244,21 +240,16 @@ Result item_t::process_predictable_move(bool need_fill_neitrals,unsigned lookup_
 
 		npoints_t pts(ac4_pts);
 		sort_maxn_and_near_zero(pts);
-		add_neitrals(pts);
 
-		if(lookup_deep>0)
-		{
 #ifdef PRINT_PREDICT_STEPS
+		if(lookup_deep>0)
 			lg<<"close_four attack: ac4_pts.size()="<<ac4_pts.size()<<" recursive_deep="<<recursive_deep
 				<<" pts="<<print_points(pts)
 				<<"\r\n"<<print_field(player.field.get_steps());
 #endif
-
-			Result r=process_neitrals(false,lookup_deep-1);
-			if(r==r_fail)
-				return r;
-			drop_neitrals_and_fail_child(2);
-		}
+		Result r=add_and_process_neitrals(pts,lookup_deep,2);
+		if(r==r_fail)
+			return r;
 	}
 
 	exclude_exists(ac4_pts,ao3_pts);
@@ -270,21 +261,16 @@ Result item_t::process_predictable_move(bool need_fill_neitrals,unsigned lookup_
 
 		npoints_t pts(ao3_pts);
 		sort_maxn_and_near_zero(pts);
-		add_neitrals(pts);
 
-		if(lookup_deep>0)
-		{
 #ifdef PRINT_PREDICT_STEPS
+		if(lookup_deep>0)
 			lg<<"open three attack: ao3_pts.size()="<<ao3_pts.size()<<" recursive_deep="<<recursive_deep
 				<<" pts="<<print_points(pts)
 				<<"\r\n"<<print_field(player.field.get_steps());
 #endif
-
-			Result r=process_neitrals(false,lookup_deep-1,ac4_pts.size());
-			if(r==r_fail)
-				return r;
-			drop_neitrals_and_fail_child(1);
-		}
+		Result r=add_and_process_neitrals(pts,lookup_deep,1);
+		if(r==r_fail)
+			return r;
 	}
 
 	exclude_exists(ao3_pts,ao3_open_pts);
@@ -293,21 +279,16 @@ Result item_t::process_predictable_move(bool need_fill_neitrals,unsigned lookup_
 	{
 		npoints_t pts(ao3_open_pts);
 		sort_maxn_and_near_zero(pts);
-		add_neitrals(pts);
 
-		if(lookup_deep>0)
-		{
 #ifdef PRINT_PREDICT_STEPS
+		if(lookup_deep>0)
 			lg<<"hole three attack: ao3_open_pts.size()="<<ao3_open_pts.size()<<" recursive_deep="<<recursive_deep
 				<<" pts="<<print_points(pts)
 				<<"\r\n"<<print_field(player.field.get_steps());
 #endif
-
-			Result r=process_neitrals(false,lookup_deep-1,ac4_pts.size()+ao3_pts.size());
-			if(r==r_fail)
-				return r;
-			drop_neitrals_and_fail_child(1);
-		}
+		Result r=add_and_process_neitrals(pts,lookup_deep,1);
+		if(r==r_fail)
+			return r;
 	}
 
 	if(!need_fill_neitrals)
@@ -350,16 +331,18 @@ Result item_t::process_predictable_move(bool need_fill_neitrals,unsigned lookup_
 	return r_neitral;
 }
 
-Result item_t::process_neitrals(bool need_fill_neitrals,unsigned lookup_deep,unsigned from)
+Result item_t::process_neitrals(bool need_fill_neitrals,unsigned lookup_deep,unsigned from,const item_t* parent_node)
 {
-	for(unsigned i=0;i<neitrals.size();i++)
+//	reorder_neitrals_as_neighbor_win_hint(from,parent_node);
+
+	for(unsigned i=from;i<neitrals.size();i++)
 	{
 		player.check_cancel();
 		item_ptr& pch=neitrals[i];
 		item_t& ch=*pch;
 
 		temporary_state ts(player,ch);
-		Result r=ch.process(need_fill_neitrals,lookup_deep);
+		Result r=ch.process(need_fill_neitrals,lookup_deep,this);
 
 		if(r==r_win)
 		{
@@ -382,6 +365,39 @@ Result item_t::process_neitrals(bool need_fill_neitrals,unsigned lookup_deep,uns
 		return r_fail;
 
 	if(neitrals.empty())return r_win;
+	return r_neitral;
+}
+
+void item_t::reorder_neitrals_as_neighbor_win_hint(unsigned from,const item_t* parent_node)
+{
+	if(!parent_node)
+		return;
+
+	const npoints_t& hint=parent_node->get_fails().get_win_hins();
+	
+	if(hint.empty())
+		return;
+
+	existing_npoints_sort_pr pr(hint);
+	std::stable_sort(neitrals.begin()+from,neitrals.end(),pr);
+}
+
+
+Result item_t::add_and_process_neitrals(const npoints_t& pts,unsigned lookup_deep,unsigned drop_generation)
+{
+	unsigned from=neitrals.size();
+	add_neitrals(pts);
+
+	if(lookup_deep==0)
+		return r_neitral;
+
+	Result r=process_neitrals(false,lookup_deep-1,from);
+
+	if(r==r_fail)
+		return r;
+
+	drop_neitrals_and_fail_child(drop_generation);
+
 	return r_neitral;
 }
 
@@ -585,9 +601,9 @@ void wide_item_t::process(bool need_fill_neitrals,unsigned lookup_deep)
 	process_neitrals(need_fill_neitrals,lookup_deep);
 }
 
-Result wide_item_t::process_neitrals(bool need_fill_neitrals,unsigned lookup_deep,unsigned from)
+Result wide_item_t::process_neitrals(bool need_fill_neitrals,unsigned lookup_deep,unsigned from,const item_t* parent_node)
 {
-	for(unsigned i=0;i<neitrals.size();i++)
+	for(unsigned i=from;i<neitrals.size();i++)
 	{
 		player.check_cancel();
 		item_ptr& pch=neitrals[i];
@@ -612,13 +628,12 @@ Result wide_item_t::process_neitrals(bool need_fill_neitrals,unsigned lookup_dee
 
 
 ///////////////////////////////////////////////////////////////
-selected_childs::selected_childs(bool _shortest_is_best)
+selected_wins_childs::selected_wins_childs()
 {
-	shortest_is_best=_shortest_is_best;
 	current_chain_depth=0;
 }
 		
-void selected_childs::add(const item_ptr& val)
+void selected_wins_childs::add(const item_ptr& val)
 {
 	vals.push_back(val);
 
@@ -631,19 +646,81 @@ void selected_childs::add(const item_ptr& val)
 		return;
 	}
 
-	if(shortest_is_best&&depth<current_chain_depth || 
-		!shortest_is_best&&depth>current_chain_depth)
+	if(depth<current_chain_depth)
 	{
 		best_val=val;
 		current_chain_depth=depth;
 	}
 }
 
-void selected_childs::clear()
+void selected_wins_childs::clear()
 {
 	vals.clear();
 	best_val.reset();
 	current_chain_depth=0;
+}
+
+void selected_fails_childs::add(const item_ptr& val)
+{
+	add_wins_hint(val);
+
+	vals.push_back(val);
+
+	unsigned depth=val->get_chain_depth();
+
+	if(!best_val)
+	{
+		best_val=val;
+		current_chain_depth=depth;
+		return;
+	}
+
+	if(depth>current_chain_depth)
+	{
+		best_val=val;
+		current_chain_depth=depth;
+	}
+}
+
+void selected_fails_childs::clear()
+{
+	vals.clear();
+	best_val.reset();
+	current_chain_depth=0;
+	win_hints.clear();
+}
+
+void selected_fails_childs::add_wins_hint(const item_ptr& val)
+{
+	const items_t& child_wins=val->get_wins().get_vals();
+	
+	if(child_wins.empty())
+		return;
+	
+	win_hints.reserve(win_hints.size()+child_wins.size());
+	for(size_t i=0;i<child_wins.size();i++)
+	{
+		const item_t& v=*child_wins[i];
+		win_hints.push_back(npoint(v));
+	}
+
+	make_unique(win_hints);
+}
+
+/////////////////////////////////////////////////////////////////////////////////////
+
+bool existing_npoints_sort_pr::operator()(const item_ptr& a,const item_ptr& b)const
+{
+	npoints_t::const_iterator ia=binary_find(ref.begin(),ref.end(),*a,pr);
+	npoints_t::const_iterator ib=binary_find(ref.begin(),ref.end(),*b,pr);
+
+	if(ia==ref.end())
+		return false;
+
+	if(ib==ref.end())
+		return true;
+	
+	return ia->n > ib->n;
 }
 
 /////////////////////////////////////////////////////////////////////////////////////
