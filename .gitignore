@@ -1,0 +1,4 @@
+*.exe
+db/cmake/*
+gui/cmake/*
+tests/cmake/*
