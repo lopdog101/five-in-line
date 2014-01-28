@@ -11,6 +11,7 @@ namespace Gomoku { namespace WsPlayer
 	extern unsigned treat_deep;
     extern unsigned max_treat_check;
     extern unsigned max_treat_check_rebuild_tree;
+    extern unsigned ant_count;
 
     struct e_max_treat_check_reached : public e_cancel{};
     struct e_max_treat_check_rebuild_tree : public e_max_treat_check_reached{};

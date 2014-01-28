@@ -24,6 +24,7 @@ namespace Gomoku { namespace WsPlayer
 		inline bool empty() const{return vals.empty();}
 		inline const items_t& get_vals() const{return vals;}
 		inline unsigned get_chain_depth() const{return current_chain_depth;}
+		inline size_t size() const{return vals.size();}
 	};
 
 	class selected_fails_childs : public selected_wins_childs
@@ -48,6 +49,10 @@ namespace Gomoku { namespace WsPlayer
 		bool operator()(const item_ptr& a,const item_ptr& b)const;
 	};
 
+	struct win_rate_cmp_pr
+	{
+		bool operator()(const item_ptr& a,const item_ptr& b)const;
+	};
 
 	class item_t : public step_t
 	{
@@ -65,6 +70,7 @@ namespace Gomoku { namespace WsPlayer
 
 		void clear();
 
+		Result process_predict_treat_sequence(bool need_fill_neitrals,unsigned lookup_deep);
 		Result process_predictable_move(bool need_fill_neitrals,unsigned lookup_deep);
 		Result process_treat_sequence();
 		virtual Result process_neitrals(bool need_fill_neitrals,unsigned lookup_deep,unsigned from=0,const item_t* parent_node=0);
@@ -72,8 +78,15 @@ namespace Gomoku { namespace WsPlayer
 		Result process_deep_stored();
         bool is_defence_five_exists() const;
 		void reorder_neitrals_as_neighbor_win_hint(unsigned from,const item_t* parent_node);
+		size_t select_ant_neitral(const item_t* parent_node);
+
+		Result process_deep_ant();
+		void calculate_deep_wins_fails();
+		Result solve_ant(const item_t* parent_node=0);
 	public:
 		wsplayer_t& player;
+		long long deep_wins_count;
+		long long deep_fails_count;
 
 		item_t(wsplayer_t& _player,const step_t& s);
 		item_t(wsplayer_t& _player,const Gomoku::point& p,Step s);
@@ -91,6 +104,7 @@ namespace Gomoku { namespace WsPlayer
 		inline const selected_wins_childs& get_wins() const{return wins;}
 		inline const selected_fails_childs& get_fails() const{return fails;}
 		inline const items_t& get_neitrals() const{return neitrals;}
+        inline double get_win_rate() const{return static_cast<double>(deep_wins_count+1)/(deep_fails_count+1);}
 	};
 
 	class wide_item_t : public item_t

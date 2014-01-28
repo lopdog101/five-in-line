@@ -1,5 +1,6 @@
 #include "wsplayer_node.h"
 #include <stdexcept>
+#include <numeric>
 
 #  include "../extern/pair_comparator.h"
 #  include "../extern/binary_find.h"
@@ -16,6 +17,8 @@ item_t::item_t(wsplayer_t& _player,const step_t& s) :
 	player(_player)
 {
 	++nodes_count;
+	deep_wins_count=0;
+	deep_fails_count=0;
 }
 
 item_t::item_t(wsplayer_t& _player,const Gomoku::point& p,Step s) : 
@@ -23,6 +26,8 @@ item_t::item_t(wsplayer_t& _player,const Gomoku::point& p,Step s) :
 	player(_player)
 {
 	++nodes_count;
+	deep_wins_count=0;
+	deep_fails_count=0;
 }
 
 Result item_t::process_deep_common()
@@ -34,6 +39,9 @@ Result item_t::process_deep_common()
 
 	Result r=process_deep_stored();
 
+	if(r==r_neitral)
+		r=process_deep_ant();
+
 	point pt=*get_next_step();
 
 	lg<<"process_deep_common():"
@@ -43,6 +51,26 @@ Result item_t::process_deep_common()
 		<<" perf="<<perf;
 	
 	return r;
+}
+
+Result item_t::process_deep_ant()
+{
+	calculate_deep_wins_fails();
+	for(unsigned i=0;i<ant_count;i++)
+	{
+		player.check_cancel();
+		Result r=solve_ant();
+		if(r!=r_neitral)
+			return r;
+	}
+
+	if(!neitrals.empty())
+	{
+		items_t::iterator it=std::min_element(neitrals.begin(),neitrals.end(),win_rate_cmp_pr());
+		std::iter_swap(neitrals.begin(),it);
+	}
+
+	return r_neitral;
 }
 
 Result item_t::process_deep_stored()
@@ -89,18 +117,23 @@ Result item_t::process(bool need_fill_neitrals,unsigned lookup_deep,const item_t
 		if(!fails.empty())
 			return r_win;
 		
-		Result r=process_predictable_move(false,0);
-		if(r!=r_neitral)return r;
-
-		clear();
-
-		r=process_treat_sequence();
-		if(r!=r_neitral)return r;
-
-		return process_predictable_move(need_fill_neitrals,lookup_deep);
+		return process_predict_treat_sequence(need_fill_neitrals,lookup_deep);
 	}
 
 	return process_neitrals(need_fill_neitrals,lookup_deep,0,parent_node);
+}
+
+Result item_t::process_predict_treat_sequence(bool need_fill_neitrals,unsigned lookup_deep)
+{
+	Result r=process_predictable_move(false,0);
+	if(r!=r_neitral)return r;
+
+	clear();
+
+	r=process_treat_sequence();
+	if(r!=r_neitral)return r;
+
+	return process_predictable_move(need_fill_neitrals,lookup_deep);
 }
 
 Result item_t::process_predictable_move(bool need_fill_neitrals,unsigned lookup_deep)
@@ -567,6 +600,128 @@ void item_t::add_neitrals(const Points& pts)
 	}
 }
 
+void item_t::calculate_deep_wins_fails()
+{
+	deep_wins_count=wins.size();
+	deep_fails_count=fails.size();
+	
+	for(size_t i=0;i<neitrals.size();i++)
+	{
+		item_t& v=*neitrals[i];
+		v.calculate_deep_wins_fails();
+		deep_wins_count+=v.deep_fails_count;
+		deep_fails_count+=v.deep_wins_count;
+	}
+}
+
+Result item_t::solve_ant(const item_t* parent_node)
+{
+	if(!wins.empty())
+		return r_fail;
+	
+	if(neitrals.empty())
+	{
+		if(!fails.empty())
+			return r_win;
+		
+		Result r=process_predict_treat_sequence(true,def_lookup_deep);
+
+		if(r!=r_neitral)
+		{
+			deep_wins_count=wins.size();
+			deep_fails_count=fails.size();
+		}
+		return r;
+	}
+
+	size_t shift=select_ant_neitral(parent_node);
+	item_ptr pch=neitrals[shift];
+	item_t& ch=*pch;
+
+	long long dw=ch.deep_wins_count;
+	long long df=ch.deep_fails_count;
+
+	temporary_state ts(player,ch);
+	Result r=ch.solve_ant(this);
+
+	deep_wins_count-=df;
+	deep_fails_count-=dw;
+
+	if(deep_wins_count<0 || deep_fails_count<0)//+++
+	{
+		deep_fails_count=deep_fails_count;
+	}
+
+	if(r==r_neitral)
+	{
+		deep_wins_count+=ch.deep_fails_count;
+		deep_fails_count+=ch.deep_wins_count;
+		return r;
+	}
+
+	neitrals.erase(neitrals.begin()+shift);
+
+	if(r==r_win)
+	{
+		wins.add(pch);
+		++deep_wins_count;
+		return r_fail;
+	}
+	
+	fails.add(pch);
+	++deep_fails_count;
+	
+	if(neitrals.empty())
+		return r_win;
+
+	return r_neitral;
+}
+
+size_t item_t::select_ant_neitral(const item_t* parent_node)
+{
+    std::vector<double> marks(neitrals.size());
+
+    for(size_t i=0;i<marks.size();i++)
+    {
+		const item_t& v=*neitrals[i];
+        marks[i]=1.0/v.get_win_rate();
+    }
+
+	if(parent_node&&!parent_node->get_fails().empty())
+	{
+		const npoints_t& wins_hint=parent_node->get_fails().get_win_hins();
+		for(size_t i=0;i<marks.size();i++)
+		{
+			const item_t& v=*neitrals[i];
+
+			npoints_t::const_iterator it=binary_find(wins_hint.begin(),wins_hint.end(),v,less_point_pr());
+			if(it!=wins_hint.end())
+			{
+				marks[i]*=it->n;
+			}
+		}
+	}
+	
+	double max_rate=std::accumulate(marks.begin(),marks.end(),0.0);
+
+    double adj=0;
+    for(size_t i=0;i<marks.size();i++)
+    {
+        double v=marks[i]/max_rate;
+        marks[i]=adj;
+        adj+=v;
+    }
+
+    double r=static_cast<double>(rand())/RAND_MAX;
+
+    std::vector<double>::const_iterator it=std::lower_bound(marks.begin(),marks.end(),r);
+    if(it==marks.end() || (*it!=r && it!=marks.begin()))
+        --it;
+
+    return it-marks.begin();
+}
+
+
 ///////////////////////////////////////////////////////////////
 void wide_item_t::process_deep_common()
 {
@@ -721,6 +876,11 @@ bool existing_npoints_sort_pr::operator()(const item_ptr& a,const item_ptr& b)co
 		return true;
 	
 	return ia->n > ib->n;
+}
+
+bool win_rate_cmp_pr::operator()(const item_ptr& a,const item_ptr& b)const
+{
+	return a->get_win_rate()<b->get_win_rate();
 }
 
 /////////////////////////////////////////////////////////////////////////////////////
