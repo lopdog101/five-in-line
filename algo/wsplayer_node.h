@@ -10,6 +10,9 @@ namespace Gomoku { namespace WsPlayer
 
 	class selected_wins_childs
 	{
+	private:
+		selected_wins_childs(const selected_wins_childs&);
+		void operator=(const selected_wins_childs&);
 	protected:
 		unsigned current_chain_depth;
 		items_t vals;

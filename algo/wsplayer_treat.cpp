@@ -370,9 +370,8 @@ item_ptr treat_node_t::contra_steps_exists_one_step(Step cl,treat_node_t& gr)
 			
 			item_ptr c(new item_t(player,gr.gain,other_color(cl) ));
 			item_ptr ca(new item_t(player,ch.cost[j],cl ));
-
-			c->add_win(ca);
 			ca->add_fail(res);
+			c->add_win(ca);
 			return c;
 		}
 	}

@@ -154,7 +154,7 @@ Result item_t::process_predictable_move(bool need_fill_neitrals,unsigned lookup_
 	const points_t& a5_pts=state.get_make_five(other_color(step));
 	if(!a5_pts.empty())
 	{
-		wins.add(item_ptr(new item_t(player,a5_pts.front(),other_color(step) )) );
+		add_win(item_ptr(new item_t(player,a5_pts.front(),other_color(step) )) );
 		return r_fail;
 	}
 
@@ -164,8 +164,8 @@ Result item_t::process_predictable_move(bool need_fill_neitrals,unsigned lookup_
 		if(d5_pts.size()>1)
 		{
 			item_ptr fail=item_ptr(new item_t(player,d5_pts.front(),step ));
-			fails.add(fail);
-			fail->wins.add(item_ptr(new item_t(player,d5_pts[1],other_color(step) )) );
+			fail->add_win(item_ptr(new item_t(player,d5_pts[1],other_color(step) )) );
+			add_fail(fail);
 			return r_win;
 		}
 
@@ -190,12 +190,10 @@ Result item_t::process_predictable_move(bool need_fill_neitrals,unsigned lookup_
 	if(!open_four.empty())
 	{
 		item_ptr win=item_ptr(new item_t(player,open_four.front().move,other_color(step) ));
-		wins.add(win);
-
 		item_ptr win_fail(new item_t(player,open_four.front().open[0],step ));
-		win->fails.add(win_fail);
-
-		win_fail->wins.add(item_ptr(new item_t(player,open_four.front().open[1],other_color(step) )) );
+		win_fail->add_win(item_ptr(new item_t(player,open_four.front().open[1],other_color(step) )) );
+		win->add_fail(win_fail);
+		add_win(win);
 		return r_fail;
 	}
 
@@ -379,7 +377,7 @@ Result item_t::process_neitrals(bool need_fill_neitrals,unsigned lookup_deep,uns
 
 		if(r==r_win)
 		{
-			wins.add(pch);
+			add_win(pch);
 			pch.reset();
 			if(!lookup_deep)break;
 			--lookup_deep;
@@ -387,7 +385,7 @@ Result item_t::process_neitrals(bool need_fill_neitrals,unsigned lookup_deep,uns
 		}
 		else if(r==r_fail)
 		{
-			fails.add(pch);
+			add_fail(pch);
 			pch.reset();
 		}
 	}
@@ -542,7 +540,7 @@ Result item_t::process_treat_sequence()
 
         if(r)
         {
-            wins.add(r);
+            add_win(r);
             return r_fail;
         }
         
@@ -663,12 +661,12 @@ Result item_t::solve_ant(const item_t* parent_node)
 
 	if(r==r_win)
 	{
-		wins.add(pch);
+		add_win(pch);
 		++deep_wins_count;
 		return r_fail;
 	}
 	
-	fails.add(pch);
+	add_fail(pch);
 	++deep_fails_count;
 	
 	if(neitrals.empty())
@@ -767,8 +765,8 @@ Result wide_item_t::process_neitrals(bool need_fill_neitrals,unsigned lookup_dee
 		temporary_state ts(player,ch);
 		Result r=ch.process(need_fill_neitrals,lookup_deep);
 		if(r==r_neitral)continue;
-		if(r==r_win)wins.add(pch);
-		else fails.add(pch);
+		if(r==r_win)add_win(pch);
+		else add_fail(pch);
 		pch.reset();
 	}
 
