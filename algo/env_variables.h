@@ -12,6 +12,7 @@ inline void print_enviropment_variables_hint()
 	printf("treat_deep  (default: %u)\n",WsPlayer::treat_deep);
 	printf("max_treat_check  (default: %u)\n",WsPlayer::max_treat_check);
 	printf("max_treat_check_rebuild_tree  (default: %u)\n",WsPlayer::max_treat_check_rebuild_tree);
+	printf("ant_count  (default: %u)\n",WsPlayer::ant_count);
 }
 
 inline void scan_enviropment_variables()
@@ -35,6 +36,10 @@ inline void scan_enviropment_variables()
 	sval=getenv("max_treat_check_rebuild_tree");
 	if(sval!=0&&(*sval)!=0)
 		WsPlayer::max_treat_check_rebuild_tree=atol(sval);
+
+	sval=getenv("ant_count");
+	if(sval!=0&&(*sval)!=0)
+		WsPlayer::ant_count=atol(sval);
 }
 
 inline void print_used_enviropment_variables(ObjectProgress::log_generator& lg)
@@ -44,7 +49,8 @@ inline void print_used_enviropment_variables(ObjectProgress::log_generator& lg)
         <<" lookup_deep="<<WsPlayer::def_lookup_deep
         <<" treat_deep="<<WsPlayer::treat_deep
         <<" max_treat_check="<<WsPlayer::max_treat_check
-        <<" max_treat_check_rebuild_tree="<<WsPlayer::max_treat_check_rebuild_tree;
+        <<" max_treat_check_rebuild_tree="<<WsPlayer::max_treat_check_rebuild_tree
+        <<" ant_count="<<WsPlayer::ant_count;
 }
 
 }
