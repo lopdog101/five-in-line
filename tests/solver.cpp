@@ -14,6 +14,7 @@ class solver : public testing::Test
 	unsigned backup_treat_deep;
 	unsigned backup_max_treat_check;
 	unsigned backup_max_treat_check_rebuild_tree;
+	unsigned ant_count;
  protected:
 	game_t gm;
 	WsPlayer::wsplayer_t player;
@@ -26,6 +27,7 @@ class solver : public testing::Test
 	void solve(const std::string& state_str);
 
 	bool fails_contains(const point &p){return std::find(fails.begin(),fails.end(),p)!=fails.end();}
+	bool wins_contains(const point &p){return std::find(wins.begin(),wins.end(),p)!=wins.end();}
 
 	void sort_results();
 	void print_results();
@@ -38,6 +40,7 @@ void solver::SetUp()
 	backup_treat_deep=WsPlayer::treat_deep;
     backup_max_treat_check=WsPlayer::max_treat_check;
     backup_max_treat_check_rebuild_tree=WsPlayer::max_treat_check_rebuild_tree;
+    ant_count=WsPlayer::ant_count;
 }
 
 void solver::TearDown()
@@ -47,17 +50,15 @@ void solver::TearDown()
 	WsPlayer::treat_deep=backup_treat_deep;
     WsPlayer::max_treat_check=backup_max_treat_check;
     WsPlayer::max_treat_check_rebuild_tree=backup_max_treat_check_rebuild_tree;
+    WsPlayer::ant_count=ant_count;
 }
 
 void solver::solve(const std::string& state_str)
 {
     SCOPED_TRACE(__FUNCTION__);
 
-	data_t bin;
-	hex2bin(state_str,bin);
-
 	steps_t init_state;
-	bin2points(bin,init_state);
+	hex_or_str2points(state_str,init_state);
 	reorder_state_to_game_order(init_state);
 
 	game_t gm;
@@ -93,6 +94,8 @@ void solver::print_results()
 	printf("neitrals=%s\nwins=%s\nfails=%s\n",sneitrals.c_str(),swins.c_str(),sfails.c_str());
 }
 
+// Bug description. In solve result empty points inside play field is absent in neitrals,wins,fails output.
+// This points should be there because they pass "2 points around" condition and this state is not restricted answer to the treat
 TEST_F(solver, skiped_neitrals_inside_field)
 {
 	WsPlayer::stored_deep=1;
@@ -100,14 +103,30 @@ TEST_F(solver, skiped_neitrals_inside_field)
 
 	solve("fd0201fd0302fe0102fe0201ff0002ff0101ff020200fe0200ff0200000100010101ff0101010102fe02020001020102020202030101");
 
-	sort_results();
-	print_results();
+//	sort_results();
+//	print_results();
 
 	EXPECT_TRUE(fails_contains(point(1,0)));
 	EXPECT_TRUE(fails_contains(point(1,-3)));
 	EXPECT_TRUE(fails_contains(point(1,2)));
 	EXPECT_TRUE(fails_contains(point(-1,3)));
 	EXPECT_TRUE(fails_contains(point(-2,4)));
+}
+
+// Bug description. Close four based treat is hidded by opponent open four treat.
+// Wrong assumptation is close four is "stronger" than open four. But in a fact both of them reach win on 2 steps.
+TEST_F(solver, lost_close_four_treat_cause_opponent_open_four_exists)
+{
+	WsPlayer::stored_deep=1;
+	WsPlayer::def_lookup_deep=0;
+	WsPlayer::ant_count=0;
+
+	solve("(0,0:X);(1,0:O);(-1,0:X);(8,-4:O);(-2,0:X);(8,-3:O);(-3,-1:X);(7,-5:O);(-3,-2:X);(6,-5:O);(-3,-3:X);(-3,-4:O);(2,0:X);(8,-5:O)");
+
+//	sort_results();
+//	print_results();
+	
+	EXPECT_TRUE(wins_contains(point(-3,0)));
 }
 
 }//namespace

@@ -39,7 +39,8 @@ TEST_F(find_lines, check_four_empty_both_sides)
 		Gomoku::WsPlayer::treats_t res;
 		Gomoku::WsPlayer::find_one_step_win_treats(empty_steps,res,p.step,fl);
 		Gomoku::WsPlayer::find_open_four_win_treats(empty_steps,res,p.step,fl,5);
-		Gomoku::WsPlayer::find_more_than_one_steps_win_treats(empty_steps,res,p.step,fl,5);
+		Gomoku::WsPlayer::find_close_four_win_treats(empty_steps,res,p.step,fl,5);
+		Gomoku::WsPlayer::find_more_than_two_steps_win_treats(empty_steps,res,p.step,fl,5);
 
 		EXPECT_EQ( res.size(),1 );
 
@@ -119,7 +120,8 @@ TEST_F(find_lines, check_four_left_zero)
 		Gomoku::WsPlayer::treats_t res;
 		Gomoku::WsPlayer::find_one_step_win_treats(empty_steps,res,p.step,fl);
 		Gomoku::WsPlayer::find_open_four_win_treats(empty_steps,res,p.step,fl,5);
-		Gomoku::WsPlayer::find_more_than_one_steps_win_treats(empty_steps,res,p.step,fl,5);
+		Gomoku::WsPlayer::find_close_four_win_treats(empty_steps,res,p.step,fl,5);
+		Gomoku::WsPlayer::find_more_than_two_steps_win_treats(empty_steps,res,p.step,fl,5);
 
 		EXPECT_EQ( res.size(),1);
 

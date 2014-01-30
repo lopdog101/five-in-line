@@ -110,6 +110,7 @@ void treat_node_t::find_treats_for_build_tree(Step cl,const treat_filter_t& tf,t
         empty_points=oponent_make_five_points;
 
     find_open_four_win_treats(empty_points,treats,cl,player.field,tf.get_steps_to_win());
+	find_close_four_win_treats(empty_points,treats,cl,player.field,tf.get_steps_to_win());
 
     if(oponent_make_five_points.empty())
     {
@@ -125,7 +126,7 @@ void treat_node_t::find_treats_for_build_tree(Step cl,const treat_filter_t& tf,t
         }
     }
 
-	find_more_than_one_steps_win_treats(empty_points,treats,cl,player.field,tf.get_steps_to_win());
+	find_more_than_two_steps_win_treats(empty_points,treats,cl,player.field,tf.get_steps_to_win());
 }
 
 
@@ -726,10 +727,14 @@ void find_open_four_win_treats(const points_t& empty_points,treats_t& res,Step c
 	if(steps_to_win>=2)find_treats(empty_points,cl,field,res,check_open_four_line);
 }
 
-void find_more_than_one_steps_win_treats(const points_t& empty_points,treats_t& res,Step cl,const field_t& field,unsigned steps_to_win)
+void find_close_four_win_treats(const points_t& empty_points,treats_t& res,Step cl,const field_t& field,unsigned steps_to_win)
 {
 	if(steps_to_win>=2)find_two_way_treats(empty_points,cl,field,res,check_four_line_hole_inside);
 	if(steps_to_win>=2)find_two_way_treats(empty_points,cl,field,res,check_four_line_zero_left_hole_right);
+}
+
+void find_more_than_two_steps_win_treats(const points_t& empty_points,treats_t& res,Step cl,const field_t& field,unsigned steps_to_win)
+{
 	if(steps_to_win>=3)find_treats(empty_points,cl,field,res,check_open_three_line_two_cost);
 	if(steps_to_win>=3)find_two_way_treats(empty_points,cl,field,res,check_open_three_line_three_cost);
 }
