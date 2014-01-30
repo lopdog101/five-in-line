@@ -2,3 +2,4 @@
 db/cmake/*
 gui/cmake/*
 tests/cmake/*
+tests/tmp/*
