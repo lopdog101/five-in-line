@@ -39,7 +39,7 @@ Result item_t::process_deep_common()
 
 	Result r=process_deep_stored();
 
-	if(r==r_neitral)
+	if(r==r_neitral && neitrals.size()>1)
 		r=process_deep_ant();
 
 	point pt=*get_next_step();
@@ -622,7 +622,7 @@ Result item_t::solve_ant(const item_t* parent_node)
 		if(!fails.empty())
 			return r_win;
 		
-		Result r=process_predict_treat_sequence(true,def_lookup_deep);
+		Result r=process_predict_treat_sequence(true,0);
 
 		if(r!=r_neitral)
 		{
@@ -644,11 +644,6 @@ Result item_t::solve_ant(const item_t* parent_node)
 
 	deep_wins_count-=df;
 	deep_fails_count-=dw;
-
-	if(deep_wins_count<0 || deep_fails_count<0)//+++
-	{
-		deep_fails_count=deep_fails_count;
-	}
 
 	if(r==r_neitral)
 	{
@@ -724,6 +719,9 @@ size_t item_t::select_ant_neitral(const item_t* parent_node)
 void wide_item_t::process_deep_common()
 {
 	process_deep_stored();
+	
+	if(wins.empty() && !neitrals.empty())
+		process_deep_ant();
 }
 
 void wide_item_t::process_deep_stored()
