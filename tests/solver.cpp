@@ -129,4 +129,17 @@ TEST_F(solver, lost_close_four_treat_cause_opponent_open_four_exists)
 	EXPECT_TRUE(wins_contains(point(-3,0)));
 }
 
+// Bug description. If we use ant search and disable treat search but lookup enabled, we found wrong 5 step win
+TEST_F(solver, wrong_ant_win_lookup_enabled)
+{
+	WsPlayer::stored_deep=1;
+	WsPlayer::def_lookup_deep=4;
+	WsPlayer::treat_deep=0;
+	WsPlayer::ant_count=1000;
+
+	solve("(0,0:X);(0,1:O);(-1,1:X);(-2,2:O);(1,-1:X);(-1,0:O);(1,0:X);(1,2:O);(-2,-1:X);(-1,-1:O);(0,-1:X);(0,2:O);(-1,2:X);(2,3:O);(3,4:X);(-1,-2:O);(1,-3:X);(1,-2:O);(2,-2:X);(3,-3:O);(3,-1:X);(4,0:O);(2,-1:X);(4,-1:O);(2,0:X);(-1,-3:O);(-1,-4:X);(2,-3:O)");
+
+	EXPECT_FALSE(wins_contains(point(0,-2)));
+}
+
 }//namespace

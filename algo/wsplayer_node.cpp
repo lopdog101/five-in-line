@@ -326,7 +326,8 @@ Result item_t::process_predictable_move(bool need_fill_neitrals,unsigned lookup_
 	{
 		//if fail exists all node would be mean as fail
 		//But it is not known yet
-		drop_neitrals_and_fail_child(0);
+		neitrals.resize(0);
+		fails.clear();
 		return r_neitral;
 	}
 
