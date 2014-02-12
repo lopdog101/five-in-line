@@ -1,6 +1,6 @@
 #ifndef bin_indexH
 #define bin_indexH
-#include <stdio.h>
+#include "regular_file_access.h"
 #include "ibin_index.h"
 #include <map>
 #include "../extern/exception_catch.h"
@@ -84,8 +84,8 @@ public:
 	class file_node : public inode
 	{
 		bool self_valid;
-		mutable FILE* fi;
-		mutable FILE* fd;
+		mutable file_access_ptr fi;
+		mutable file_access_ptr fd;
 		mutable size_t root_offset;
 		mutable size_t items_count;
 
@@ -178,6 +178,7 @@ private:
 	const std::string base_dir;
 	mutable node_ptr root;
 	size_t items_count;
+	regular_file_provider_t file_provider;
 
 	void validate_root() const;
 	node_ptr create_node(const std::string& base_dir,size_t key_len) const;
@@ -232,6 +233,8 @@ public:
 		validate_root();
 		return root->next(key,val);
 	}
+
+	inline const ifile_access_provider_t& get_file_provider() const{return file_provider;}
 };
 
 class bin_indexes_t : public ibin_indexes_t

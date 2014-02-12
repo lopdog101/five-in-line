@@ -1,5 +1,6 @@
 *.exe
 db/cmake/*
+solver/cmake/*
 gui/cmake/*
 tests/cmake/*
 tests/tmp/*

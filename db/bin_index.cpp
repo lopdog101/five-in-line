@@ -349,67 +349,29 @@ namespace Gomoku
 
 	void bin_index_t::file_node::load_data(size_t offset,data_t& res) const
 	{
-		if(res.empty())return;
-
 		open_data_file();
-
-		if(fseek(fd,(int)offset,SEEK_SET)!=0)
-			throw std::runtime_error("load_data(): seek error at "+boost::lexical_cast<std::string>(offset)+
-			": "+data_file_name());
-
-		if(fread(&res.front(),1,res.size(),fd)!=res.size())
-			throw std::runtime_error(
-			  "load_data(): read error at "+boost::lexical_cast<std::string>(offset)+
-			  " size="+boost::lexical_cast<std::string>(res.size())+
-			  ": "+data_file_name());
+		fd->load(offset,res);
 	}
 
 	void bin_index_t::file_node::save_data(size_t offset,const data_t& res)
 	{
-		if(res.empty())return;
-
 		open_data_file();
-
-		if(fseek(fd,(int)offset,SEEK_SET)!=0)
-			throw std::runtime_error("save_data(): seek error at "+boost::lexical_cast<std::string>(offset)+
-			": "+data_file_name());
-
-		if(fwrite(&res.front(),1,res.size(),fd)!=res.size())
-			throw std::runtime_error(
-			  "save_data(): write error at "+boost::lexical_cast<std::string>(offset)+
-			  " size="+boost::lexical_cast<std::string>(res.size())+
-			  ": "+data_file_name());
+		fd->save(offset,res);
 	}
 
 	size_t bin_index_t::file_node::append_data(const data_t& res)
 	{
-		if(res.empty())return 0;
-
 		open_data_file();
-
-		if(fseek(fd,0,SEEK_END)!=0)
-			throw std::runtime_error("append_data(): seek error at end: "+data_file_name());
-
-		size_t ret=ftell(fd);
-
-		if(fwrite(&res.front(),1,res.size(),fd)!=res.size())
-			throw std::runtime_error(
-			  "append_data(): write error size="+boost::lexical_cast<std::string>(res.size())+
-			  ": "+data_file_name());
-
-		return ret;
+		return fd->append(res);
 	}
 
 	void bin_index_t::file_node::validate_root_offset() const
 	{
 		root_offset=0;
 		items_count=0;
-		
-		if(fseek(fi,0,SEEK_END)!=0)
-			throw std::runtime_error("validate_root_offset(): seek error at end: "+index_file_name());
-		
-		size_t ret=ftell(fi);
-		if(ret==0)
+
+		size_t sz=fi->get_size();		
+		if(sz==0)
 		{
 			const_cast<file_node*>(this)->save_index_data(0,0);
 			const_cast<file_node*>(this)->save_index_data(sizeof(size_t),0);
@@ -424,49 +386,17 @@ namespace Gomoku
 
 	void bin_index_t::file_node::load_index_data(size_t offset,data_t& res) const
 	{
-		if(res.empty())return;
-
-		if(fseek(fi,(int)offset,SEEK_SET)!=0)
-			throw std::runtime_error("load_data(): seek error at "+boost::lexical_cast<std::string>(offset)+
-			": "+index_file_name());
-
-		if(fread(&res.front(),1,res.size(),fi)!=res.size())
-			throw std::runtime_error(
-			  "load_data(): read error at "+boost::lexical_cast<std::string>(offset)+
-			  " size="+boost::lexical_cast<std::string>(res.size())+
-			  ": "+index_file_name());
+		fi->load(offset,res);
 	}
 
 	void bin_index_t::file_node::save_index_data(size_t offset,const data_t& res)
 	{
-		if(res.empty())return;
-
-		if(fseek(fi,(int)offset,SEEK_SET)!=0)
-			throw std::runtime_error("save_data(): seek error at "+boost::lexical_cast<std::string>(offset)+
-			": "+index_file_name());
-
-		if(fwrite(&res.front(),1,res.size(),fi)!=res.size())
-			throw std::runtime_error(
-			  "save_data(): write error at "+boost::lexical_cast<std::string>(offset)+
-			  " size="+boost::lexical_cast<std::string>(res.size())+
-			  ": "+index_file_name());
+		fi->save(offset,res);
 	}
 
 	size_t bin_index_t::file_node::append_index_data(const data_t& res)
 	{
-		if(res.empty())return 0;
-
-		if(fseek(fi,0,SEEK_END)!=0)
-			throw std::runtime_error("append_data(): seek error at end: "+index_file_name());
-
-		size_t ret=ftell(fi);
-
-		if(fwrite(&res.front(),1,res.size(),fi)!=res.size())
-			throw std::runtime_error(
-			  "append_data(): write error size="+boost::lexical_cast<std::string>(res.size())+
-			  ": "+index_file_name());
-
-		return ret;
+		return fi->append(res);
 	}
 
 	void bin_index_t::file_node::save_index_data(size_t offset,size_t res)
@@ -512,17 +442,15 @@ namespace Gomoku
 
 	void bin_index_t::file_node::close_files()
 	{
-        if(fi){fclose(fi);fi=0;}
-        if(fd){fclose(fd);fd=0;}
+		if(fi){fi->close();fi.reset();}
+		if(fd){fd->close();fd.reset();}
 	}
 
 	void bin_index_t::file_node::open_index_file() const
 	{
 		if(fi)return;
 		fs::path file_name=fs::path(base_dir)/parent.index_file_name;
-		fi=fopen(file_name.string().c_str(),"r+b");
-		if(!fi)fi=fopen(file_name.string().c_str(),"w+b");
-		if(!fi)throw std::runtime_error("could not open index file: "+file_name.string());
+		fi=parent.get_file_provider().create(file_name.string());
 		validate_root_offset();
 	}
 
@@ -530,9 +458,7 @@ namespace Gomoku
 	{
 		if(fd)return;
 		fs::path file_name=fs::path(base_dir)/parent.data_file_name;
-		fd=fopen(file_name.string().c_str(),"r+b");
-		if(!fd)fd=fopen(file_name.string().c_str(),"w+b");
-		if(!fd)throw std::runtime_error("could not open index file: "+file_name.string());
+		fd=parent.get_file_provider().create(file_name.string());
 	}
 
 	std::string bin_index_t::file_node::index_file_name() const
