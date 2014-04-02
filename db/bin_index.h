@@ -1,6 +1,6 @@
 #ifndef bin_indexH
 #define bin_indexH
-#include "regular_file_access.h"
+#include "paged_file_access.h"
 #include "ibin_index.h"
 #include <map>
 #include "../extern/exception_catch.h"
@@ -178,7 +178,7 @@ private:
 	const std::string base_dir;
 	mutable node_ptr root;
 	size_t items_count;
-	regular_file_provider_t file_provider;
+	paged_file_provider_t file_provider;
 
 	void validate_root() const;
 	node_ptr create_node(const std::string& base_dir,size_t key_len) const;

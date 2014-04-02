@@ -41,6 +41,10 @@ namespace Gomoku
 		void flush_page(page_t& p);
 		void remove_oldest();
 		page_ptr get_page(size_t idx);
+		void add_page(const page_ptr& p);
+
+		inline size_t from_index(size_t offset) const{return offset/page_size;}
+		inline size_t to_index(size_t offset,size_t size) const{return (offset+size+page_size-1)/page_size;}
 	public:
 		paged_file_t(const std::string& file_name,size_t page_size=(1<<16),unsigned max_pages=8);
 		~paged_file_t(){close();}
