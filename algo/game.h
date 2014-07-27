@@ -6,7 +6,7 @@
 #include <boost/shared_ptr.hpp>
 
 #  include "../extern/polimvar_intf.h"
-#  include <boost/signal.hpp>
+#  include <boost/signals2.hpp>
 
 namespace Gomoku
 {
@@ -85,7 +85,7 @@ namespace Gomoku
 		player_ptr get_krestik() const{return krestik;}
 		player_ptr get_nolik() const{return nolik;}
 
-        boost::signal< void (const iplayer_t& pl,const point& pt)> OnNextStep;
+		boost::signals2::signal< void (const iplayer_t& pl,const point& pt)> OnNextStep;
     };
 
 }//namespace Gomoku

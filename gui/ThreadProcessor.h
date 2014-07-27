@@ -4,7 +4,7 @@
 #include <vector>
 #include <boost/thread/recursive_mutex.hpp>
 #include <boost/thread/condition.hpp>
-#include <boost/signal.hpp>
+#include <boost/signals2/signal.hpp>
 
 // CThreadProcessor
 
@@ -48,9 +48,9 @@ public:
 	void cancel_job();
     bool is_job_in_progress() const;
 
-	boost::signal<void ()> OnExecute;
-	boost::signal<void ()> OnComplete;
-	boost::signal<void (const errors_t& vals)> OnErrors;
+	boost::signals2::signal<void ()> OnExecute;
+	boost::signals2::signal<void ()> OnComplete;
+	boost::signals2::signal<void (const errors_t& vals)> OnErrors;
 
 protected:
 	DECLARE_MESSAGE_MAP()

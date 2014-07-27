@@ -6,13 +6,13 @@
 #include <fstream>
 #include <boost/lexical_cast.hpp>
 #include <boost/shared_ptr.hpp>
-#include <boost/signal.hpp>
+#include <boost/signals2.hpp>
 
 namespace ObjectProgress
 {
 class log_generator;
 
-typedef boost::signal<void (const std::string&)> log_handler_t;
+typedef boost::signals2::signal<void (const std::string&)> log_handler_t;
 log_handler_t& get_log_handler();
 
 
@@ -92,7 +92,7 @@ inline std::basic_ostream<charT, traits>& operator<<(std::basic_ostream<charT, t
 
 class ilogout
 {
-    boost::signals::scoped_connection hld;
+    boost::signals2::scoped_connection hld;
 protected:
     virtual void on_message(const std::string& str)= 0;
 public:

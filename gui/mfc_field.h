@@ -1,6 +1,6 @@
 #pragma once
 #include "../algo/field.h"
-#include <boost/signal.hpp>
+#include <boost/signals2/signal.hpp>
 
 
 // CMfcField
@@ -34,10 +34,10 @@ public:
 	void set_scroll_bars();
 	CPoint mouse_pos() const;
 
-	boost::signal<void (Gomoku::point pos)> OnLMouseDown;
-	boost::signal<void (Gomoku::point pos)> OnLMouseUp;
-	boost::signal<void (Gomoku::point pos)> on_mouse_move;
-	boost::signal<void (CDC& dc)> on_after_paint;
+	boost::signals2::signal<void (Gomoku::point pos)> OnLMouseDown;
+	boost::signals2::signal<void (Gomoku::point pos)> OnLMouseUp;
+	boost::signals2::signal<void (Gomoku::point pos)> on_mouse_move;
+	boost::signals2::signal<void (CDC& dc)> on_after_paint;
 protected:
 	DECLARE_MESSAGE_MAP()
 public:

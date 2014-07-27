@@ -26,7 +26,7 @@ private:
 	DlgResizeHelper szr;
 	Gomoku::game_t game;
     Gomoku::steps_t redo_steps;
-	boost::signals::scoped_connection hld_step;
+	boost::signals2::scoped_connection hld_step;
 
     ObjectProgress::logout_debug log_dbg;
     ObjectProgress::logout_file log_file;
