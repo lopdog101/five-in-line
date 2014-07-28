@@ -3,7 +3,7 @@
 #include "../algo/game.h"
 #include "../algo/wsplayer.h"
 #include "ThreadProcessor.h"
-#include <boost/signals/connection.hpp>
+#include <boost/signals2/connection.hpp>
 #include "../extern/object_progress.hpp"
 #include "mfc_field.h"
 
@@ -16,10 +16,10 @@ class mfcPlayer : public iplayer_t
 	CBitmap bmp;
 	bool inited;
 
-	boost::signals::scoped_connection hld_mouse_down;
-	boost::signals::scoped_connection hld_mouse_up;
-	boost::signals::scoped_connection hld_mouse_move;
-	boost::signals::scoped_connection hld_after_draw;
+	boost::signals2::scoped_connection hld_mouse_down;
+	boost::signals2::scoped_connection hld_mouse_up;
+	boost::signals2::scoped_connection hld_mouse_move;
+	boost::signals2::scoped_connection hld_after_draw;
 
     void reset_handlers();
 
@@ -61,10 +61,10 @@ private:
     point answer_point;
     bool answer_complete;
 
-	boost::signals::scoped_connection hld_execute;
-	boost::signals::scoped_connection hld_complete;
-	boost::signals::scoped_connection hld_errors;
-    boost::signals::scoped_connection hld_mirror_next_step;
+	boost::signals2::scoped_connection hld_execute;
+	boost::signals2::scoped_connection hld_complete;
+	boost::signals2::scoped_connection hld_errors;
+    boost::signals2::scoped_connection hld_mirror_next_step;
 
 	void MirrorExecute();
 	void TaskComplete();
