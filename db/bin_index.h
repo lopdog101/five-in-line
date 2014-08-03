@@ -131,8 +131,6 @@ public:
 			: inode(_parent,_base_dir,_key_len)
 		{
 			self_valid=true;
-			fi=0;
-			fd=0;
 			disable_split=false;
 			root_offset=items_count=0;
 		}

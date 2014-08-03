@@ -157,6 +157,47 @@ TEST_F(avl_tree,split)
     }
 }
 
+TEST_F(avl_tree,DISABLED_big_split)
+{
+	char init_chain[]={0,1,2,3,4,5,6,7,8,9,10};
+	static const size_t chain_length=sizeof(init_chain)/sizeof(char);
+
+	static const unsigned num_iterations=1100000;
+	static const unsigned split_count=10000000;
+	static const unsigned char key_mod=5;
+
+	recreate_dirs();
+
+	{
+		bin_index_t ind(index_dir,chain_length,1,split_count);
+
+		data_t key(init_chain,init_chain+chain_length);
+
+		for(unsigned i=0;i<num_iterations;i++,std::next_permutation(key.begin(),key.end()))
+		{
+			key[0]=i%key_mod;
+			ind.set(key,key);
+		}
+	}
+
+	{
+		bin_index_t ind(index_dir,chain_length,1,split_count);
+
+		data_t key(init_chain,init_chain+chain_length);
+
+		for(unsigned i=0;i<num_iterations;i++,std::next_permutation(key.begin(),key.end()))
+		{
+			key[0]=i%key_mod;
+
+			data_t val;
+
+			ASSERT_TRUE(ind.get(key,val));
+
+			ASSERT_EQ(key,val);
+		}
+	}
+}
+
 TEST_F(avl_tree, DISABLED_show)
 {
     steps_t not_found=scan_steps("(-1,1:X);(0,0:X);(1,-1:X);(1,0:O);(1,1:O);(-2,2:O);(2,-2:X);(3,-3:O);(-2,0:X);(-2,3:O);(-2,1:X);(-2,4:O)");

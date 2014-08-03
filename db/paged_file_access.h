@@ -3,6 +3,13 @@
 #include "regular_file_access.h"
 #include <list>
 #include <stdio.h>
+#include <unordered_map>
+#include <boost/weak_ptr.hpp>
+
+namespace std
+{
+	using namespace std::tr1;
+}
 
 namespace Gomoku
 {
@@ -10,11 +17,20 @@ namespace Gomoku
 	class paged_file_t : public regular_file_t
 	{
 	public:
+		struct page_t;
+
+		typedef boost::shared_ptr<page_t> page_ptr;
+		typedef boost::weak_ptr<page_t> page_wptr;
+		typedef std::unordered_map<size_t,page_ptr> pages_t;
+
 		struct page_t
 		{
 			const size_t index;
 			bool dirty;
 			data_t data;
+			page_wptr left;
+			page_wptr right;
+			page_wptr self;
 
 			page_t(size_t _index,size_t max_size) : index(_index)
 			{
@@ -26,14 +42,13 @@ namespace Gomoku
 			void operator=(const page_t&);
 		};
 
-		typedef boost::shared_ptr<page_t> page_ptr;
-		typedef std::list<page_ptr> pages_t;
-
 	protected:
 		const size_t page_size;
 		const unsigned max_pages;
 		pages_t pages;
 		size_t file_size;
+		page_wptr first_page;
+		page_wptr last_page;
 
 		virtual void open();
 
@@ -42,11 +57,12 @@ namespace Gomoku
 		void remove_oldest();
 		page_ptr get_page(size_t idx);
 		void add_page(const page_ptr& p);
+		void bring_to_front(page_ptr& p);
 
 		inline size_t from_index(size_t offset) const{return offset/page_size;}
 		inline size_t to_index(size_t offset,size_t size) const{return (offset+size+page_size-1)/page_size;}
 	public:
-		paged_file_t(const std::string& file_name,size_t page_size=(1<<16),unsigned max_pages=8);
+		paged_file_t(const std::string& file_name,size_t page_size=512,unsigned max_pages=512);
 		~paged_file_t(){close();}
 		void close();
 		size_t get_size();

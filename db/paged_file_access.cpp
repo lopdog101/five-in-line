@@ -101,7 +101,7 @@ void paged_file_t::flush()
 	pages_t::iterator from=pages.begin();
 	pages_t::iterator to=pages.end();
 	for(;from!=to;++from)
-		flush_page(**from);
+		flush_page(*from->second);
 }
 
 void paged_file_t::flush_page(page_t& p)
@@ -115,28 +115,17 @@ void paged_file_t::flush_page(page_t& p)
 
 paged_file_t::page_ptr paged_file_t::get_page(size_t idx)
 {
-	pages_t::iterator it=pages.begin();
-
-	for(;it!=pages.end();++it)
-	{
-		page_t& p=**it;
-		if(p.index==idx)
-			break;
-	}
+	pages_t::iterator it=pages.find(idx);
 
 	if(it!=pages.end())
 	{
-		if(it==pages.begin())
-			return *it;
-
-		page_ptr p=*it;
-		pages.erase(it);
-		pages.insert(pages.begin(),p);
-
+		page_ptr p=it->second;
+		bring_to_front(p);
 		return p;
 	}
 
 	page_ptr p(new page_t(idx,page_size));
+	p->self=p;
 	size_t offset=idx*page_size;
 	size_t sz=page_size;
 	if(offset+sz>file_size)sz=file_size-offset;
@@ -148,9 +137,40 @@ paged_file_t::page_ptr paged_file_t::get_page(size_t idx)
 	return p;
 }
 
+void paged_file_t::bring_to_front(page_ptr& p)
+{
+	page_ptr left=p->left.lock();
+	if(!left)
+		return;
+
+	page_ptr right=p->right.lock();
+
+	if(left)left->right=right;
+
+	if(right)right->left=left;
+	else last_page=left;
+
+	p->left=page_wptr();
+
+	page_ptr pp=first_page.lock();
+	p->right=first_page;
+	if(pp)pp->left=p;
+	first_page=p;
+}
+
+
 void paged_file_t::add_page(const page_ptr& p)
 {
-	pages.insert(pages.begin(),p);
+	if(pages.empty())
+		last_page=p;
+
+	pages[p->index]=p;
+
+	page_ptr pp=first_page.lock();
+	p->right=first_page;
+	if(pp)pp->left=p;
+	first_page=p;
+
 	remove_oldest();
 }
 
@@ -158,8 +178,11 @@ void paged_file_t::remove_oldest()
 {
 	while(pages.size()>=max_pages)
 	{
-		flush_page(*pages.back());
-		pages.erase(--pages.end());
+		page_ptr p=last_page.lock();
+		flush_page(*p);
+
+		last_page=p->left;
+		pages.erase(p->index);
 	}
 }
 
