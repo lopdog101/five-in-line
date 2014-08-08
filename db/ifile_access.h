@@ -8,6 +8,8 @@ namespace Gomoku
 {
 	typedef std::vector<unsigned char> data_t;
 
+	typedef long long file_offset_t;
+
 	class ifile_access_t
 	{
 		ifile_access_t(const ifile_access_t&);
@@ -16,10 +18,10 @@ namespace Gomoku
 		ifile_access_t(){}
 		virtual ~ifile_access_t(){}
 		virtual void close()=0;
-		virtual size_t get_size()=0;
-		virtual void load(size_t offset,data_t& res)=0;
-		virtual void save(size_t offset,const data_t& res)=0;
-		virtual size_t append(const data_t& res)=0;
+		virtual file_offset_t get_size()=0;
+		virtual void load(file_offset_t offset,data_t& res)=0;
+		virtual void save(file_offset_t offset,const data_t& res)=0;
+		virtual file_offset_t append(const data_t& res)=0;
 	};
 
 	typedef boost::shared_ptr<ifile_access_t> file_access_ptr;

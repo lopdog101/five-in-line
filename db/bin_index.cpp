@@ -8,7 +8,7 @@ namespace fs=boost::filesystem;
 
 namespace Gomoku
 {
-	bin_index_t::bin_index_t(const std::string& _base_dir,size_t _key_len,size_t _dir_key_len,size_t _file_max_records) :
+	bin_index_t::bin_index_t(const std::string& _base_dir,size_t _key_len,size_t _dir_key_len,file_offset_t _file_max_records) :
       base_dir(_base_dir),key_len(_key_len),dir_key_len(_dir_key_len),file_max_records(_file_max_records)
 	{
 		index_file_name="index";
@@ -88,7 +88,7 @@ namespace Gomoku
 		return true;
 	}
 
-	bool bin_index_t::file_node::get_item(size_t offset,index_t& val,size_t& index_value_offset) const
+	bool bin_index_t::file_node::get_item(file_offset_t offset,index_t& val,file_offset_t& index_value_offset) const
 	{
 		if(offset==0)return false;
 
@@ -122,7 +122,7 @@ namespace Gomoku
 		return true;
 	}
 
-	bool bin_index_t::file_node::first_item(size_t offset,index_t& val) const
+	bool bin_index_t::file_node::first_item(file_offset_t offset,index_t& val) const
 	{
 		if(offset==0)return false;
 
@@ -149,7 +149,7 @@ namespace Gomoku
 		return true;
 	}
 
-	bool bin_index_t::file_node::next_item(size_t offset,index_t& val) const
+	bool bin_index_t::file_node::next_item(file_offset_t offset,index_t& val) const
 	{
 		if(offset==0)
 		{
@@ -178,7 +178,7 @@ namespace Gomoku
 
 		index_t it;
 		it.key=key;
-		size_t it_offset=0;
+		file_offset_t it_offset=0;
 
 		if(get_item(root_offset,it,it_offset))
 		{
@@ -206,7 +206,7 @@ namespace Gomoku
 			save_index_data(0,root_offset);
 
 		++items_count;
-		save_index_data(sizeof(size_t),items_count);
+		save_index_data(sizeof(file_offset_t),items_count);
 
 		if(items_count<parent.file_max_records)return true;
 		if(key_len<=parent.dir_key_len)return true;
@@ -218,7 +218,7 @@ namespace Gomoku
 		return true;
 	}
 
-	bool bin_index_t::file_node::add_item(size_t& offset,const index_t& val,bool& new_level)
+	bool bin_index_t::file_node::add_item(file_offset_t& offset,const index_t& val,bool& new_level)
 	{
 		if(offset==0)
 		{
@@ -229,7 +229,7 @@ namespace Gomoku
 
 		index_t cr;
 		load_index(offset,cr);
-		size_t orig_offset=offset;
+		file_offset_t orig_offset=offset;
 
 		data_less_pr pr;
 		if(pr(val.key,cr.key))
@@ -248,7 +248,7 @@ namespace Gomoku
 				else
 				{
 					index_t l;
-					size_t old_l_offset=cr.left;
+					file_offset_t old_l_offset=cr.left;
 					load_index(old_l_offset,l);
 					//ll
 					if(l.balance==-1)
@@ -263,7 +263,7 @@ namespace Gomoku
 					else
 					{
 						index_t lr;
-						size_t old_lr_offset=l.right;
+						file_offset_t old_lr_offset=l.right;
 						load_index(old_lr_offset,lr);
 
 						l.right=lr.left;
@@ -303,7 +303,7 @@ namespace Gomoku
 				else
 				{
 					index_t r;
-					size_t old_r_offset=cr.right;
+					file_offset_t old_r_offset=cr.right;
 					load_index(old_r_offset,r);
 					//rr
 					if(r.balance==1)
@@ -318,7 +318,7 @@ namespace Gomoku
 					else
 					{
 						index_t rl;
-						size_t old_rl_offset=r.left;
+						file_offset_t old_rl_offset=r.left;
 						load_index(old_rl_offset,rl);
 
 						r.left=rl.right;
@@ -347,19 +347,19 @@ namespace Gomoku
 		return offset!=orig_offset;
 	}
 
-	void bin_index_t::file_node::load_data(size_t offset,data_t& res) const
+	void bin_index_t::file_node::load_data(file_offset_t offset,data_t& res) const
 	{
 		open_data_file();
 		fd->load(offset,res);
 	}
 
-	void bin_index_t::file_node::save_data(size_t offset,const data_t& res)
+	void bin_index_t::file_node::save_data(file_offset_t offset,const data_t& res)
 	{
 		open_data_file();
 		fd->save(offset,res);
 	}
 
-	size_t bin_index_t::file_node::append_data(const data_t& res)
+	file_offset_t bin_index_t::file_node::append_data(const data_t& res)
 	{
 		open_data_file();
 		return fd->append(res);
@@ -370,39 +370,39 @@ namespace Gomoku
 		root_offset=0;
 		items_count=0;
 
-		size_t sz=fi->get_size();		
+		file_offset_t sz=fi->get_size();		
 		if(sz==0)
 		{
 			const_cast<file_node*>(this)->save_index_data(0,0);
-			const_cast<file_node*>(this)->save_index_data(sizeof(size_t),0);
+			const_cast<file_node*>(this)->save_index_data(sizeof(file_offset_t),0);
 			return;
 		}
 
 		data_t d(2*sizeof(root_offset));
 		load_index_data(0,d);
-		root_offset=*reinterpret_cast<const size_t*>(&d[0]);
-		items_count=*reinterpret_cast<const size_t*>(&d[sizeof(size_t)]);
+		root_offset=*reinterpret_cast<const file_offset_t*>(&d[0]);
+		items_count=*reinterpret_cast<const file_offset_t*>(&d[sizeof(file_offset_t)]);
 	}
 
-	void bin_index_t::file_node::load_index_data(size_t offset,data_t& res) const
+	void bin_index_t::file_node::load_index_data(file_offset_t offset,data_t& res) const
 	{
 		fi->load(offset,res);
 	}
 
-	void bin_index_t::file_node::save_index_data(size_t offset,const data_t& res)
+	void bin_index_t::file_node::save_index_data(file_offset_t offset,const data_t& res)
 	{
 		fi->save(offset,res);
 	}
 
-	size_t bin_index_t::file_node::append_index_data(const data_t& res)
+	file_offset_t bin_index_t::file_node::append_index_data(const data_t& res)
 	{
 		return fi->append(res);
 	}
 
-	void bin_index_t::file_node::save_index_data(size_t offset,size_t res)
+	void bin_index_t::file_node::save_index_data(file_offset_t offset,file_offset_t res)
 	{
 		const char* p=reinterpret_cast<const char*>(&res);
-		data_t d(p,p+sizeof(size_t));
+		data_t d(p,p+sizeof(file_offset_t));
 		save_index_data(offset,d);
 	}
 
@@ -478,11 +478,11 @@ namespace Gomoku
 		bin.resize(irec_len());
 		std::copy(val.key.begin(),val.key.end(),bin.begin());
 
-		*reinterpret_cast<size_t*>(&bin[key_len])=val.left;
-		*reinterpret_cast<size_t*>(&bin[key_len+1*sizeof(size_t)])=val.right;
-		*reinterpret_cast<size_t*>(&bin[key_len+2*sizeof(size_t)])=val.data_offset;
-		*reinterpret_cast<size_t*>(&bin[key_len+3*sizeof(size_t)])=val.data_len;
-		*reinterpret_cast<char*>(&bin[key_len+4*sizeof(size_t)])=val.balance;
+		*reinterpret_cast<file_offset_t*>(&bin[key_len])=val.left;
+		*reinterpret_cast<file_offset_t*>(&bin[key_len+1*sizeof(file_offset_t)])=val.right;
+		*reinterpret_cast<file_offset_t*>(&bin[key_len+2*sizeof(file_offset_t)])=val.data_offset;
+		*reinterpret_cast<size_t*>(&bin[key_len+3*sizeof(file_offset_t)])=val.data_len;
+		*reinterpret_cast<char*>(&bin[key_len+3*sizeof(file_offset_t)+sizeof(size_t)])=val.balance;
 	}
 
 	void bin_index_t::file_node::unpack(index_t& val,const data_t& bin) const
@@ -490,28 +490,28 @@ namespace Gomoku
 		if(bin.size()!=irec_len())throw std::runtime_error(index_file_name()+": unpack() invalid bin.size()");
 		val.key.resize(0);
 		val.key.insert(val.key.end(),bin.begin(),bin.begin()+key_len);
-		val.left=*reinterpret_cast<const size_t*>(&bin[key_len]);
-		val.right=*reinterpret_cast<const size_t*>(&bin[key_len+1*sizeof(size_t)]);
-		val.data_offset=*reinterpret_cast<const size_t*>(&bin[key_len+2*sizeof(size_t)]);
-		val.data_len=*reinterpret_cast<const size_t*>(&bin[key_len+3*sizeof(size_t)]);
-		val.balance=*reinterpret_cast<const char*>(&bin[key_len+4*sizeof(size_t)]);
+		val.left=*reinterpret_cast<const file_offset_t*>(&bin[key_len]);
+		val.right=*reinterpret_cast<const file_offset_t*>(&bin[key_len+1*sizeof(file_offset_t)]);
+		val.data_offset=*reinterpret_cast<const file_offset_t*>(&bin[key_len+2*sizeof(file_offset_t)]);
+		val.data_len=*reinterpret_cast<const size_t*>(&bin[key_len+3*sizeof(file_offset_t)]);
+		val.balance=*reinterpret_cast<const char*>(&bin[key_len+3*sizeof(file_offset_t)+sizeof(size_t)]);
 	}
 
-	void bin_index_t::file_node::load_index(size_t offset,index_t& val) const
+	void bin_index_t::file_node::load_index(file_offset_t offset,index_t& val) const
 	{
 		data_t d(irec_len());
 		load_index_data(offset,d);
 		unpack(val,d);
 	}
 
-	void bin_index_t::file_node::save_index(size_t offset,const index_t& val)
+	void bin_index_t::file_node::save_index(file_offset_t offset,const index_t& val)
 	{
 		data_t d;
 		pack(val,d);
 		save_index_data(offset,d);
 	}
 
-	size_t bin_index_t::file_node::append_index(const index_t& val)
+	file_offset_t bin_index_t::file_node::append_index(const index_t& val)
 	{
 		data_t d;
 		pack(val,d);

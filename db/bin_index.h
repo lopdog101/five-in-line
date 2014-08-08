@@ -15,9 +15,9 @@ public:
 	struct index_t
 	{
 		data_t key;
-		size_t left;
-		size_t right;
-		size_t data_offset;
+		file_offset_t left;
+		file_offset_t right;
+		file_offset_t data_offset;
 		size_t data_len;
 		char balance;
 
@@ -86,19 +86,19 @@ public:
 		bool self_valid;
 		mutable file_access_ptr fi;
 		mutable file_access_ptr fd;
-		mutable size_t root_offset;
-		mutable size_t items_count;
+		mutable file_offset_t root_offset;
+		mutable file_offset_t items_count;
 
-		void load_data(size_t offset,data_t& res) const;
-		void save_data(size_t offset,const data_t& res);
-		size_t append_data(const data_t& res);
+		void load_data(file_offset_t offset,data_t& res) const;
+		void save_data(file_offset_t offset,const data_t& res);
+		file_offset_t append_data(const data_t& res);
 
-		void load_index_data(size_t offset,data_t& res) const;
-		void save_index_data(size_t offset,const data_t& res);
-		void save_index_data(size_t offset,size_t res);
-		size_t append_index_data(const data_t& res);
+		void load_index_data(file_offset_t offset,data_t& res) const;
+		void save_index_data(file_offset_t offset,const data_t& res);
+		void save_index_data(file_offset_t offset,file_offset_t res);
+		file_offset_t append_index_data(const data_t& res);
 
-		inline size_t irec_len() const{return key_len+4*sizeof(size_t)+sizeof(char);}
+		inline size_t irec_len() const{return key_len+3*sizeof(file_offset_t)+sizeof(size_t)+sizeof(char);}
 
 		void split();
 		void close_files();
@@ -110,20 +110,20 @@ public:
 
 		void pack(const index_t& val,data_t& bin) const;
 		void unpack(index_t& val,const data_t& bin) const;
-		void load_index(size_t offset,index_t& val) const;
-		void save_index(size_t offset,const index_t& val);
-		size_t append_index(const index_t& val);
+		void load_index(file_offset_t offset,index_t& val) const;
+		void save_index(file_offset_t offset,const index_t& val);
+		file_offset_t append_index(const index_t& val);
 
-		bool get_item(size_t offset,index_t& val) const
+		bool get_item(file_offset_t offset,index_t& val) const
 		{
-			size_t index_value_offset=0;
+			file_offset_t index_value_offset=0;
 			return get_item(offset,val,index_value_offset);
 		}
 
-		bool get_item(size_t offset,index_t& val,size_t& index_value_offset) const;
-		bool first_item(size_t offset,index_t& val) const;
-		bool next_item(size_t offset,index_t& val) const;
-		bool add_item(size_t& offset,const index_t& val,bool& new_level);
+		bool get_item(file_offset_t offset,index_t& val,file_offset_t& index_value_offset) const;
+		bool first_item(file_offset_t offset,index_t& val) const;
+		bool next_item(file_offset_t offset,index_t& val) const;
+		bool add_item(file_offset_t& offset,const index_t& val,bool& new_level);
 	public:
 		bool disable_split;
 
@@ -172,10 +172,10 @@ public:
 private:
 	const size_t key_len;
 	const size_t dir_key_len;
-	const size_t file_max_records;
+	const file_offset_t file_max_records;
 	const std::string base_dir;
 	mutable node_ptr root;
-	size_t items_count;
+	file_offset_t items_count;
 	paged_file_provider_t file_provider;
 
 	void validate_root() const;
@@ -188,7 +188,7 @@ public:
 	std::string data_file_name;
 	std::string items_count_file_name;
 
-	bin_index_t(const std::string& _base_dir,size_t _key_len,size_t _dir_key_len=1,size_t _file_max_records=1048576);
+	bin_index_t(const std::string& _base_dir,size_t _key_len,size_t _dir_key_len=1,file_offset_t _file_max_records=1048576);
 	~bin_index_t()
     {
         try

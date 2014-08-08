@@ -17,10 +17,10 @@ namespace Gomoku
 		regular_file_t(const std::string& file_name);
 		~regular_file_t(){close();}
 		virtual void close();
-		virtual size_t get_size();
-		virtual void load(size_t offset,data_t& res);
-		virtual void save(size_t offset,const data_t& res);
-		virtual size_t append(const data_t& res);
+		virtual file_offset_t get_size();
+		virtual void load(file_offset_t offset,data_t& res);
+		virtual void save(file_offset_t offset,const data_t& res);
+		virtual file_offset_t append(const data_t& res);
 	};
 
 	class regular_file_provider_t : public ifile_access_provider_t

@@ -27,61 +27,65 @@ void paged_file_t::close()
 	regular_file_t::close();
 }
 
-size_t paged_file_t::get_size()
+file_offset_t paged_file_t::get_size()
 {
 	open();
 	return file_size;
 }
 
-void paged_file_t::load(size_t offset,data_t& res)
+void paged_file_t::load(file_offset_t offset,data_t& res)
 {
 	open();
 
-	size_t from=from_index(offset);
-	size_t to=to_index(offset,res.size());
+	file_offset_t from=from_index(offset);
+	file_offset_t to=to_index(offset,res.size());
 	
-	size_t res_to=offset+res.size();
+	file_offset_t res_to=offset+res.size();
 
-	for(size_t i=from;i<to;i++)
+	for(file_offset_t i=from;i<to;i++)
 	{
 		page_ptr pp=get_page(i);
 		const page_t& p=*pp;
 
-		size_t p_from=p.index*page_size;
-		size_t p_to=p_from+p.data.size();
+		file_offset_t p_from=p.index*page_size;
+		file_offset_t p_to=p_from+p.data.size();
 
-		size_t common_from=(offset>p_from)? offset:p_from;
-		size_t common_to=(res_to<p_to)? res_to:p_to;
+		file_offset_t common_from=(offset>p_from)? offset:p_from;
+		file_offset_t common_to=(res_to<p_to)? res_to:p_to;
 
-		std::copy(p.data.begin()+(common_from-p_from),p.data.begin()+(common_to-p_from),res.begin()+(common_from-offset));
+		std::copy(p.data.begin()+static_cast<ptrdiff_t>(common_from-p_from),
+			p.data.begin()+static_cast<ptrdiff_t>(common_to-p_from),
+			res.begin()+static_cast<ptrdiff_t>(common_from-offset));
 	}
 }
 
-void paged_file_t::save(size_t offset,const data_t& res)
+void paged_file_t::save(file_offset_t offset,const data_t& res)
 {
 	open();
 
-	size_t from=from_index(offset);
-	size_t to=to_index(offset,res.size());
+	file_offset_t from=from_index(offset);
+	file_offset_t to=to_index(offset,res.size());
 	
-	size_t res_to=offset+res.size();
+	file_offset_t res_to=offset+res.size();
 
-	for(size_t i=from;i<to;i++)
+	for(file_offset_t i=from;i<to;i++)
 	{
 		page_ptr pp=get_page(i);
 		page_t& p=*pp;
 
-		size_t p_from=p.index*page_size;
-		size_t p_to=p_from+page_size;
+		file_offset_t p_from=p.index*page_size;
+		file_offset_t p_to=p_from+page_size;
 
-		size_t common_from=(offset>p_from)? offset:p_from;
-		size_t common_to=(res_to<p_to)? res_to:p_to;
+		file_offset_t common_from=(offset>p_from)? offset:p_from;
+		file_offset_t common_to=(res_to<p_to)? res_to:p_to;
 
-		size_t data_size=common_to-p_from;
+		size_t data_size=static_cast<size_t>(common_to-p_from);
 		if(data_size>p.data.size())
 			p.data.resize(data_size);
 
-		std::copy(res.begin()+(common_from-offset),res.begin()+(common_to-offset),p.data.begin()+(common_from-p_from));
+		std::copy(res.begin()+static_cast<ptrdiff_t>(common_from-offset),
+			res.begin()+static_cast<ptrdiff_t>(common_to-offset),
+			p.data.begin()+static_cast<ptrdiff_t>(common_from-p_from));
 		p.dirty=true;
 
 		if(common_to>file_size)
@@ -89,9 +93,9 @@ void paged_file_t::save(size_t offset,const data_t& res)
 	}
 }
 
-size_t paged_file_t::append(const data_t& res)
+file_offset_t paged_file_t::append(const data_t& res)
 {
-	size_t offset=get_size();
+	file_offset_t offset=get_size();
 	save(offset,res);
 	return offset;
 }
@@ -113,7 +117,7 @@ void paged_file_t::flush_page(page_t& p)
 	p.dirty=false;
 }
 
-paged_file_t::page_ptr paged_file_t::get_page(size_t idx)
+paged_file_t::page_ptr paged_file_t::get_page(file_offset_t idx)
 {
 	pages_t::iterator it=pages.find(idx);
 
@@ -126,9 +130,9 @@ paged_file_t::page_ptr paged_file_t::get_page(size_t idx)
 
 	page_ptr p(new page_t(idx,page_size));
 	p->self=p;
-	size_t offset=idx*page_size;
+	file_offset_t offset=idx*page_size;
 	size_t sz=page_size;
-	if(offset+sz>file_size)sz=file_size-offset;
+	if(offset+sz>file_size)sz=static_cast<ptrdiff_t>(file_size-offset);
 	p->data.resize(sz);
 	regular_file_t::load(offset,p->data);
 

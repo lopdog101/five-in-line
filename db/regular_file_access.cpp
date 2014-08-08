@@ -25,23 +25,27 @@ void regular_file_t::close()
 	fd=0;
 }
 
-size_t regular_file_t::get_size()
+file_offset_t regular_file_t::get_size()
 {
 	open();
 
 	if(fseek(fd,0,SEEK_END)!=0)
 		throw std::runtime_error("get_size(): seek error at end: "+file_name);
 
-	return ftell(fd);
+	file_offset_t ret=0;
+	if(fgetpos(fd,&ret)!=0)
+		throw std::runtime_error("get_size(): fgetpos() failed: "+file_name);
+
+	return ret;
 }
 
-void regular_file_t::load(size_t offset,data_t& res)
+void regular_file_t::load(file_offset_t offset,data_t& res)
 {
 	if(res.empty())return;
 
 	open();
 
-	if(fseek(fd,(int)offset,SEEK_SET)!=0)
+	if(fsetpos(fd,&offset)!=0)
 		throw std::runtime_error("load(): seek error at "+boost::lexical_cast<std::string>(offset)+
 			": "+file_name);
 
@@ -52,15 +56,15 @@ void regular_file_t::load(size_t offset,data_t& res)
 			": "+file_name);
 }
 
-void regular_file_t::save(size_t offset,const data_t& res)
+void regular_file_t::save(file_offset_t offset,const data_t& res)
 {
 	if(res.empty())return;
 
 	open();
 
-	if(fseek(fd,(int)offset,SEEK_SET)!=0)
+	if(fsetpos(fd,&offset)!=0)
 		throw std::runtime_error("save(): seek error at "+boost::lexical_cast<std::string>(offset)+
-		": "+file_name);
+			": "+file_name);
 
 	if(fwrite(&res.front(),1,res.size(),fd)!=res.size())
 		throw std::runtime_error(
@@ -69,7 +73,7 @@ void regular_file_t::save(size_t offset,const data_t& res)
 			": "+file_name);
 }
 
-size_t regular_file_t::append(const data_t& res)
+file_offset_t regular_file_t::append(const data_t& res)
 {
 	if(res.empty())return 0;
 
@@ -78,7 +82,9 @@ size_t regular_file_t::append(const data_t& res)
 	if(fseek(fd,0,SEEK_END)!=0)
 		throw std::runtime_error("append(): seek error at end: "+file_name);
 
-	size_t ret=ftell(fd);
+	file_offset_t ret=0;
+	if(fgetpos(fd,&ret)!=0)
+		throw std::runtime_error("get_size(): fgetpos() failed: "+file_name);
 
 	if(fwrite(&res.front(),1,res.size(),fd)!=res.size())
 		throw std::runtime_error(

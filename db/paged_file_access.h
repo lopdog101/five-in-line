@@ -21,18 +21,18 @@ namespace Gomoku
 
 		typedef boost::shared_ptr<page_t> page_ptr;
 		typedef boost::weak_ptr<page_t> page_wptr;
-		typedef std::unordered_map<size_t,page_ptr> pages_t;
+		typedef std::unordered_map<file_offset_t,page_ptr> pages_t;
 
 		struct page_t
 		{
-			const size_t index;
+			const file_offset_t index;
 			bool dirty;
 			data_t data;
 			page_wptr left;
 			page_wptr right;
 			page_wptr self;
 
-			page_t(size_t _index,size_t max_size) : index(_index)
+			page_t(file_offset_t _index,size_t max_size) : index(_index)
 			{
 				dirty=false;
 				data.reserve(max_size);
@@ -46,7 +46,7 @@ namespace Gomoku
 		const size_t page_size;
 		const unsigned max_pages;
 		pages_t pages;
-		size_t file_size;
+		file_offset_t file_size;
 		page_wptr first_page;
 		page_wptr last_page;
 
@@ -55,20 +55,20 @@ namespace Gomoku
 		void flush();
 		void flush_page(page_t& p);
 		void remove_oldest();
-		page_ptr get_page(size_t idx);
+		page_ptr get_page(file_offset_t idx);
 		void add_page(const page_ptr& p);
 		void bring_to_front(page_ptr& p);
 
-		inline size_t from_index(size_t offset) const{return offset/page_size;}
-		inline size_t to_index(size_t offset,size_t size) const{return (offset+size+page_size-1)/page_size;}
+		inline file_offset_t from_index(file_offset_t offset) const{return offset/page_size;}
+		inline file_offset_t to_index(file_offset_t offset,file_offset_t size) const{return (offset+size+page_size-1)/page_size;}
 	public:
 		paged_file_t(const std::string& file_name,size_t page_size=512,unsigned max_pages=512);
 		~paged_file_t(){close();}
 		void close();
-		size_t get_size();
-		virtual void load(size_t offset,data_t& res);
-		virtual void save(size_t offset,const data_t& res);
-		virtual size_t append(const data_t& res);
+		file_offset_t get_size();
+		virtual void load(file_offset_t offset,data_t& res);
+		virtual void save(file_offset_t offset,const data_t& res);
+		virtual file_offset_t append(const data_t& res);
 	};
 
 	class paged_file_provider_t : public regular_file_provider_t
