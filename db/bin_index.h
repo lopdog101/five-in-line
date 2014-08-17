@@ -4,6 +4,7 @@
 #include "ibin_index.h"
 #include <map>
 #include "../extern/exception_catch.h"
+#include <boost/iterator/counting_iterator.hpp>
 
 namespace Gomoku
 {
@@ -11,32 +12,161 @@ namespace Gomoku
 class bin_index_t : public ibin_index_t
 {
 public:
+	inline static size_t idx_rec_len(size_t key_len){return key_len+3*sizeof(file_offset_t)+sizeof(size_t)+sizeof(char);}
+	inline static size_t idx_page_len(size_t key_len,size_t page_max){return (page_max+1)*idx_rec_len(key_len);}
+
+	typedef boost::counting_iterator<file_offset_t> page_iter;
+	struct index_t;
+
+	struct index_ref
+	{
+		unsigned char* const data;
+		const size_t key_len;
+
+		index_ref(unsigned char* _data,size_t _key_len) : data(_data),key_len(_key_len)
+		{
+		}
+
+		file_offset_t& left(){return *reinterpret_cast<file_offset_t*>(data);}
+		file_offset_t& data_offset(){return *reinterpret_cast<file_offset_t*>(data+sizeof(file_offset_t));}
+		size_t& data_len(){return *reinterpret_cast<size_t*>(data+2*sizeof(file_offset_t));}
+		unsigned char* key_begin(){return data+2*sizeof(file_offset_t)+sizeof(size_t);}
+		unsigned char* key_end(){return key_begin()+idx_rec_len(key_len);}
+
+		const file_offset_t& left() const {return const_cast<index_ref*>(this)->left();}
+		const file_offset_t& data_offset() const {return const_cast<index_ref*>(this)->data_offset();}
+		const size_t& data_len() const {return const_cast<index_ref*>(this)->data_len();}
+		const unsigned char* key_begin() const {return const_cast<index_ref*>(this)->key_begin();}
+		const unsigned char* key_end() const{return const_cast<index_ref*>(this)->key_end();}
+
+		void copy_pointers(const index_t& rhs)
+		{
+			left()=rhs.left;
+			data_offset()=rhs.data_offset;
+			data_len()=rhs.data_len;
+		}
+
+		void copy_key(const index_t& rhs)
+		{
+			std::copy(rhs.key.begin(),rhs.key.end(),key_begin());
+		}
+
+		void operator=(const index_t& rhs)
+		{
+			copy_pointers(rhs);
+			copy_key(rhs);
+		}
+	};
 
 	struct index_t
 	{
 		data_t key;
 		file_offset_t left;
-		file_offset_t right;
 		file_offset_t data_offset;
 		size_t data_len;
-		char balance;
+
+		file_offset_t page_offset;
+		size_t index_in_page;
+
 
 		index_t()
 		{
-			left=right=0;
+			left=0;
 			data_offset=0;
 			data_len=0;
-			balance=0;
+			
+			page_offset=0;
+			index_in_page=0;
 		}
 
-		inline bool operator==(const index_t& rhs) const
+		void copy_pointers(const index_ref& rhs)
 		{
-			return key==rhs.key&&
-				left==rhs.left&&
-				right==rhs.right&&
-				data_offset==rhs.data_offset&&
-				data_len==rhs.data_len&&
-				balance==rhs.balance;
+			left=rhs.left();
+			data_offset=rhs.data_offset();
+			data_len=rhs.data_len();
+		}
+
+		void copy_key(const index_ref& rhs)
+		{
+			key.clear();
+			key.insert(key.end(),rhs.key_begin(),rhs.key_end());
+		}
+
+		void operator=(const index_ref& rhs)
+		{
+			copy_pointers(rhs);
+			copy_key(rhs);
+		}
+	};
+
+	class page_t
+	{
+	public:
+		data_t buffer;
+		const size_t key_len;
+		const size_t page_max;
+		
+		file_offset_t page_offset;
+		bool dirty;
+
+		page_t(size_t _key_len,size_t _page_max) : key_len(_key_len),page_max(_page_max)
+		{
+			buffer.resize(idx_page_len(key_len,page_max),0);
+			page_offset=0;
+			dirty=false;
+		}
+
+		page_iter begin() const{return page_iter(0);}
+		page_iter end() const{return page_iter(items_count());}
+
+		inline index_ref operator[](size_t idx){return index_ref(&buffer[idx_rec_len(key_len)*idx],key_len);}
+		inline const size_t& items_count() const{return const_cast<page_t&>(*this)[page_max].data_len();}
+		inline size_t& items_count(){return const_cast<page_t&>(*this)[page_max].data_len();}
+
+		void insert_item(const index_t& val)
+		{
+			size_t ct=items_count();
+
+			data_t::iterator from=buffer.begin()+idx_rec_len(key_len)*val.index_in_page;
+			data_t::iterator to=buffer.begin()+idx_rec_len(key_len)*ct;
+			std::copy_backward(from,to,to+1);
+
+			index_ref r=operator[](val.index_in_page);
+			r=val;
+
+			items_count()=ct+1;
+			dirty=true;
+		}
+	};
+
+	typedef boost::shared_ptr<page_t> page_ptr;
+
+	class page_pr
+	{
+		page_t& page;
+
+	public:
+		page_pr(page_t& _page) : page(_page)
+		{
+		}
+
+		inline bool operator()(file_offset_t ia,file_offset_t ib) const
+		{
+			index_ref a=page[static_cast<size_t>(ia)];
+			index_ref b=page[static_cast<size_t>(ib)];
+			return std::lexicographical_compare(a.key_begin(),a.key_end(),b.key_begin(),b.key_end());
+		}
+
+		inline bool operator()(file_offset_t ia,const data_t& b) const
+		{
+			index_ref a=page[static_cast<size_t>(ia)];
+			return std::lexicographical_compare(a.key_begin(),a.key_end(),b.begin(),b.end());
+		}
+
+		inline bool operator()(const data_t& a,file_offset_t ib) const
+		{
+			index_ref b=page[static_cast<size_t>(ib)];
+			return std::lexicographical_compare(a.begin(),a.end(),b.key_begin(),b.key_end());
 		}
 	};
 
@@ -86,7 +216,7 @@ public:
 		bool self_valid;
 		mutable file_access_ptr fi;
 		mutable file_access_ptr fd;
-		mutable file_offset_t root_offset;
+		mutable page_ptr root_page;
 		mutable file_offset_t items_count;
 
 		void load_data(file_offset_t offset,data_t& res) const;
@@ -98,8 +228,6 @@ public:
 		void save_index_data(file_offset_t offset,file_offset_t res);
 		file_offset_t append_index_data(const data_t& res);
 
-		inline size_t irec_len() const{return key_len+3*sizeof(file_offset_t)+sizeof(size_t)+sizeof(char);}
-
 		void split();
 		void close_files();
 		void open_index_file() const;
@@ -108,22 +236,18 @@ public:
 		std::string data_file_name() const;
 		void validate_root_offset() const;
 
-		void pack(const index_t& val,data_t& bin) const;
-		void unpack(index_t& val,const data_t& bin) const;
-		void load_index(file_offset_t offset,index_t& val) const;
-		void save_index(file_offset_t offset,const index_t& val);
-		file_offset_t append_index(const index_t& val);
+		void load_page(page_t& val) const{load_index_data(val.page_offset,val.buffer);}
+		void save_page(page_t& val){save_index_data(val.page_offset,val.buffer);val.dirty=false;}
+		void flush_page(page_t& val){if(val.dirty)save_page(val);}
+		void append_page(page_t& val){val.page_offset=append_index_data(val.buffer);val.dirty=false;}
 
-		bool get_item(file_offset_t offset,index_t& val) const
-		{
-			file_offset_t index_value_offset=0;
-			return get_item(offset,val,index_value_offset);
-		}
-
-		bool get_item(file_offset_t offset,index_t& val,file_offset_t& index_value_offset) const;
-		bool first_item(file_offset_t offset,index_t& val) const;
-		bool next_item(file_offset_t offset,index_t& val) const;
-		bool add_item(file_offset_t& offset,const index_t& val,bool& new_level);
+		bool get_item(page_t& page,index_t& val) const;
+		bool first_item(page_t& page,index_t& val) const;
+		bool next_item(page_t& page,index_t& val) const;
+		bool next_item(page_t& page,const page_iter& p,index_t& val) const;
+		void add_item(const index_t& val);
+		void add_item(const index_t& val,page_t& page);
+		void split_page(page_t& child_page,page_t& parent_page,size_t parent_index,page_t& new_right_page);
 	public:
 		bool disable_split;
 
@@ -132,7 +256,7 @@ public:
 		{
 			self_valid=true;
 			disable_split=false;
-			root_offset=items_count=0;
+			items_count=0;
 		}
 
 		~file_node(){close_files();}
@@ -142,6 +266,7 @@ public:
 		bool first(data_t& key,data_t& val) const;
 		bool next(data_t& key,data_t& val) const;
 		virtual bool is_valid() const{return self_valid;}
+		void update_page(const index_t& it);
 	};
 
 	class dir_node : public inode
@@ -173,6 +298,7 @@ private:
 	const size_t key_len;
 	const size_t dir_key_len;
 	const file_offset_t file_max_records;
+	const size_t page_max;
 	const std::string base_dir;
 	mutable node_ptr root;
 	file_offset_t items_count;
@@ -188,7 +314,7 @@ public:
 	std::string data_file_name;
 	std::string items_count_file_name;
 
-	bin_index_t(const std::string& _base_dir,size_t _key_len,size_t _dir_key_len=1,file_offset_t _file_max_records=1048576);
+	bin_index_t(const std::string& _base_dir,size_t _key_len,size_t _dir_key_len=1,file_offset_t _file_max_records=1048576,size_t _page_max=512);
 	~bin_index_t()
     {
         try

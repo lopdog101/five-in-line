@@ -45,7 +45,7 @@ SOURCE_GROUP(gtest FILES ${SRC_GTEST_FILES} )
 
 add_executable(five_in_line_tests ${SRC_ALGO_FILES} ${SRC_DB_FILES} ${SRC_EXTERN_FILES} ${SRC_TESTS_FILES} ${SRC_GTEST_FILES})
 
-add_definitions(-D_CRT_SECURE_NO_WARNINGS)
+add_definitions(-D_CRT_SECURE_NO_WARNINGS -D_SCL_SECURE_NO_WARNINGS)
 include_directories($ENV{BOOST})
 
 if(MSVC)

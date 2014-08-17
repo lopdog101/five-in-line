@@ -8,8 +8,12 @@ namespace fs=boost::filesystem;
 
 namespace Gomoku
 {
-	bin_index_t::bin_index_t(const std::string& _base_dir,size_t _key_len,size_t _dir_key_len,file_offset_t _file_max_records) :
-      base_dir(_base_dir),key_len(_key_len),dir_key_len(_dir_key_len),file_max_records(_file_max_records)
+	bin_index_t::bin_index_t(const std::string& _base_dir,size_t _key_len,size_t _dir_key_len,file_offset_t _file_max_records,size_t _page_max) :
+		base_dir(_base_dir),
+		key_len(_key_len),
+		dir_key_len(_dir_key_len),
+		file_max_records(_file_max_records),
+		page_max(_page_max)
 	{
 		index_file_name="index";
 		data_file_name="data";
@@ -78,97 +82,136 @@ namespace Gomoku
 	{
 		validate_key_len(key);
 		open_index_file();
+
+		if(!root_page)
+			return false;
 		
 		index_t ind;
 		ind.key=key;
-		if(!get_item(root_offset,ind))return false;
+
+		if(!get_item(*root_page,ind))return false;
 
 		val.resize(ind.data_len);
 		load_data(ind.data_offset,val);
 		return true;
 	}
 
-	bool bin_index_t::file_node::get_item(file_offset_t offset,index_t& val,file_offset_t& index_value_offset) const
+	bool bin_index_t::file_node::get_item(page_t& page,index_t& val) const
 	{
-		if(offset==0)return false;
+		page_pr pr(page);
+		page_iter p=std::lower_bound(page.begin(),page.end(),val.key,pr);
+		
+		index_ref r=page[static_cast<size_t>(*p)];
 
-		index_t cr;
-		load_index(offset,cr);
-		if(cr.key==val.key)
+		if(p!=page.end() && !pr(val.key,*p))
 		{
-			val=cr;
-			index_value_offset=offset;
+			val.page_offset=page.page_offset;
+			val.index_in_page=static_cast<size_t>(*p);
+			val.copy_pointers(r);
+
 			return true;
 		}
 
-		data_less_pr pr;
+		if(r.left()==0)
+			return false;
 
-		if(pr(val.key,cr.key))
-			return get_item(cr.left,val,index_value_offset);
-		return get_item(cr.right,val,index_value_offset);
+		page_t pg(key_len,parent.page_max);
+		pg.page_offset=r.left();
+		load_page(pg);
+		return get_item(pg,val);
 	}
 
-	
 	bool bin_index_t::file_node::first(data_t& key,data_t& val) const
 	{
+		validate_key_len(key);
 		open_index_file();
+
+		if(!root_page)
+			return false;
 		
 		index_t ind;
-		if(!first_item(root_offset,ind))return false;
+		ind.key=key;
 
-		key=ind.key;
+		if(!first_item(*root_page,ind))return false;
+
 		val.resize(ind.data_len);
 		load_data(ind.data_offset,val);
 		return true;
 	}
 
-	bool bin_index_t::file_node::first_item(file_offset_t offset,index_t& val) const
+	bool bin_index_t::file_node::first_item(page_t& page,index_t& val) const
 	{
-		if(offset==0)return false;
+		if(page.items_count()==0)
+			return false;
 
-		index_t cr;
-		load_index(offset,cr);
-		if(cr.left!=0)return first_item(cr.left,val);
+		index_ref r=page[0];
+		if(r.left()==0)
+		{
+			val.page_offset=page.page_offset;
+			val.index_in_page=0;
+			val=r;
+			return true;
+		}
 
-		val=cr;
-		return true;
+		page_t pg(key_len,parent.page_max);
+		pg.page_offset=r.left();
+		load_page(pg);
+		return first_item(pg,val);
 	}
 
 	bool bin_index_t::file_node::next(data_t& key,data_t& val) const
 	{
 		validate_key_len(key);
 		open_index_file();
+
+		if(!root_page)
+			return false;
 		
 		index_t ind;
 		ind.key=key;
-		if(!next_item(root_offset,ind))return false;
 
-		key=ind.key;
+		if(!next_item(*root_page,ind))return false;
+
 		val.resize(ind.data_len);
 		load_data(ind.data_offset,val);
 		return true;
 	}
 
-	bool bin_index_t::file_node::next_item(file_offset_t offset,index_t& val) const
+	bool bin_index_t::file_node::next_item(page_t& page,index_t& val) const
 	{
-		if(offset==0)
+		page_pr pr(page);
+		page_iter p=std::lower_bound(page.begin(),page.end(),val.key,pr);
+		
+		if(p==page.end())
+			return next_item(page,p,val);
+
+		if(pr(val.key,*p))
 		{
-			return false;
-		}
+			if(next_item(page,p,val))
+				return true;
 
-		index_t cr;
-		load_index(offset,cr);
-
-		data_less_pr pr;
-		if(pr(val.key,cr.key))
-		{
-			if(next_item(cr.left,val))return true;
-
-			val=cr;
+			index_ref r=page[static_cast<size_t>(*p)];
+			val.page_offset=page.page_offset;
+			val.index_in_page=static_cast<size_t>(*p);
+			val=r;
 			return true;
 		}
 
-		return next_item(cr.right,val);
+		++p;
+		return next_item(page,p,val);
+	}
+
+	bool bin_index_t::file_node::next_item(page_t& page,const page_iter& p,index_t& val) const
+	{
+		index_ref r=page[static_cast<size_t>(*p)];
+
+		if(r.left()==0)
+			return false;
+
+		page_t pg(key_len,parent.page_max);
+		pg.page_offset=r.left();
+		load_page(pg);
+		return next_item(pg,val);
 	}
 
 	bool bin_index_t::file_node::set(const data_t& key,const data_t& val)
@@ -176,11 +219,17 @@ namespace Gomoku
 		validate_key_len(key);
 		open_index_file();
 
+		if(!root_page)
+		{
+			root_page=page_ptr(new page_t(key_len,parent.page_max));
+			//offset=0 for additional data, choose the next one
+			root_page->page_offset=idx_page_len(key_len,parent.page_max);
+		}
+		
 		index_t it;
 		it.key=key;
-		file_offset_t it_offset=0;
 
-		if(get_item(root_offset,it,it_offset))
+		if(get_item(*root_page,it))
 		{
 			index_t old_i=it;
 
@@ -192,7 +241,7 @@ namespace Gomoku
 				old_i.data_len==it.data_len)
 				return false;
 
-			save_index(it_offset,it);
+			update_page(it);
 			return false;
 		}
 
@@ -201,9 +250,7 @@ namespace Gomoku
 		v.data_len=val.size();
 		v.data_offset=append_data(val);
 
-        bool new_level=false;
-		if(add_item(root_offset,v,new_level))
-			save_index_data(0,root_offset);
+		add_item(v);
 
 		++items_count;
 		save_index_data(sizeof(file_offset_t),items_count);
@@ -218,133 +265,102 @@ namespace Gomoku
 		return true;
 	}
 
-	bool bin_index_t::file_node::add_item(file_offset_t& offset,const index_t& val,bool& new_level)
+	void bin_index_t::file_node::update_page(const index_t& it)
 	{
-		if(offset==0)
-		{
-			offset=append_index(val);
-			new_level=true;
-			return true;
-		}
+		page_ptr pg;
 
-		index_t cr;
-		load_index(offset,cr);
-		file_offset_t orig_offset=offset;
-
-		data_less_pr pr;
-		if(pr(val.key,cr.key))
-		{
-			bool changed=add_item(cr.left,val,new_level);
-			if(!changed&&!new_level)return false;
-
-            if(new_level)
-			{
-				if(cr.balance==1)
-				{
-					cr.balance=0;
-					new_level=false;
-				}
-				else if(cr.balance==0)cr.balance=-1;
-				else
-				{
-					index_t l;
-					file_offset_t old_l_offset=cr.left;
-					load_index(old_l_offset,l);
-					//ll
-					if(l.balance==-1)
-					{
-						cr.left=l.right;
-						l.right=offset;
-						cr.balance=0;
-						offset=old_l_offset;
-						l.balance=0;
-					}
-					//lr
-					else
-					{
-						index_t lr;
-						file_offset_t old_lr_offset=l.right;
-						load_index(old_lr_offset,lr);
-
-						l.right=lr.left;
-						lr.left=old_l_offset;
-						cr.left=lr.right;
-						lr.right=orig_offset;
-
-						if(lr.balance==-1)cr.balance=1;
-						else cr.balance=0;
-
-						if(lr.balance==1)l.balance=-1;
-						else l.balance=0;
-						
-						offset=old_lr_offset;
-						lr.balance=0;
-						save_index(old_lr_offset,lr);
-					}
-
-					new_level=false;
-					save_index(old_l_offset,l);
-				}
-			}
-		}
+		if(root_page->page_offset==it.page_offset)
+			pg=root_page;
 		else
 		{
-			bool changed=add_item(cr.right,val,new_level);
-			if(!changed&&!new_level)return false;
-
-            if(new_level)
-			{
-				if(cr.balance==-1)
-				{
-					cr.balance=0;
-					new_level=false;
-				}
-				else if(cr.balance==0)cr.balance=1;
-				else
-				{
-					index_t r;
-					file_offset_t old_r_offset=cr.right;
-					load_index(old_r_offset,r);
-					//rr
-					if(r.balance==1)
-					{
-						cr.right=r.left;
-						r.left=offset;
-						cr.balance=0;
-						offset=old_r_offset;
-						r.balance=0;
-					}
-					//rl
-					else
-					{
-						index_t rl;
-						file_offset_t old_rl_offset=r.left;
-						load_index(old_rl_offset,rl);
-
-						r.left=rl.right;
-						rl.right=old_r_offset;
-						cr.right=rl.left;
-						rl.left=orig_offset;
-
-						if(rl.balance==1)cr.balance=-1;
-						else cr.balance=0;
-
-						if(rl.balance==-1)r.balance=1;
-						else r.balance=0;
-						
-						offset=old_rl_offset;
-						rl.balance=0;
-						save_index(old_rl_offset,rl);
-					}
-
-					new_level=false;
-					save_index(old_r_offset,r);
-				}
-			}
+			pg=page_ptr(new page_t(key_len,parent.page_max));
+			pg->page_offset=it.page_offset;
+			load_page(*pg);
 		}
 
-		save_index(orig_offset,cr);
-		return offset!=orig_offset;
+		(*pg)[it.index_in_page].copy_pointers(it);
+		save_page(*pg);
+	}
+
+	void bin_index_t::file_node::add_item(const index_t& val)
+	{
+		if(root_page->items_count()<parent.page_max)
+		{
+			add_item(val,*root_page);
+			flush_page(*root_page);
+			return;
+		}
+
+		page_ptr new_root(new page_t(key_len,parent.page_max));
+		index_ref r=(*new_root)[0];
+		r.left()=root_page->page_offset;
+
+		add_item(val,*new_root);
+
+		root_page=new_root;
+		append_page(*new_root);
+
+		save_index_data(0,new_root->page_offset);
+	}
+
+	void bin_index_t::file_node::add_item(const index_t& val,page_t& page)
+	{
+		page_pr pr(page);
+		page_iter p=std::lower_bound(page.begin(),page.end(),val.key,pr);
+		
+		index_ref r=page[static_cast<size_t>(*p)];
+
+		if(r.left()==0)
+		{
+			index_t cp(val);
+			cp.index_in_page=static_cast<size_t>(*p);
+			page.insert_item(cp);
+			return;
+		}
+
+		page_t child_page(key_len,parent.page_max);
+		child_page.page_offset=r.left();
+		load_page(child_page);
+
+		if(child_page.items_count()<parent.page_max)
+		{
+			add_item(val,child_page);
+			flush_page(child_page);
+			return;
+		}
+
+		page_t new_right_page(key_len,parent.page_max);
+
+		split_page(child_page,page,static_cast<size_t>(*p),new_right_page);
+		
+		if(pr(val.key,*p)) add_item(val,child_page);
+		else add_item(val,new_right_page);
+
+		save_page(child_page);
+		save_page(new_right_page);
+	}
+
+	void bin_index_t::file_node::split_page(page_t& child_page,page_t& parent_page,size_t parent_index,page_t& new_right_page)
+	{
+		size_t left_count=(child_page.items_count()-1)/2;
+
+		std::copy(
+			child_page.buffer.begin()+idx_rec_len(key_len)*(left_count+1),
+			child_page.buffer.begin()+idx_rec_len(key_len)*child_page.items_count(),
+			new_right_page.buffer.begin());
+		new_right_page.items_count()=child_page.items_count()-left_count-1;
+		append_page(new_right_page);
+		
+
+		index_t val;
+		val=child_page[left_count];
+		val.index_in_page=parent_index;
+		val.left=child_page.page_offset;
+		parent_page.insert_item(val);
+
+		child_page.items_count()=left_count;
+
+		parent_page[parent_index+1].left()=new_right_page.page_offset;
 	}
 
 	void bin_index_t::file_node::load_data(file_offset_t offset,data_t& res) const
@@ -367,21 +383,25 @@ namespace Gomoku
 
 	void bin_index_t::file_node::validate_root_offset() const
 	{
-		root_offset=0;
+		root_page.reset();
 		items_count=0;
 
 		file_offset_t sz=fi->get_size();		
 		if(sz==0)
 		{
-			const_cast<file_node*>(this)->save_index_data(0,0);
-			const_cast<file_node*>(this)->save_index_data(sizeof(file_offset_t),0);
+			data_t d(idx_page_len(key_len,parent.page_max),0);
+			const_cast<file_node*>(this)->save_index_data(0,d);
 			return;
 		}
 
-		data_t d(2*sizeof(root_offset));
+		data_t d(2*sizeof(file_offset_t));
 		load_index_data(0,d);
-		root_offset=*reinterpret_cast<const file_offset_t*>(&d[0]);
 		items_count=*reinterpret_cast<const file_offset_t*>(&d[sizeof(file_offset_t)]);
+
+		page_ptr p(new page_t(key_len,parent.page_max));
+		p->page_offset=*reinterpret_cast<const file_offset_t*>(&d[0]);
+		load_page(*p);
+		root_page=p;
 	}
 
 	void bin_index_t::file_node::load_index_data(file_offset_t offset,data_t& res) const
@@ -471,51 +491,6 @@ namespace Gomoku
 	{
 		fs::path file_name=fs::path(base_dir)/parent.data_file_name;
 		return file_name.string();
-	}
-
-	void bin_index_t::file_node::pack(const index_t& val,data_t& bin) const
-	{
-		bin.resize(irec_len());
-		std::copy(val.key.begin(),val.key.end(),bin.begin());
-
-		*reinterpret_cast<file_offset_t*>(&bin[key_len])=val.left;
-		*reinterpret_cast<file_offset_t*>(&bin[key_len+1*sizeof(file_offset_t)])=val.right;
-		*reinterpret_cast<file_offset_t*>(&bin[key_len+2*sizeof(file_offset_t)])=val.data_offset;
-		*reinterpret_cast<size_t*>(&bin[key_len+3*sizeof(file_offset_t)])=val.data_len;
-		*reinterpret_cast<char*>(&bin[key_len+3*sizeof(file_offset_t)+sizeof(size_t)])=val.balance;
-	}
-
-	void bin_index_t::file_node::unpack(index_t& val,const data_t& bin) const
-	{
-		if(bin.size()!=irec_len())throw std::runtime_error(index_file_name()+": unpack() invalid bin.size()");
-		val.key.resize(0);
-		val.key.insert(val.key.end(),bin.begin(),bin.begin()+key_len);
-		val.left=*reinterpret_cast<const file_offset_t*>(&bin[key_len]);
-		val.right=*reinterpret_cast<const file_offset_t*>(&bin[key_len+1*sizeof(file_offset_t)]);
-		val.data_offset=*reinterpret_cast<const file_offset_t*>(&bin[key_len+2*sizeof(file_offset_t)]);
-		val.data_len=*reinterpret_cast<const size_t*>(&bin[key_len+3*sizeof(file_offset_t)]);
-		val.balance=*reinterpret_cast<const char*>(&bin[key_len+3*sizeof(file_offset_t)+sizeof(size_t)]);
-	}
-
-	void bin_index_t::file_node::load_index(file_offset_t offset,index_t& val) const
-	{
-		data_t d(irec_len());
-		load_index_data(offset,d);
-		unpack(val,d);
-	}
-
-	void bin_index_t::file_node::save_index(file_offset_t offset,const index_t& val)
-	{
-		data_t d;
-		pack(val,d);
-		save_index_data(offset,d);
-	}
-
-	file_offset_t bin_index_t::file_node::append_index(const index_t& val)
-	{
-		data_t d;
-		pack(val,d);
-		return append_index_data(d);
 	}
 
 ///////////////////////////////////////////////////////////////////////////////////
