@@ -8,12 +8,12 @@ namespace fs=boost::filesystem;
 
 namespace Gomoku
 {
-	bin_index_t::bin_index_t(const std::string& _base_dir,size_t _key_len,size_t _dir_key_len,file_offset_t _file_max_records,size_t _page_max) :
+	bin_index_t::bin_index_t(const std::string& _base_dir,size_t _key_len,size_t _dir_key_len,file_offset_t _file_max_records,size_t _page_max_size) :
 		base_dir(_base_dir),
 		key_len(_key_len),
 		dir_key_len(_dir_key_len),
 		file_max_records(_file_max_records),
-		page_max(_page_max)
+		page_max_size(_page_max_size)
 	{
 		index_file_name="index";
 		data_file_name="data";
@@ -115,7 +115,7 @@ namespace Gomoku
 		if(r.left()==0)
 			return false;
 
-		page_t pg(key_len,parent.page_max);
+		page_t pg(key_len,parent.page_max_size);
 		pg.page_offset=r.left();
 		load_page(pg);
 		return get_item(pg,val);
@@ -152,7 +152,7 @@ namespace Gomoku
 			return true;
 		}
 
-		page_t pg(key_len,parent.page_max);
+		page_t pg(key_len,parent.page_max_size);
 		pg.page_offset=r.left();
 		load_page(pg);
 		return first_item(pg,val);
@@ -203,7 +203,7 @@ namespace Gomoku
 
 		if(r.left()!=0)
 		{
-			page_t pg(key_len,parent.page_max);
+			page_t pg(key_len,parent.page_max_size);
 			pg.page_offset=r.left();
 			load_page(pg);
 			if(first_item(pg,val))
@@ -226,7 +226,7 @@ namespace Gomoku
 		if(r.left()==0)
 			return false;
 
-		page_t pg(key_len,parent.page_max);
+		page_t pg(key_len,parent.page_max_size);
 		pg.page_offset=r.left();
 		load_page(pg);
 		return next_item(pg,val);
@@ -239,7 +239,7 @@ namespace Gomoku
 
 		if(!root_page)
 		{
-			root_page=page_ptr(new page_t(key_len,parent.page_max));
+			root_page=page_ptr(new page_t(key_len,parent.page_max_size));
 			append_page(*root_page);
 			save_index_data(0,root_page->page_offset);
 		}
@@ -291,7 +291,7 @@ namespace Gomoku
 			pg=root_page;
 		else
 		{
-			pg=page_ptr(new page_t(key_len,parent.page_max));
+			pg=page_ptr(new page_t(key_len,parent.page_max_size));
 			pg->page_offset=it.page_offset;
 			load_page(*pg);
 		}
@@ -302,14 +302,14 @@ namespace Gomoku
 
 	void bin_index_t::file_node::add_item(const index_t& val)
 	{
-		if(root_page->items_count()<parent.page_max)
+		if(root_page->items_count()<root_page->page_max)
 		{
 			add_item(val,*root_page);
 			flush_page(*root_page);
 			return;
 		}
 
-		page_ptr new_root(new page_t(key_len,parent.page_max));
+		page_ptr new_root(new page_t(key_len,parent.page_max_size));
 		index_ref r=(*new_root)[0];
 		r.left()=root_page->page_offset;
 
@@ -336,18 +336,18 @@ namespace Gomoku
 			return;
 		}
 
-		page_t child_page(key_len,parent.page_max);
+		page_t child_page(key_len,parent.page_max_size);
 		child_page.page_offset=r.left();
 		load_page(child_page);
 
-		if(child_page.items_count()<parent.page_max)
+		if(child_page.items_count()<child_page.page_max)
 		{
 			add_item(val,child_page);
 			flush_page(child_page);
 			return;
 		}
 
-		page_t new_right_page(key_len,parent.page_max);
+		page_t new_right_page(key_len,parent.page_max_size);
 
 		split_page(child_page,page,static_cast<size_t>(*p),new_right_page);
 		
@@ -406,7 +406,7 @@ namespace Gomoku
 		file_offset_t sz=fi->get_size();		
 		if(sz==0)
 		{
-			data_t d(idx_page_len(key_len,parent.page_max),0);
+			data_t d(parent.page_max_size,0);
 			const_cast<file_node*>(this)->save_index_data(0,d);
 			return;
 		}
@@ -415,7 +415,7 @@ namespace Gomoku
 		load_index_data(0,d);
 		items_count=*reinterpret_cast<const file_offset_t*>(&d[sizeof(file_offset_t)]);
 
-		page_ptr p(new page_t(key_len,parent.page_max));
+		page_ptr p(new page_t(key_len,parent.page_max_size));
 		p->page_offset=*reinterpret_cast<const file_offset_t*>(&d[0]);
 		load_page(*p);
 		root_page=p;
@@ -487,7 +487,7 @@ namespace Gomoku
 	{
 		if(fi)return;
 		fs::path file_name=fs::path(base_dir)/parent.index_file_name;
-		fi=parent.get_file_provider().create(file_name.string());
+		fi=file_access_ptr(new paged_file_t(file_name.string(),parent.page_max_size));
 		validate_root_offset();
 	}
 
@@ -495,7 +495,7 @@ namespace Gomoku
 	{
 		if(fd)return;
 		fs::path file_name=fs::path(base_dir)/parent.data_file_name;
-		fd=parent.get_file_provider().create(file_name.string());
+		fd=file_access_ptr(new paged_file_t(file_name.string()));
 	}
 
 	std::string bin_index_t::file_node::index_file_name() const

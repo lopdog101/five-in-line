@@ -13,7 +13,6 @@ class bin_index_t : public ibin_index_t
 {
 public:
 	inline static size_t idx_rec_len(size_t key_len){return key_len+2*sizeof(file_offset_t)+sizeof(size_t);}
-	inline static size_t idx_page_len(size_t key_len,size_t page_max){return (page_max+1)*idx_rec_len(key_len);}
 
 	typedef boost::counting_iterator<file_offset_t> page_iter;
 	struct index_t;
@@ -109,9 +108,9 @@ public:
 		file_offset_t page_offset;
 		bool dirty;
 
-		page_t(size_t _key_len,size_t _page_max) : key_len(_key_len),page_max(_page_max)
+		page_t(size_t _key_len,size_t _page_max_size) : key_len(_key_len),page_max(_page_max_size/idx_rec_len(_key_len)-1)
 		{
-			buffer.resize(idx_page_len(key_len,page_max),0);
+			buffer.resize(_page_max_size,0);
 			page_offset=0;
 			dirty=false;
 		}
@@ -300,11 +299,10 @@ private:
 	const size_t key_len;
 	const size_t dir_key_len;
 	const file_offset_t file_max_records;
-	const size_t page_max;
+	const size_t page_max_size;
 	const std::string base_dir;
 	mutable node_ptr root;
 	file_offset_t items_count;
-	paged_file_provider_t file_provider;
 
 	void validate_root() const;
 	node_ptr create_node(const std::string& base_dir,size_t key_len) const;
@@ -316,7 +314,7 @@ public:
 	std::string data_file_name;
 	std::string items_count_file_name;
 
-	bin_index_t(const std::string& _base_dir,size_t _key_len,size_t _dir_key_len=1,file_offset_t _file_max_records=1048576,size_t _page_max=512);
+	bin_index_t(const std::string& _base_dir,size_t _key_len,size_t _dir_key_len=1,file_offset_t _file_max_records=1048576,size_t _page_max_size=1024);
 	~bin_index_t()
     {
         try
@@ -359,8 +357,6 @@ public:
 		validate_root();
 		return root->next(key,val);
 	}
-
-	inline const ifile_access_provider_t& get_file_provider() const{return file_provider;}
 };
 
 class bin_indexes_t : public ibin_indexes_t
