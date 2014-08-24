@@ -12,7 +12,7 @@ namespace Gomoku
 class bin_index_t : public ibin_index_t
 {
 public:
-	inline static size_t idx_rec_len(size_t key_len){return key_len+3*sizeof(file_offset_t)+sizeof(size_t)+sizeof(char);}
+	inline static size_t idx_rec_len(size_t key_len){return key_len+2*sizeof(file_offset_t)+sizeof(size_t);}
 	inline static size_t idx_page_len(size_t key_len,size_t page_max){return (page_max+1)*idx_rec_len(key_len);}
 
 	typedef boost::counting_iterator<file_offset_t> page_iter;
@@ -31,7 +31,7 @@ public:
 		file_offset_t& data_offset(){return *reinterpret_cast<file_offset_t*>(data+sizeof(file_offset_t));}
 		size_t& data_len(){return *reinterpret_cast<size_t*>(data+2*sizeof(file_offset_t));}
 		unsigned char* key_begin(){return data+2*sizeof(file_offset_t)+sizeof(size_t);}
-		unsigned char* key_end(){return key_begin()+idx_rec_len(key_len);}
+		unsigned char* key_end(){return key_begin()+key_len;}
 
 		const file_offset_t& left() const {return const_cast<index_ref*>(this)->left();}
 		const file_offset_t& data_offset() const {return const_cast<index_ref*>(this)->data_offset();}
@@ -128,8 +128,8 @@ public:
 			size_t ct=items_count();
 
 			data_t::iterator from=buffer.begin()+idx_rec_len(key_len)*val.index_in_page;
-			data_t::iterator to=buffer.begin()+idx_rec_len(key_len)*ct;
-			std::copy_backward(from,to,to+1);
+			data_t::iterator to=buffer.begin()+idx_rec_len(key_len)*(ct+1);
+			std::copy_backward(from,to,to+idx_rec_len(key_len));
 
 			index_ref r=operator[](val.index_in_page);
 			r=val;
@@ -137,6 +137,8 @@ public:
 			items_count()=ct+1;
 			dirty=true;
 		}
+
+		void dump();
 	};
 
 	typedef boost::shared_ptr<page_t> page_ptr;

@@ -123,17 +123,16 @@ namespace Gomoku
 
 	bool bin_index_t::file_node::first(data_t& key,data_t& val) const
 	{
-		validate_key_len(key);
 		open_index_file();
 
 		if(!root_page)
 			return false;
 		
 		index_t ind;
-		ind.key=key;
 
 		if(!first_item(*root_page,ind))return false;
 
+		key=ind.key;
 		val.resize(ind.data_len);
 		load_data(ind.data_offset,val);
 		return true;
@@ -172,6 +171,7 @@ namespace Gomoku
 
 		if(!next_item(*root_page,ind))return false;
 
+		key=ind.key;
 		val.resize(ind.data_len);
 		load_data(ind.data_offset,val);
 		return true;
@@ -198,7 +198,25 @@ namespace Gomoku
 		}
 
 		++p;
-		return next_item(page,p,val);
+
+		index_ref r=page[static_cast<size_t>(*p)];
+
+		if(r.left()!=0)
+		{
+			page_t pg(key_len,parent.page_max);
+			pg.page_offset=r.left();
+			load_page(pg);
+			if(first_item(pg,val))
+				return true;
+		}
+
+		if(p==page.end())
+			return false;
+
+		val.page_offset=page.page_offset;
+		val.index_in_page=static_cast<size_t>(*p);
+		val=r;
+		return true;
 	}
 
 	bool bin_index_t::file_node::next_item(page_t& page,const page_iter& p,index_t& val) const
@@ -222,8 +240,8 @@ namespace Gomoku
 		if(!root_page)
 		{
 			root_page=page_ptr(new page_t(key_len,parent.page_max));
-			//offset=0 for additional data, choose the next one
-			root_page->page_offset=idx_page_len(key_len,parent.page_max);
+			append_page(*root_page);
+			save_index_data(0,root_page->page_offset);
 		}
 		
 		index_t it;
@@ -346,7 +364,7 @@ namespace Gomoku
 
 		std::copy(
 			child_page.buffer.begin()+idx_rec_len(key_len)*(left_count+1),
-			child_page.buffer.begin()+idx_rec_len(key_len)*child_page.items_count(),
+			child_page.buffer.begin()+idx_rec_len(key_len)*(child_page.items_count()+1),
 			new_right_page.buffer.begin());
 		new_right_page.items_count()=child_page.items_count()-left_count-1;
 		append_page(new_right_page);
@@ -359,7 +377,6 @@ namespace Gomoku
 		parent_page.insert_item(val);
 
 		child_page.items_count()=left_count;
-
 		parent_page[parent_index+1].left()=new_right_page.page_offset;
 	}
 
@@ -491,6 +508,25 @@ namespace Gomoku
 	{
 		fs::path file_name=fs::path(base_dir)/parent.data_file_name;
 		return file_name.string();
+	}
+
+	void bin_index_t::page_t::dump()
+	{
+		ObjectProgress::log_generator lg(true);
+		lg<<"page_offset="<<page_offset<<" items_count()="<<items_count();
+
+		size_t mi=items_count();
+		for(size_t i=0;i<mi;i++)
+		{
+			index_ref r=operator[](i);
+			data_t key(r.key_begin(),r.key_end());
+			std::string str;
+			bin2hex(key,str);
+			lg<<"  left="<<r.left()<<" data_offset="<<r.data_offset()<<" data_len="<<r.data_len()<<" key="<<str;
+		}
+
+		index_ref r=operator[](mi);
+		lg<<"  right="<<r.left();
 	}
 
 ///////////////////////////////////////////////////////////////////////////////////
