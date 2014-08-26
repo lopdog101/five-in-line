@@ -159,41 +159,56 @@ TEST_F(avl_tree,split)
 
 TEST_F(avl_tree,DISABLED_big_split)
 {
-	char init_chain[]={0,1,2,3,4,5,6,7,8,9,10};
-	static const size_t chain_length=sizeof(init_chain)/sizeof(char);
-
-	static const unsigned num_iterations=1100000;
-	static const unsigned split_count=10000000;
+	static const unsigned num_iterations=15000000;
+	static const unsigned split_count=1000000000;
 	static const unsigned char key_mod=5;
+	static const unsigned perf_mod=200000;
 
 	recreate_dirs();
+	ObjectProgress::log_generator lg(true);
+	ObjectProgress::perfomance perf;
+
+	data_t key(sizeof(unsigned long long));
 
 	{
-		bin_index_t ind(index_dir,chain_length,1,split_count);
+		bin_index_t ind(index_dir,sizeof(unsigned long long),1,split_count);
 
-		data_t key(init_chain,init_chain+chain_length);
-
-		for(unsigned i=0;i<num_iterations;i++,std::next_permutation(key.begin(),key.end()))
+		for(unsigned long long i=0;i<num_iterations;i++)
 		{
-			key[0]=i%key_mod;
+			const unsigned char* pi=reinterpret_cast<const unsigned char*>(&i);
+			std::copy(pi,pi+sizeof(i),key.begin());
+
 			ind.set(key,key);
+
+			if((i!=0)&&(i%perf_mod)==0)
+			{
+				ObjectProgress::perfomance::val_t v=perf.delay();
+				lg<<"write: i="<<i<<" perf="<<(v/1000.0)<<"ms rate="<<(1.0*perf_mod/v*1000000.0)<<"rps";
+				perf.reset();
+			}
 		}
 	}
 
 	{
-		bin_index_t ind(index_dir,chain_length,1,split_count);
+		bin_index_t ind(index_dir,sizeof(unsigned long long),1,split_count);
+		perf.reset();
 
-		data_t key(init_chain,init_chain+chain_length);
-
-		for(unsigned i=0;i<num_iterations;i++,std::next_permutation(key.begin(),key.end()))
+		for(unsigned long long i=0;i<num_iterations;i++)
 		{
-			key[0]=i%key_mod;
+			const unsigned char* pi=reinterpret_cast<const unsigned char*>(&i);
+			std::copy(pi,pi+sizeof(i),key.begin());
 
 			data_t val;
 
 			ASSERT_TRUE(ind.get(key,val));
-
 			ASSERT_EQ(key,val);
+
+			if((i!=0)&&(i%perf_mod)==0)
+			{
+				ObjectProgress::perfomance::val_t v=perf.delay();
+				lg<<"read: i="<<i<<" perf="<<(v/1000.0)<<"ms rate="<<(1.0*perf_mod/v*1000000.0)<<"rps";
+				perf.reset();
+			}
 		}
 	}
 }
