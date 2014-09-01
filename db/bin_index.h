@@ -5,6 +5,13 @@
 #include <map>
 #include "../extern/exception_catch.h"
 #include <boost/iterator/counting_iterator.hpp>
+#include <unordered_map>
+#include <boost/weak_ptr.hpp>
+
+namespace std
+{
+	using namespace std::tr1;
+}
 
 namespace Gomoku
 {
@@ -19,10 +26,10 @@ public:
 
 	struct index_ref
 	{
-		unsigned char* const data;
-		const size_t key_len;
+		unsigned char* data;
+		size_t key_len;
 
-		index_ref(unsigned char* _data,size_t _key_len) : data(_data),key_len(_key_len)
+		index_ref(unsigned char* _data=0,size_t _key_len=0) : data(_data),key_len(_key_len)
 		{
 		}
 
@@ -98,6 +105,11 @@ public:
 		}
 	};
 
+	class page_t;
+	typedef boost::shared_ptr<page_t> page_ptr;
+	typedef boost::weak_ptr<page_t> page_wptr;
+	typedef std::unordered_map<file_offset_t,page_ptr> pages_t;
+
 	class page_t
 	{
 	public:
@@ -107,6 +119,10 @@ public:
 		
 		file_offset_t page_offset;
 		bool dirty;
+
+		page_wptr left;
+		page_wptr right;
+		page_wptr self;
 
 		page_t(size_t _key_len,size_t _page_max_size) : key_len(_key_len),page_max(_page_max_size/idx_rec_len(_key_len)-1)
 		{
@@ -139,8 +155,6 @@ public:
 
 		void dump();
 	};
-
-	typedef boost::shared_ptr<page_t> page_ptr;
 
 	class page_pr
 	{
@@ -219,6 +233,10 @@ public:
 		mutable file_access_ptr fd;
 		mutable page_ptr root_page;
 		mutable file_offset_t items_count;
+		
+		mutable pages_t pages;
+		mutable page_wptr first_page;
+		mutable page_wptr last_page;
 
 		void load_data(file_offset_t offset,data_t& res) const;
 		void save_data(file_offset_t offset,const data_t& res);
@@ -239,16 +257,23 @@ public:
 
 		void load_page(page_t& val) const{load_index_data(val.page_offset,val.buffer);}
 		void save_page(page_t& val){save_index_data(val.page_offset,val.buffer);val.dirty=false;}
-		void flush_page(page_t& val){if(val.dirty)save_page(val);}
 		void append_page(page_t& val){val.page_offset=append_index_data(val.buffer);val.dirty=false;}
 
-		bool get_item(page_t& page,index_t& val) const;
+		bool get_item(index_t& val) const;
 		bool first_item(page_t& page,index_t& val) const;
 		bool next_item(page_t& page,index_t& val) const;
 		bool next_item(page_t& page,const page_iter& p,index_t& val) const;
 		void add_item(const index_t& val);
 		void add_item(const index_t& val,page_t& page);
 		void split_page(page_t& child_page,page_t& parent_page,size_t parent_index,page_t& new_right_page);
+
+		void flush();
+		void flush_page(page_t& val){if(val.dirty)save_page(val);}
+		void remove_oldest();
+		page_ptr get_page(file_offset_t page_offset);
+		void add_page(const page_ptr& p);
+		void remove_from_list(const page_ptr& p);
+		void insert_into_list(const page_ptr& p,page_ptr& right);
 	public:
 		bool disable_split;
 
@@ -301,6 +326,7 @@ private:
 	const file_offset_t file_max_records;
 	const size_t page_max_size;
 	const std::string base_dir;
+	static const size_t max_pages;
 	mutable node_ptr root;
 	file_offset_t items_count;
 
@@ -314,7 +340,7 @@ public:
 	std::string data_file_name;
 	std::string items_count_file_name;
 
-	bin_index_t(const std::string& _base_dir,size_t _key_len,size_t _dir_key_len=1,file_offset_t _file_max_records=1048576,size_t _page_max_size=1024);
+	bin_index_t(const std::string& _base_dir,size_t _key_len,size_t _dir_key_len=1,file_offset_t _file_max_records=1048576,size_t _page_max_size=131072);
 	~bin_index_t()
     {
         try

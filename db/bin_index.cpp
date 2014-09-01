@@ -8,6 +8,8 @@ namespace fs=boost::filesystem;
 
 namespace Gomoku
 {
+	const size_t bin_index_t::max_pages=16;
+
 	bin_index_t::bin_index_t(const std::string& _base_dir,size_t _key_len,size_t _dir_key_len,file_offset_t _file_max_records,size_t _page_max_size) :
 		base_dir(_base_dir),
 		key_len(_key_len),
@@ -89,36 +91,43 @@ namespace Gomoku
 		index_t ind;
 		ind.key=key;
 
-		if(!get_item(*root_page,ind))return false;
+		if(!get_item(ind))return false;
 
 		val.resize(ind.data_len);
 		load_data(ind.data_offset,val);
 		return true;
 	}
 
-	bool bin_index_t::file_node::get_item(page_t& page,index_t& val) const
+	bool bin_index_t::file_node::get_item(index_t& val) const
 	{
-		page_pr pr(page);
-		page_iter p=std::lower_bound(page.begin(),page.end(),val.key,pr);
-		
-		index_ref r=page[static_cast<size_t>(*p)];
+		page_ptr page_ptr=root_page;
 
-		if(p!=page.end() && !pr(val.key,*p))
+		while(true)
 		{
-			val.page_offset=page.page_offset;
-			val.index_in_page=static_cast<size_t>(*p);
-			val.copy_pointers(r);
+			page_t& page=*page_ptr;
 
-			return true;
+			page_pr pr(page);
+			page_iter p=std::lower_bound(page.begin(),page.end(),val.key,pr);
+			
+			index_ref r=page[static_cast<size_t>(*p)];
+
+			if(p!=page.end() && !pr(val.key,*p))
+			{
+				val.page_offset=page.page_offset;
+				val.index_in_page=static_cast<size_t>(*p);
+				val.copy_pointers(r);
+
+				return true;
+			}
+
+			if(r.left()==0)
+				break;
+
+			page_ptr=const_cast<file_node*>(this)->get_page(r.left());
 		}
 
-		if(r.left()==0)
-			return false;
+		return false;
 
-		page_t pg(key_len,parent.page_max_size);
-		pg.page_offset=r.left();
-		load_page(pg);
-		return get_item(pg,val);
 	}
 
 	bool bin_index_t::file_node::first(data_t& key,data_t& val) const
@@ -242,12 +251,13 @@ namespace Gomoku
 			root_page=page_ptr(new page_t(key_len,parent.page_max_size));
 			append_page(*root_page);
 			save_index_data(0,root_page->page_offset);
+			add_page(root_page);
 		}
 		
 		index_t it;
 		it.key=key;
 
-		if(get_item(*root_page,it))
+		if(get_item(it))
 		{
 			index_t old_i=it;
 
@@ -285,19 +295,10 @@ namespace Gomoku
 
 	void bin_index_t::file_node::update_page(const index_t& it)
 	{
-		page_ptr pg;
-
-		if(root_page->page_offset==it.page_offset)
-			pg=root_page;
-		else
-		{
-			pg=page_ptr(new page_t(key_len,parent.page_max_size));
-			pg->page_offset=it.page_offset;
-			load_page(*pg);
-		}
+		page_ptr pg=get_page(it.page_offset);
 
 		(*pg)[it.index_in_page].copy_pointers(it);
-		save_page(*pg);
+		pg->dirty=true;
 	}
 
 	void bin_index_t::file_node::add_item(const index_t& val)
@@ -305,7 +306,6 @@ namespace Gomoku
 		if(root_page->items_count()<root_page->page_max)
 		{
 			add_item(val,*root_page);
-			flush_page(*root_page);
 			return;
 		}
 
@@ -317,6 +317,7 @@ namespace Gomoku
 
 		root_page=new_root;
 		append_page(*new_root);
+		add_page(root_page);
 
 		save_index_data(0,new_root->page_offset);
 	}
@@ -336,26 +337,22 @@ namespace Gomoku
 			return;
 		}
 
-		page_t child_page(key_len,parent.page_max_size);
-		child_page.page_offset=r.left();
-		load_page(child_page);
+		page_ptr child_page=get_page(r.left());
 
-		if(child_page.items_count()<child_page.page_max)
+		if(child_page->items_count()<child_page->page_max)
 		{
-			add_item(val,child_page);
-			flush_page(child_page);
+			add_item(val,*child_page);
 			return;
 		}
 
-		page_t new_right_page(key_len,parent.page_max_size);
+		page_ptr new_right_page(new page_t(key_len,parent.page_max_size));
 
-		split_page(child_page,page,static_cast<size_t>(*p),new_right_page);
+		split_page(*child_page,page,static_cast<size_t>(*p),*new_right_page);
 		
-		if(pr(val.key,*p)) add_item(val,child_page);
-		else add_item(val,new_right_page);
+		if(pr(val.key,*p)) add_item(val,*child_page);
+		else add_item(val,*new_right_page);
 
-		save_page(child_page);
-		save_page(new_right_page);
+		add_page(new_right_page);
 	}
 
 	void bin_index_t::file_node::split_page(page_t& child_page,page_t& parent_page,size_t parent_index,page_t& new_right_page)
@@ -378,6 +375,9 @@ namespace Gomoku
 
 		child_page.items_count()=left_count;
 		parent_page[parent_index+1].left()=new_right_page.page_offset;
+
+		child_page.dirty=true;
+		new_right_page.dirty=true;
 	}
 
 	void bin_index_t::file_node::load_data(file_offset_t offset,data_t& res) const
@@ -479,6 +479,7 @@ namespace Gomoku
 
 	void bin_index_t::file_node::close_files()
 	{
+		flush();
 		if(fi){fi->close();fi.reset();}
 		if(fd){fd->close();fd.reset();}
 	}
@@ -487,7 +488,7 @@ namespace Gomoku
 	{
 		if(fi)return;
 		fs::path file_name=fs::path(base_dir)/parent.index_file_name;
-		fi=file_access_ptr(new paged_file_t(file_name.string(),parent.page_max_size));
+		fi=file_access_ptr(new regular_file_t(file_name.string()));
 		validate_root_offset();
 	}
 
@@ -529,6 +530,119 @@ namespace Gomoku
 		lg<<"  right="<<r.left();
 	}
 
+	void bin_index_t::file_node::flush()
+	{
+		pages_t::iterator from=pages.begin();
+		pages_t::iterator to=pages.end();
+		for(;from!=to;++from)
+			flush_page(*from->second);
+	}
+
+	bin_index_t::page_ptr bin_index_t::file_node::get_page(file_offset_t page_offset)
+	{
+		pages_t::iterator it=pages.find(page_offset);
+
+		if(it!=pages.end())
+		{
+			page_ptr p=it->second;
+			if(!p->left.expired())
+			{
+				remove_from_list(p);
+				insert_into_list(p,first_page.lock());
+			}
+			return p;
+		}
+
+		page_ptr p(new page_t(key_len,parent.page_max_size));
+		p->self=p;
+		p->page_offset=page_offset;
+		load_page(*p);
+
+		add_page(p);
+
+		return p;
+	}
+
+	void bin_index_t::file_node::remove_from_list(const page_ptr& p)
+	{
+		page_ptr left=p->left.lock();
+		page_ptr right=p->right.lock();
+
+		if(left)left->right=right;
+		else first_page=right;
+
+		if(right)right->left=left;
+		else last_page=left;
+
+		p->left.reset();
+		p->right.reset();
+	}
+
+	void bin_index_t::file_node::insert_into_list(const page_ptr& p,page_ptr& right)
+	{
+		if(!right)
+		{
+			page_ptr l=last_page.lock();
+			if(!l)
+			{
+				first_page=last_page=p;
+				return;
+			}
+
+			l->right=p;
+			p->left=l;
+			last_page=p;
+
+			return;
+		}
+
+
+		page_ptr l=right->left.lock();
+		
+		p->left=l;
+		p->right=right;
+
+		if(l)l->right=p;
+		else first_page=p;
+
+		right->left=p;
+	}
+
+	void bin_index_t::file_node::add_page(const page_ptr& p)
+	{
+		pages[p->page_offset]=p;
+		insert_into_list(p,first_page.lock());
+
+		remove_oldest();
+	}
+
+	void bin_index_t::file_node::remove_oldest()
+	{
+		for(page_wptr wp=last_page;pages.size()>=max_pages&&!wp.expired();)
+		{
+			page_ptr r;
+			page_ptr l;
+
+			{
+				page_ptr p=wp.lock();
+				r=p->right.lock();
+				l=p->left.lock();
+				flush_page(*p);
+				pages.erase(p->page_offset);
+				remove_from_list(p);
+			}
+
+			//Somebody still use this page and we can't delete it
+			if(!wp.expired())
+			{
+				page_ptr p=wp.lock();
+				pages[p->page_offset]=p;
+				insert_into_list(p,r);
+			}
+
+			wp=l;
+		}
+	}
 ///////////////////////////////////////////////////////////////////////////////////
 //  dir_node
 //
