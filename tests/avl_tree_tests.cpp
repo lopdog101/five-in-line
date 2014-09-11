@@ -157,26 +157,37 @@ TEST_F(avl_tree,split)
     }
 }
 
+void fill_key(unsigned char* _pi,unsigned long long v,int kp)
+{
+	unsigned long long* pi=reinterpret_cast<unsigned long long*>(_pi);
+	pi[kp-1]=v;
+	//for(;kp>0;kp--,pi++)
+	//{
+	//	*pi=v;
+	//	v++;
+	//}
+}
+
 TEST_F(avl_tree,DISABLED_big_split)
 {
-	static const unsigned num_iterations=15000000;
+	static const unsigned num_iterations=600001;
 	static const unsigned split_count=1000000000;
 	static const unsigned char key_mod=5;
 	static const unsigned perf_mod=200000;
+	static const unsigned kp=8;
 
 	recreate_dirs();
 	ObjectProgress::log_generator lg(true);
 	ObjectProgress::perfomance perf;
 
-	data_t key(sizeof(unsigned long long));
+	data_t key(kp*sizeof(unsigned long long));
 
 	{
-		bin_index_t ind(index_dir,sizeof(unsigned long long),1,split_count);
+		bin_index_t ind(index_dir,kp*sizeof(unsigned long long),1,split_count);
 
 		for(unsigned long long i=0;i<num_iterations;i++)
 		{
-			const unsigned char* pi=reinterpret_cast<const unsigned char*>(&i);
-			std::copy(pi,pi+sizeof(i),key.begin());
+			fill_key(&key.front(),i,kp);
 
 			ind.set(key,key);
 
@@ -190,13 +201,12 @@ TEST_F(avl_tree,DISABLED_big_split)
 	}
 
 	{
-		bin_index_t ind(index_dir,sizeof(unsigned long long),1,split_count);
+		bin_index_t ind(index_dir,kp*sizeof(unsigned long long),1,split_count);
 		perf.reset();
 
 		for(unsigned long long i=0;i<num_iterations;i++)
 		{
-			const unsigned char* pi=reinterpret_cast<const unsigned char*>(&i);
-			std::copy(pi,pi+sizeof(i),key.begin());
+			fill_key(&key.front(),i,kp);
 
 			data_t val;
 

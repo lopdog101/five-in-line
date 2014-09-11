@@ -159,9 +159,10 @@ public:
 	class page_pr
 	{
 		page_t& page;
+		const size_t len;
 
 	public:
-		page_pr(page_t& _page) : page(_page)
+		page_pr(page_t& _page) : page(_page),len(_page.key_len/sizeof(file_offset_t))
 		{
 		}
 
@@ -169,19 +170,31 @@ public:
 		{
 			index_ref a=page[static_cast<size_t>(ia)];
 			index_ref b=page[static_cast<size_t>(ib)];
-			return std::lexicographical_compare(a.key_begin(),a.key_end(),b.key_begin(),b.key_end());
+
+			const file_offset_t* ap=reinterpret_cast<const file_offset_t*>(a.key_begin());
+			const file_offset_t* bp=reinterpret_cast<const file_offset_t*>(b.key_begin());
+
+			return std::lexicographical_compare(ap,ap+len,bp,bp+len);
 		}
 
 		inline bool operator()(file_offset_t ia,const data_t& b) const
 		{
 			index_ref a=page[static_cast<size_t>(ia)];
-			return std::lexicographical_compare(a.key_begin(),a.key_end(),b.begin(),b.end());
+
+			const file_offset_t* ap=reinterpret_cast<const file_offset_t*>(a.key_begin());
+			const file_offset_t* bp=reinterpret_cast<const file_offset_t*>(&b.front());
+
+			return std::lexicographical_compare(ap,ap+len,bp,bp+len);
 		}
 
 		inline bool operator()(const data_t& a,file_offset_t ib) const
 		{
 			index_ref b=page[static_cast<size_t>(ib)];
-			return std::lexicographical_compare(a.begin(),a.end(),b.key_begin(),b.key_end());
+
+			const file_offset_t* ap=reinterpret_cast<const file_offset_t*>(&a.front());
+			const file_offset_t* bp=reinterpret_cast<const file_offset_t*>(b.key_begin());
+
+			return std::lexicographical_compare(ap,ap+len,bp,bp+len);
 		}
 	};
 
@@ -228,6 +241,8 @@ public:
 
 	class file_node : public inode
 	{
+		const size_t aligned_key_len;
+
 		bool self_valid;
 		mutable file_access_ptr fi;
 		mutable file_access_ptr fd;
@@ -260,9 +275,8 @@ public:
 		void append_page(page_t& val){val.page_offset=append_index_data(val.buffer);val.dirty=false;}
 
 		bool get_item(index_t& val) const;
-		bool first_item(page_t& page,index_t& val) const;
-		bool next_item(page_t& page,index_t& val) const;
-		bool next_item(page_t& page,const page_iter& p,index_t& val) const;
+		bool first_item(page_ptr pp,index_t& val) const;
+		bool next_item(page_ptr pp,index_t& val) const;
 		void add_item(const index_t& val);
 		void add_item(const index_t& val,page_t& page);
 		void split_page(page_t& child_page,page_t& parent_page,size_t parent_index,page_t& new_right_page);
@@ -271,20 +285,17 @@ public:
 		void flush_page(page_t& val){if(val.dirty)save_page(val);}
 		void remove_oldest();
 		page_ptr get_page(file_offset_t page_offset);
+		inline page_ptr get_page(file_offset_t page_offset) const{return const_cast<file_node*>(this)->get_page(page_offset);}
 		void add_page(const page_ptr& p);
 		void remove_from_list(const page_ptr& p);
 		void insert_into_list(const page_ptr& p,page_ptr& right);
+
+		page_ptr create_page() const;
+		void align_key(const data_t& key,index_t& res) const;
 	public:
 		bool disable_split;
 
-		file_node(const bin_index_t& _parent,const std::string& _base_dir,size_t _key_len) 
-			: inode(_parent,_base_dir,_key_len)
-		{
-			self_valid=true;
-			disable_split=false;
-			items_count=0;
-		}
-
+		file_node(const bin_index_t& _parent,const std::string& _base_dir,size_t _key_len);
 		~file_node(){close_files();}
 
 		bool get(const data_t& key,data_t& val) const;
