@@ -29,7 +29,7 @@ file_offset_t regular_file_t::get_size()
 {
 	open();
 
-	if(fseek(fd,0,SEEK_END)!=0)
+	if(_fseeki64(fd,0,SEEK_END)!=0)
 		throw std::runtime_error("get_size(): seek error at end: "+file_name);
 
 	file_offset_t ret=0;
@@ -79,7 +79,7 @@ file_offset_t regular_file_t::append(const data_t& res)
 
 	open();
 
-	if(fseek(fd,0,SEEK_END)!=0)
+	if(_fseeki64(fd,0,SEEK_END)!=0)
 		throw std::runtime_error("append(): seek error at end: "+file_name);
 
 	file_offset_t ret=0;
