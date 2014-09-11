@@ -247,7 +247,6 @@ public:
 		mutable file_access_ptr fi;
 		mutable file_access_ptr fd;
 		mutable page_ptr root_page;
-		mutable file_offset_t items_count;
 		
 		mutable pages_t pages;
 		mutable page_wptr first_page;
@@ -331,13 +330,17 @@ public:
 		bool first(data_t& key,data_t& val) const;
 		bool next(data_t& key,data_t& val) const;
 	};
+
+public:
+	static const size_t dir_key_len=1;
+	static const size_t max_pages=16;
+
+	static file_offset_t file_max_size;
+	static size_t page_max_size;
+
 private:
 	const size_t key_len;
-	const size_t dir_key_len;
-	const file_offset_t file_max_records;
-	const size_t page_max_size;
 	const std::string base_dir;
-	static const size_t max_pages;
 	mutable node_ptr root;
 	file_offset_t items_count;
 
@@ -351,7 +354,7 @@ public:
 	std::string data_file_name;
 	std::string items_count_file_name;
 
-	bin_index_t(const std::string& _base_dir,size_t _key_len,size_t _dir_key_len=1,file_offset_t _file_max_records=1048576,size_t _page_max_size=131072);
+	bin_index_t(const std::string& _base_dir,size_t _key_len);
 	~bin_index_t()
     {
         try

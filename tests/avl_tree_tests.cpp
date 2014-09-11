@@ -11,15 +11,31 @@ namespace Gomoku{
 
 class avl_tree : public testing::Test
 {
+	file_offset_t file_max_size;
+	size_t page_max_size;
 protected:
     void recreate_dirs();
     void read();
     void write();
+	virtual void SetUp();
+	virtual void TearDown();
 public:
     static const char* index_dir;
 };
 
 const char* avl_tree::index_dir="../tmp";
+
+void avl_tree::SetUp()
+{
+	file_max_size=bin_index_t::file_max_size;
+	page_max_size=bin_index_t::page_max_size;
+}
+
+void avl_tree::TearDown()
+{
+	bin_index_t::file_max_size=file_max_size;
+	bin_index_t::page_max_size=page_max_size;
+}
 
 void avl_tree::recreate_dirs()
 {
@@ -123,11 +139,12 @@ TEST_F(avl_tree,split)
     static const size_t chain_length=sizeof(init_chain)/sizeof(char);
 
     static const unsigned num_iterations=3000;
+	bin_index_t::file_max_size=1024;
 
     recreate_dirs();
 
     {
-	    bin_index_t ind(index_dir,chain_length,1,512);
+	    bin_index_t ind(index_dir,chain_length);
         
         data_t key(init_chain,init_chain+chain_length);
 
@@ -140,7 +157,7 @@ TEST_F(avl_tree,split)
     }
 
     {
-	    bin_index_t ind(index_dir,chain_length,1,512);
+	    bin_index_t ind(index_dir,chain_length);
         
         data_t key(init_chain,init_chain+chain_length);
 
@@ -161,20 +178,16 @@ void fill_key(unsigned char* _pi,unsigned long long v,int kp)
 {
 	unsigned long long* pi=reinterpret_cast<unsigned long long*>(_pi);
 	pi[kp-1]=v;
-	//for(;kp>0;kp--,pi++)
-	//{
-	//	*pi=v;
-	//	v++;
-	//}
 }
 
 TEST_F(avl_tree,DISABLED_big_split)
 {
-	static const unsigned num_iterations=600001;
-	static const unsigned split_count=1000000000;
+	static const unsigned num_iterations=1000000000;
 	static const unsigned char key_mod=5;
 	static const unsigned perf_mod=200000;
-	static const unsigned kp=8;
+	static const unsigned kp=1;
+
+	bin_index_t::file_max_size=9223372036854775807ll;
 
 	recreate_dirs();
 	ObjectProgress::log_generator lg(true);
@@ -183,7 +196,7 @@ TEST_F(avl_tree,DISABLED_big_split)
 	data_t key(kp*sizeof(unsigned long long));
 
 	{
-		bin_index_t ind(index_dir,kp*sizeof(unsigned long long),1,split_count);
+		bin_index_t ind(index_dir,kp*sizeof(unsigned long long));
 
 		for(unsigned long long i=0;i<num_iterations;i++)
 		{
@@ -201,7 +214,7 @@ TEST_F(avl_tree,DISABLED_big_split)
 	}
 
 	{
-		bin_index_t ind(index_dir,kp*sizeof(unsigned long long),1,split_count);
+		bin_index_t ind(index_dir,kp*sizeof(unsigned long long));
 		perf.reset();
 
 		for(unsigned long long i=0;i<num_iterations;i++)

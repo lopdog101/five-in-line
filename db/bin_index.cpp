@@ -8,14 +8,12 @@ namespace fs=boost::filesystem;
 
 namespace Gomoku
 {
-	const size_t bin_index_t::max_pages=16;
+	file_offset_t bin_index_t::file_max_size=1099511627776ll;
+	size_t bin_index_t::page_max_size=131072;
 
-	bin_index_t::bin_index_t(const std::string& _base_dir,size_t _key_len,size_t _dir_key_len,file_offset_t _file_max_records,size_t _page_max_size) :
+	bin_index_t::bin_index_t(const std::string& _base_dir,size_t _key_len) :
 		base_dir(_base_dir),
-		key_len(_key_len),
-		dir_key_len(_dir_key_len),
-		file_max_records(_file_max_records),
-		page_max_size(_page_max_size)
+		key_len(_key_len)
 	{
 		index_file_name="index";
 		data_file_name="data";
@@ -85,7 +83,6 @@ namespace Gomoku
 	{
 		self_valid=true;
 		disable_split=false;
-		items_count=0;
 	}
 
 	bool bin_index_t::file_node::get(const data_t& key,data_t& val) const
@@ -295,10 +292,7 @@ namespace Gomoku
 
 		add_item(v);
 
-		++items_count;
-		save_index_data(sizeof(file_offset_t),items_count);
-
-		if(items_count<parent.file_max_records)return true;
+		if(v.data_offset<parent.file_max_size)return true;
 		if(key_len<=parent.dir_key_len)return true;
 		if(disable_split)return true;
 
@@ -416,7 +410,6 @@ namespace Gomoku
 	void bin_index_t::file_node::validate_root_offset() const
 	{
 		root_page.reset();
-		items_count=0;
 
 		file_offset_t sz=fi->get_size();		
 		if(sz==0)
@@ -426,9 +419,8 @@ namespace Gomoku
 			return;
 		}
 
-		data_t d(2*sizeof(file_offset_t));
+		data_t d(sizeof(file_offset_t));
 		load_index_data(0,d);
-		items_count=*reinterpret_cast<const file_offset_t*>(&d[sizeof(file_offset_t)]);
 
 		page_ptr p(create_page());
 		p->page_offset=*reinterpret_cast<const file_offset_t*>(&d[0]);
