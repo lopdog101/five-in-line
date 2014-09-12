@@ -380,7 +380,7 @@ public:
 		if(r)
 		{
 			++items_count;
-			if((items_count%1024)==0)save_items_count();
+			if((items_count%100000)==0)save_items_count();
 		}
 		
 		return r;
