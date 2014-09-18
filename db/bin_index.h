@@ -233,8 +233,6 @@ public:
 		virtual bool set(const data_t& key,const data_t& val)=0;
 		virtual bool first(data_t& key,data_t& val) const=0;
 		virtual bool next(data_t& key,data_t& val) const=0;
-
-		virtual bool is_valid() const{return true;}
 	};
 
 	typedef boost::shared_ptr<inode> node_ptr;
@@ -243,7 +241,6 @@ public:
 	{
 		const size_t aligned_key_len;
 
-		bool self_valid;
 		mutable file_access_ptr fi;
 		mutable file_access_ptr fd;
 		mutable page_ptr root_page;
@@ -251,6 +248,8 @@ public:
 		mutable pages_t pages;
 		mutable page_wptr first_page;
 		mutable page_wptr last_page;
+
+		mutable file_offset_t data_size;
 
 		void load_data(file_offset_t offset,data_t& res) const;
 		void save_data(file_offset_t offset,const data_t& res);
@@ -261,7 +260,6 @@ public:
 		void save_index_data(file_offset_t offset,file_offset_t res);
 		file_offset_t append_index_data(const data_t& res);
 
-		void split();
 		void close_files();
 		void open_index_file() const;
 		void open_data_file() const;
@@ -292,7 +290,6 @@ public:
 		page_ptr create_page() const;
 		void align_key(const data_t& key,index_t& res) const;
 	public:
-		bool disable_split;
 
 		file_node(const bin_index_t& _parent,const std::string& _base_dir,size_t _key_len);
 		~file_node(){close_files();}
@@ -301,8 +298,9 @@ public:
 		bool set(const data_t& key,const data_t& val);
 		bool first(data_t& key,data_t& val) const;
 		bool next(data_t& key,data_t& val) const;
-		virtual bool is_valid() const{return self_valid;}
 		void update_page(const index_t& it);
+
+		inline bool is_enough_space() const{return data_size<parent.file_max_size;}
 	};
 
 	class dir_node : public inode
@@ -329,6 +327,21 @@ public:
 		bool set(const data_t& key,const data_t& val);
 		bool first(data_t& key,data_t& val) const;
 		bool next(data_t& key,data_t& val) const;
+	};
+
+	class mix_node : public inode
+	{
+		file_node fn;
+		dir_node dn;
+
+		inline bool is_dir_can_work() const{return key_len>parent.dir_key_len;}
+	public:
+
+		mix_node(const bin_index_t& _parent,const std::string& _base_dir,size_t _key_len);
+		virtual bool get(const data_t& key,data_t& val) const;
+		virtual bool set(const data_t& key,const data_t& val);
+		virtual bool first(data_t& key,data_t& val) const;
+		virtual bool next(data_t& key,data_t& val) const;
 	};
 
 public:
@@ -375,7 +388,6 @@ public:
 	{
 		validate_root();
 		bool r=root->set(key,val);
-		if(!root->is_valid())root.reset();
 		
 		if(r)
 		{

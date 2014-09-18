@@ -30,19 +30,7 @@ namespace Gomoku
 
 	bin_index_t::node_ptr bin_index_t::create_node(const std::string& base_dir,size_t key_len) const
 	{
-		bool is_any_sub_dir=false;
-		fs::directory_iterator end_itr;
-		for(fs::directory_iterator itr(base_dir);itr!=end_itr;++itr)
-		{
-			fs::path fl=*itr;
-			if(!is_directory(fl))continue;
-			is_any_sub_dir=true;
-			break;
-		}
-
-		if(is_any_sub_dir)return node_ptr(new dir_node(*this,base_dir,key_len));
-		return node_ptr(new file_node(*this,base_dir,key_len));
-		
+		return node_ptr(new mix_node(*this,base_dir,key_len));
 	}
 
 	void bin_index_t::load_items_count()
@@ -81,8 +69,7 @@ namespace Gomoku
 		: inode(_parent,_base_dir,_key_len),
 		aligned_key_len((_key_len+sizeof(file_offset_t)-1)/sizeof(file_offset_t)*sizeof(file_offset_t))
 	{
-		self_valid=true;
-		disable_split=false;
+		data_size=0;
 	}
 
 	bool bin_index_t::file_node::get(const data_t& key,data_t& val) const
@@ -132,7 +119,6 @@ namespace Gomoku
 		}
 
 		return false;
-
 	}
 
 	bool bin_index_t::file_node::first(data_t& key,data_t& val) const
@@ -292,13 +278,6 @@ namespace Gomoku
 
 		add_item(v);
 
-		if(v.data_offset<parent.file_max_size)return true;
-		if(key_len<=parent.dir_key_len)return true;
-		if(disable_split)return true;
-
-		split();
-		self_valid=false;
-
 		return true;
 	}
 
@@ -369,8 +348,8 @@ namespace Gomoku
 		size_t left_count=(child_page.items_count()-1)/2;
 
 		std::copy(
-			child_page.buffer.begin()+idx_rec_len(key_len)*(left_count+1),
-			child_page.buffer.begin()+idx_rec_len(key_len)*(child_page.items_count()+1),
+			child_page.buffer.begin()+idx_rec_len(aligned_key_len)*(left_count+1),
+			child_page.buffer.begin()+idx_rec_len(aligned_key_len)*(child_page.items_count()+1),
 			new_right_page.buffer.begin());
 		new_right_page.items_count()=child_page.items_count()-left_count-1;
 		append_page(new_right_page);
@@ -404,7 +383,9 @@ namespace Gomoku
 	file_offset_t bin_index_t::file_node::append_data(const data_t& res)
 	{
 		open_data_file();
-		return fd->append(res);
+		file_offset_t ret=fd->append(res);
+		data_size=ret+res.size();
+		return ret;
 	}
 
 	void bin_index_t::file_node::validate_root_offset() const
@@ -451,38 +432,6 @@ namespace Gomoku
 		save_index_data(offset,d);
 	}
 
-	void bin_index_t::file_node::split()
-	{
-		bool r;
-		data_t key;
-		data_t val;
-
-		for(r=first(key,val);r;)
-		{
-			data_t child_base(key.begin(),key.begin()+parent.dir_key_len);
-			std::string sub_dir;
-			bin2hex(child_base,sub_dir);
-			fs::path full_path=fs::path(base_dir)/sub_dir;
-			fs::create_directory(full_path);
-
-			file_node ch(parent,full_path.string(),key_len-parent.dir_key_len);
-			ch.disable_split=true;
-
-			for(;r;r=next(key,val))
-			{
-				if(!std::equal(child_base.begin(),child_base.end(),key.begin()))
-					break;
-
-				data_t sub_key(key.begin()+parent.dir_key_len,key.end());
-				ch.set(sub_key,val);
-			}
-		}
-
-        close_files();
-		fs::remove(fs::path(base_dir)/parent.index_file_name);
-		fs::remove(fs::path(base_dir)/parent.data_file_name);
-	}
-
 	void bin_index_t::file_node::close_files()
 	{
 		flush();
@@ -503,6 +452,8 @@ namespace Gomoku
 		if(fd)return;
 		fs::path file_name=fs::path(base_dir)/parent.data_file_name;
 		fd=file_access_ptr(new paged_file_t(file_name.string()));
+
+		data_size=fd->get_size();
 	}
 
 	std::string bin_index_t::file_node::index_file_name() const
@@ -695,7 +646,6 @@ namespace Gomoku
 		validate_sub(head);
 
 		bool r=sub_node->set(tail,val);
-		if(!sub_node->is_valid())sub_node.reset();
 		return r;
 	}
 	
@@ -799,6 +749,52 @@ namespace Gomoku
 		fs::create_directory(sub_path);
 	}
 
+	bin_index_t::mix_node::mix_node(const bin_index_t& _parent,const std::string& _base_dir,size_t _key_len)
+		: inode(_parent,_base_dir,_key_len),
+		fn(_parent,_base_dir,_key_len),
+		dn(_parent,_base_dir,_key_len)
+	{
+	}
+
+	bool bin_index_t::mix_node::get(const data_t& key,data_t& val) const
+	{
+		if(fn.get(key,val))
+			return true;
+
+		if(!is_dir_can_work())
+			return false;
+
+		return dn.get(key,val);
+
+	}
+
+	bool bin_index_t::mix_node::set(const data_t& key,const data_t& val)
+	{
+		if(fn.is_enough_space()||!is_dir_can_work())
+			return fn.set(key,val);
+
+		data_t tmp_val;
+		if(fn.get(key,tmp_val))
+			return fn.set(key,val);
+
+		return dn.set(key,val);
+	}
+
+	bool bin_index_t::mix_node::first(data_t& key,data_t& val) const
+	{
+		return fn.first(key,val);
+	}
+
+	bool bin_index_t::mix_node::next(data_t& key,data_t& val) const
+	{
+		if(fn.next(key,val))
+			return true;
+
+		if(!is_dir_can_work())
+			return false;
+
+		return  dn.next(key,val);
+	}
 
 
 	bin_index_t& bin_indexes_t::get_index(unsigned steps_count)
