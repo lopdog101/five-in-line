@@ -4,6 +4,9 @@
 namespace fs=boost::filesystem;
 #include "../db/solution_tree.h"
 #include "../db/bin_index.h"
+#include "../algo/wsplayer.h"
+#include "../algo/wsplayer_node.h"
+#include <boost/algorithm/string.hpp>
 
 namespace fs=boost::filesystem;
 
@@ -21,9 +24,11 @@ protected:
 	virtual void TearDown();
 public:
     static const char* index_dir;
+    static const char* src_dir;
 };
 
 const char* avl_tree::index_dir="../tmp";
+const char* avl_tree::src_dir="../src_data";
 
 void avl_tree::SetUp()
 {
@@ -280,6 +285,224 @@ TEST_F(avl_tree, DISABLED_show)
 */
 }
 
+TEST_F(avl_tree, DISABLED_generate_index_data)
+{
+	recreate_dirs();
 
+	bin_indexes_t indexes(index_dir,3);
+
+	solution_tree_t tr(indexes);
+	tr.init(index_dir);
+
+	std::string str("(-1,0:O);(-1,1:X);(-1,2:X);(0,0:X);(0,1:X);(0,2:O);(1,1:O);(1,2:X);(2,2:O)");
+    steps_t steps;
+    hex_or_str2points(str,steps);
+	tr.create_init_tree(steps);
+
+	WsPlayer::stored_deep=1;
+	WsPlayer::def_lookup_deep=0;
+	WsPlayer::treat_deep=0;
+	WsPlayer::ant_count=0;
+
+	size_t key_size=0;
+
+	std::string file_name;
+	file_access_ptr fi;
+	file_access_ptr fd;
+
+	ObjectProgress::log_generator lg(true);
+	ObjectProgress::perfomance perf;
+
+	for(int i=0;i<1000000;i++)
+	{
+		steps_t key;
+        if(!tr.get_job(key))
+		{
+			printf("no job anymore\n");
+			break;
+		}
+
+		reorder_state_to_game_order(key);
+
+		game_t gm;
+		gm.field().set_steps(key);
+
+		WsPlayer::wsplayer_t pl;
+
+		pl.init(gm,other_color(key.back().step));
+		pl.solve();
+
+		const WsPlayer::wide_item_t& r=static_cast<const WsPlayer::wide_item_t&>(*pl.root);
+
+		points_t neitrals;
+		items2points(r.get_neitrals(),neitrals);
+
+		npoints_t wins;
+		items2depth_npoints(r.get_wins().get_vals(),wins);
+
+		npoints_t fails;
+		items2depth_npoints(r.get_fails().get_vals(),fails);
+
+		tr.save_job(key,neitrals,wins,fails);
+
+
+		if(key_size!=key.size())
+		{
+			file_name=std::string(index_dir)+"/"+boost::lexical_cast<std::string>(key.size());
+			fi=file_access_ptr(new paged_file_t(file_name+".idx") );
+			fd=file_access_ptr(new paged_file_t(file_name+".data") );
+			key_size=key.size();
+			lg<<i<<": key_size="<<key.size();
+		}
+
+		sol_state_t st;
+		st.key=key;
+		st.neitrals=neitrals;
+		st.solved_wins=wins;
+		st.solved_fails=fails;
+
+		data_t bin_key;
+		Gomoku::points2bin(key,bin_key);
+		
+		data_t st_bin;
+		st.pack(st_bin);
+
+		fi->append(bin_key);
+
+		data_t st_bin_size(sizeof(size_t));
+		*reinterpret_cast<size_t*>(&st_bin_size.front())=st_bin.size();
+		fd->append(st_bin_size);
+		fd->append(st_bin);
+
+		static const int perf_mod=10000;
+		if((i!=0)&&(i%perf_mod)==0)
+		{
+			ObjectProgress::perfomance::val_t v=perf.delay();
+			lg<<i<<": perf="<<(v/1000.0)<<"ms   rate="<<(1.0*perf_mod/v*1000000.0)<<" kps";
+			perf.reset();
+		}
+	}
+
+}
+
+TEST_F(avl_tree, real_data_cycle)
+{
+	static const unsigned perf_mod=200000;
+
+	recreate_dirs();
+	ObjectProgress::log_generator lg(true);
+	ObjectProgress::perfomance perf;
+
+	static const size_t key_len=39;
+
+	std::string file_name=std::string(src_dir)+"/13";
+	regular_file_t fi(file_name+".idx");
+	regular_file_t fd(file_name+".data");
+
+	data_t idx_content(static_cast<size_t>(fi.get_size()));
+	fi.load(0,idx_content);
+
+	data_t data_content(static_cast<size_t>(fd.get_size()));
+	fd.load(0,data_content);
+
+	data_t key(key_len);
+	data_t val,val_cp;
+
+	size_t mi=idx_content.size()/key_len;
+
+	{
+		bin_index_t ind(index_dir,key_len);
+
+		perf.reset();
+		size_t data_pos=0;
+
+		for(size_t i=0;i<mi;i++)
+		{
+			std::copy(idx_content.begin()+i*key_len,idx_content.begin()+(i+1)*key_len,key.begin());
+
+			val.resize(*reinterpret_cast<const size_t*>(&data_content[data_pos] ));
+			data_pos+=sizeof(size_t);
+			std::copy(data_content.begin()+data_pos,data_content.begin()+data_pos+val.size(),val.begin());
+			data_pos+=val.size();
+
+			ind.set(key,val);
+
+			if((i!=0)&&(i%perf_mod)==0)
+			{
+				ObjectProgress::perfomance::val_t v=perf.delay();
+				lg<<"write: i="<<i<<" perf="<<(v/1000.0)<<"ms rate="<<(1.0*perf_mod/v*1000000.0)<<"rps";
+				perf.reset();
+			}
+		}
+	}
+
+	{
+		bin_index_t ind(index_dir,key_len);
+
+		perf.reset();
+		size_t data_pos=0;
+
+		for(size_t i=0;i<mi;i++)
+		{
+			std::copy(idx_content.begin()+i*key_len,idx_content.begin()+(i+1)*key_len,key.begin());
+
+			val.resize(*reinterpret_cast<const size_t*>(&data_content[data_pos] ));
+			data_pos+=sizeof(size_t);
+			std::copy(data_content.begin()+data_pos,data_content.begin()+data_pos+val.size(),val.begin());
+			data_pos+=val.size();
+
+			ASSERT_TRUE(ind.get(key,val_cp));
+
+			ASSERT_EQ(val,val_cp);
+
+			if((i!=0)&&(i%perf_mod)==0)
+			{
+				ObjectProgress::perfomance::val_t v=perf.delay();
+				lg<<"read: i="<<i<<" perf="<<(v/1000.0)<<"ms rate="<<(1.0*perf_mod/v*1000000.0)<<"rps";
+				perf.reset();
+			}
+		}
+	}
+
+	{
+		size_t data_pos=0;
+		std::map<data_t,data_t> idx;
+
+		for(size_t i=0;i<mi;i++)
+		{
+			std::copy(idx_content.begin()+i*key_len,idx_content.begin()+(i+1)*key_len,key.begin());
+
+			val.resize(*reinterpret_cast<const size_t*>(&data_content[data_pos] ));
+			data_pos+=sizeof(size_t);
+			std::copy(data_content.begin()+data_pos,data_content.begin()+data_pos+val.size(),val.begin());
+			data_pos+=val.size();
+
+			idx[key]=val;
+		}
+
+		bin_index_t ind(index_dir,key_len);
+
+		perf.reset();
+		
+		size_t i=0;
+		for(bool b=ind.first(key,val);b;b=ind.next(key,val),i++)
+		{
+			std::map<data_t,data_t>::iterator it=idx.find(key);
+			
+			ASSERT_TRUE(it!=idx.end());
+			ASSERT_EQ(it->second,val);
+			idx.erase(it);
+
+			if((i!=0)&&(i%perf_mod)==0)
+			{
+				ObjectProgress::perfomance::val_t v=perf.delay();
+				lg<<"next: i="<<i<<" perf="<<(v/1000.0)<<"ms rate="<<(1.0*perf_mod/v*1000000.0)<<"rps";
+				perf.reset();
+			}
+		}
+
+		ASSERT_EQ(idx.size(),0);
+	}
+}
 
 }//namespace

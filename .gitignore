@@ -4,3 +4,4 @@ solver/cmake/*
 gui/cmake/*
 tests/cmake/*
 tests/tmp/*
+tests/src_data/*
