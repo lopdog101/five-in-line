@@ -94,8 +94,8 @@ public:
 
 		void copy_key(const index_ref& rhs)
 		{
-			key.clear();
-			key.insert(key.end(),rhs.key_begin(),rhs.key_end());
+			key.resize(rhs.key_end()-rhs.key_begin());
+			std::copy(rhs.key_begin(),rhs.key_end(),key.begin());
 		}
 
 		void operator=(const index_ref& rhs)
