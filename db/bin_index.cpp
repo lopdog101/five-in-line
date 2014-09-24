@@ -181,6 +181,7 @@ namespace Gomoku
 	bool bin_index_t::file_node::next_item(page_ptr pp,index_t& val) const
 	{
 		bool ret=false;
+		index_t val_cp;
 
 		while(pp!=0)
 		{
@@ -202,9 +203,9 @@ namespace Gomoku
 
 			if(pr(val.key,*p))
 			{
-				val.page_offset=page.page_offset;
-				val.index_in_page=static_cast<size_t>(*p);
-				val=r;
+				val_cp.page_offset=page.page_offset;
+				val_cp.index_in_page=static_cast<size_t>(*p);
+				val_cp=r;
 				ret=true;
 
 				if(r.left()==0)
@@ -218,6 +219,14 @@ namespace Gomoku
 
 			r=page[static_cast<size_t>(*p)];
 
+			if(p!=page.end())
+			{
+				val_cp.page_offset=page.page_offset;
+				val_cp.index_in_page=static_cast<size_t>(*p);
+				val_cp=r;
+				ret=true;
+			}
+
 			if(r.left()!=0)
 			{
 				page_ptr pg=get_page(r.left());
@@ -225,16 +234,10 @@ namespace Gomoku
 					return true;
 			}
 
-			if(p==page.end())
-				return false;
-
-			val.page_offset=page.page_offset;
-			val.index_in_page=static_cast<size_t>(*p);
-			val=r;
-
-			return true;
+			break;
 		}
 
+		if(ret)val=val_cp;
 		return ret;
 	}
 
