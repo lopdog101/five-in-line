@@ -5,3 +5,11 @@ gui/cmake/*
 tests/cmake/*
 tests/tmp/*
 tests/src_data/*
+ALL_BUILD.*
+ZERO_CHECK.*
+CMakeCache.txt
+CMakeFiles
+*.sln
+*.ncb
+*.suo
+cmake_install.cmake
