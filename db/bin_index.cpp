@@ -9,7 +9,7 @@ namespace fs=boost::filesystem;
 namespace Gomoku
 {
 	file_offset_t bin_index_t::file_max_size=1099511627776ll;
-	size_t bin_index_t::page_max_size=131072;
+	size_t bin_index_t::page_max_size= 16384;
 
 	bin_index_t::bin_index_t(const std::string& _base_dir,size_t _key_len) :
 		base_dir(_base_dir),

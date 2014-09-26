@@ -346,7 +346,7 @@ public:
 
 public:
 	static const size_t dir_key_len=1;
-	static const size_t max_pages=16;
+	static const size_t max_pages=256;
 
 	static file_offset_t file_max_size;
 	static size_t page_max_size;
