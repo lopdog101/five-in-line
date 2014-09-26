@@ -222,8 +222,8 @@ bool show_state(solution_tree_t& tr,steps_t req)
 	case Gomoku::ss_solved:sst="solved";break;
 	}
 
-	printf("key: %s\nhex_key: %s\nstate=%s use_count=%u wins_count=%llu fails_count=%llu\nneitrals: %s\nsolved wins: %s\ntree wins: %s\nsolved fails: %s\ntree fails: %s\nfield:\n%s",
-        k.c_str(),h.c_str(),sst.c_str(),st.use_count,st.wins_count,st.fails_count,
+	printf("key: %s\nhex_key: %s\nstate=%s wins_count=%llu fails_count=%llu\nneitrals: %s\nsolved wins: %s\ntree wins: %s\nsolved fails: %s\ntree fails: %s\nfield:\n%s",
+        k.c_str(),h.c_str(),sst.c_str(),st.wins_count,st.fails_count,
 		n.c_str(),
 		sw.c_str(),tw.c_str(),
 		sf.c_str(),tf.c_str(),

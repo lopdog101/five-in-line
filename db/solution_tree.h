@@ -13,7 +13,6 @@ namespace Gomoku
 	struct sol_state_t
 	{
         SolState state;
-		size_t use_count;
         //wins for next step from state key
         unsigned long long wins_count;
         //fails for next step from state key
@@ -33,7 +32,6 @@ namespace Gomoku
 		sol_state_t()
 		{
 			state=ss_not_solved;
-			use_count=1;
             wins_count = 0;
             fails_count = 0;
 		}
@@ -132,7 +130,6 @@ namespace Gomoku
 		void mark_solving(const steps_t& key);
 
 		void generate_new(const sol_state_t& base_st);
-		void decrment_use_count(const sol_state_t& base_st);
         void scan_already_solved_neitrals(sol_state_t& base_st);
         void update_base_wins_and_fails(const sol_state_t& child_st,unsigned long long delta_wins,unsigned long long delta_fails);
 		

@@ -145,9 +145,7 @@ namespace Gomoku
 			throw std::runtime_error("get_first_deep(): state not found: "+print_steps(ss.key)+" sorted="+print_steps(sorted_key));
         }
 			
-		if(ss.use_count==0)return false;
 		if(ss.state!=ss_solved)return true;
-
 		if(ss.key.size()>=max_key_size)return false;
 
 		Step move_step=next_color(val.key.size());
@@ -221,7 +219,7 @@ namespace Gomoku
 			sol_state_t st;
 			st.key=key.key;
 			get(st);
-			if(st.state!=ss_solved&&st.use_count>0)
+			if(st.state!=ss_solved)
             {
 				return true;
             }
@@ -303,7 +301,7 @@ namespace Gomoku
 		}
 
 		if(st.is_completed())relax(st);
-		else if(st.use_count>0)generate_new(st);
+		else generate_new(st);
 
         if(st.wins_count!=0 || st.fails_count!=0)
             update_base_wins_and_fails(st,st.wins_count,st.fails_count);
@@ -326,12 +324,9 @@ namespace Gomoku
 
 			sol_state_t exist_st;
 			exist_st.key=key;
-			if(!get(exist_st))set(new_st);
-			else
-			{
-				++exist_st.use_count;
-				set(exist_st);
-			}
+
+			if(!get(exist_st))
+				set(new_st);
 		}
 	}
 
@@ -382,35 +377,6 @@ namespace Gomoku
 
 			if(prev_st.is_completed()&&prev_st.key.size()>1)
 				relax(prev_st);
-
-			if(prev_st.is_win())decrment_use_count(prev_st);
-		}
-	}
-
-	void solution_tree_t::decrment_use_count(const sol_state_t& base_st)
-	{
-		Step cur_step=last_color(base_st.key.size());
-		Step next_step=other_color(cur_step);
-		ObjectProgress::log_generator lg(true);
-
-		lg<<"decrment_use_count()1: "<<print_steps(base_st.key);
-		
-		for(size_t i=0;i<base_st.neitrals.size();i++)
-		{
-			const point& p=base_st.neitrals[i];
-			
-			sol_state_t new_st;
-			steps_t& key=new_st.key;
-
-			key=base_st.key;
-
-			if(!get(new_st))continue;
-			lg<<"decrment_use_count()2.0: i="<<i<<" use_count="<<new_st.use_count<<" "<<print_steps(key);
-			if(new_st.use_count==0)continue;
-			--new_st.use_count;
-			lg<<"decrment_use_count()2.1: i="<<i<<" use_count="<<new_st.use_count<<" "<<print_steps(key);
-			set(new_st);
-			if(new_st.use_count==0)decrment_use_count(new_st);
 		}
 	}
 
@@ -775,7 +741,6 @@ namespace Gomoku
 		bin.resize(0);
 		bin.push_back((unsigned char)state);
 
-        pack_raw(use_count,bin);
         pack_raw(wins_count,bin);
         pack_raw(fails_count,bin);
 
@@ -796,7 +761,6 @@ namespace Gomoku
 		state=(SolState)bin[from];
 		++from;
 
-		unpack_raw(bin,use_count,from,"sol_state_t::unpack(): unpack use_count failed");
 		unpack_raw(bin,wins_count,from,"sol_state_t::unpack(): unpack wins_count failed");
 		unpack_raw(bin,fails_count,from,"sol_state_t::unpack(): unpack fails_count failed");
 

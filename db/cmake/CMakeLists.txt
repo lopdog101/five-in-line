@@ -32,7 +32,7 @@ SOURCE_GROUP(extern FILES ${SRC_EXTERN_FILES} )
 
 add_executable(db ${SRC_ALGO_FILES} ${SRC_DB_FILES} ${SRC_EXTERN_FILES})
 
-add_definitions(-D_CRT_SECURE_NO_WARNINGS)
+add_definitions(-D_CRT_SECURE_NO_WARNINGS -D_SCL_SECURE_NO_WARNINGS)
 
 if(NOT WIN32)
       TARGET_LINK_LIBRARIES(db boost_filesystem boost_signals boost_system)
