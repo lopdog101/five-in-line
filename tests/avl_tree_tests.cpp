@@ -360,9 +360,11 @@ TEST_F(avl_tree, DISABLED_generate_index_data)
 		st.neitrals=neitrals;
 		st.solved_wins=wins;
 		st.solved_fails=fails;
-
+		
+		steps_t sorted_key=key;
+		sort_steps(sorted_key);
 		data_t bin_key;
-		Gomoku::points2bin(key,bin_key);
+		Gomoku::points2bin(sorted_key,bin_key);
 		
 		data_t st_bin;
 		st.pack(st_bin);
@@ -407,8 +409,19 @@ TEST_F(avl_tree, real_data_cycle)
 
 	data_t key(key_len);
 	data_t val,val_cp;
+	steps_t steps;
 
 	size_t mi=idx_content.size()/key_len;
+
+	for(size_t i=0;i<mi;i++)
+	{
+		std::copy(idx_content.begin()+i*key_len,idx_content.begin()+(i+1)*key_len,key.begin());
+		bin2points(key,steps);
+		sort_steps(steps);
+		points2bin(steps,key);
+
+		std::copy(key.begin(),key.end(),idx_content.begin()+i*key_len);
+	}
 
 	{
 		bin_index_t ind(index_dir,key_len);
