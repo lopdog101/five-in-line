@@ -18,6 +18,7 @@ namespace fs=boost::filesystem;
 #include "../algo/wsplayer_node.h"
 #include "../extern/object_progress.hpp"
 #include "../algo/env_variables.h"
+#include "bin_index_solution_base.h"
 
 using namespace Gomoku;
 
@@ -260,8 +261,9 @@ int main(int argc,char** argv)
 			throw std::runtime_error("solution tree already inited");
 
 		bin_indexes_t indexes(root_dir.string(),3);
+		bin_index_solution_base_t bin_index_db(indexes);
 
-		solution_tree_t tr(indexes);
+		solution_tree_t tr(bin_index_db);
 		tr.init(root_dir.string());
 
 		if(!fs::exists(root_dir))

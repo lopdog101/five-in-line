@@ -115,11 +115,22 @@ namespace Gomoku
         virtual bool is_canceled(){return false;}
     };
 
+	class isolution_tree_base_t
+	{
+	public:
+		virtual ~isolution_tree_base_t(){}
+
+		virtual bool get(sol_state_t& res) const = 0;
+		virtual void set(const sol_state_t& val) = 0;
+		virtual steps_t get_root_key() const=0;
+        virtual void width_first_search_from_bottom_to_top(sol_state_width_pr& pr) = 0;
+	};
+
     class solution_tree_t
 	{
 	private:
 		std::string base_dir;
-		ibin_indexes_t& indexes;
+		isolution_tree_base_t& db;
 		mutable deep_solve_t first_solving;
 		mutable deep_solve_t last_solving;
 
@@ -145,14 +156,12 @@ namespace Gomoku
         size_t normalize_marks_select_shift(std::vector<double>& marks);
         void load_all_fails_its_wins(const sol_state_t base_st,npoints_t& wins);
 
-        size_t retreive_max_level() const;
-
 	public:
 		static const char* first_solving_file_name;
 		static const char* last_solving_file_name;
 		static unsigned win_neitrals;
 		
-		solution_tree_t(ibin_indexes_t& _indexes) : indexes(_indexes){}
+		solution_tree_t(isolution_tree_base_t& _db) : db(_db){}
 
 		void init(const std::string& _base_dir);
 		void create_init_tree();
@@ -174,7 +183,6 @@ namespace Gomoku
         void depth_first_search(const steps_t& key,sol_state_visitor_pr& pr);
 
         void width_first_search_from_bottom_to_top(sol_state_width_pr& pr);
-        void width_first_search_from_bottom_to_top(sol_state_width_pr& pr,ibin_index_t& idx);
 	};
 
 }//namespace

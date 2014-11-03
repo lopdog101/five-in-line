@@ -7,6 +7,7 @@ namespace fs=boost::filesystem;
 #include "../algo/wsplayer.h"
 #include "../algo/wsplayer_node.h"
 #include <boost/algorithm/string.hpp>
+#include "../db/bin_index_solution_base.h"
 
 namespace fs=boost::filesystem;
 
@@ -290,8 +291,8 @@ TEST_F(avl_tree, DISABLED_generate_index_data)
 	recreate_dirs();
 
 	bin_indexes_t indexes(index_dir,3);
-
-	solution_tree_t tr(indexes);
+	bin_index_solution_base_t bin_index_db(indexes);
+	solution_tree_t tr(bin_index_db);
 	tr.init(index_dir);
 
 	std::string str("(-1,0:O);(-1,1:X);(-1,2:X);(0,0:X);(0,1:X);(0,2:O);(1,1:O);(1,2:X);(2,2:O)");
@@ -515,6 +516,34 @@ TEST_F(avl_tree, real_data_cycle)
 		}
 
 		ASSERT_EQ(idx.size(),0);
+	}
+}
+
+TEST_F(avl_tree, DISABLED_tree_next)
+{
+	static const unsigned perf_mod=200000;
+
+	ObjectProgress::log_generator lg(true);
+	ObjectProgress::perfomance perf;
+
+	data_t key;
+	data_t val;
+
+	{
+		bin_index_t ind(std::string(src_dir)+"/S14",42);
+
+		perf.reset();
+		
+		size_t i=0;
+		for(bool b=ind.first(key,val);b;b=ind.next(key,val),i++)
+		{
+			if((i!=0)&&(i%perf_mod)==0)
+			{
+				ObjectProgress::perfomance::val_t v=perf.delay();
+				lg<<"next: i="<<i<<" perf="<<(v/1000.0)<<"ms rate="<<(1.0*perf_mod/v*1000000.0)<<"rps";
+				perf.reset();
+			}
+		}
 	}
 }
 
