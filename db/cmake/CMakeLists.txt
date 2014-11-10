@@ -2,6 +2,7 @@ cmake_minimum_required (VERSION 2.6)
 
 if( WIN32)
     link_directories($ENV{BOOST}/stage/lib)
+    link_directories(/distr/mysql-win32/lib)
 endif()
 
 project (db)
@@ -38,8 +39,8 @@ if(NOT WIN32)
       TARGET_LINK_LIBRARIES(db boost_filesystem boost_signals boost_system)
 endif()
 
-link_directories($ENV{BOOST}/stage/lib)
 if( MSVC)
     include_directories($ENV{BOOST})
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP")
+    TARGET_LINK_LIBRARIES(db mysql)
 endif()

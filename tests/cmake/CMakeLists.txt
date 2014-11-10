@@ -1,6 +1,9 @@
 cmake_minimum_required (VERSION 2.6)
 
-link_directories($ENV{BOOST}/stage/lib)
+if( WIN32)
+    link_directories($ENV{BOOST}/stage/lib)
+    link_directories(/distr/mysql-win32/lib)
+endif()
 
 project (five_in_line_tests)
 
@@ -13,6 +16,7 @@ FILE(GLOB SRC_ALGO_FILES
 FILE(GLOB SRC_DB_FILES
 ../../db/bin_index.*
 ../../db/bin_index_utils.*
+../../db/bin_index_solution_base.*
 ../../db/solution_tree.*
 ../../db/solution_tree_utils.*
 ../../db/regular_file_access.*
@@ -45,9 +49,11 @@ SOURCE_GROUP(gtest FILES ${SRC_GTEST_FILES} )
 
 add_executable(five_in_line_tests ${SRC_ALGO_FILES} ${SRC_DB_FILES} ${SRC_EXTERN_FILES} ${SRC_TESTS_FILES} ${SRC_GTEST_FILES})
 
-add_definitions(-D_CRT_SECURE_NO_WARNINGS -D_SCL_SECURE_NO_WARNINGS)
-include_directories($ENV{BOOST})
 
 if(MSVC)
+    TARGET_LINK_LIBRARIES(five_in_line_tests libmysql)
+	add_definitions(-D_CRT_SECURE_NO_WARNINGS -D_SCL_SECURE_NO_WARNINGS)
+	include_directories($ENV{BOOST})
+	include_directories(/distr/mysql-win32/include)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /MP")
 endif()
