@@ -21,12 +21,52 @@ namespace Gomoku{ namespace Mysql
 		statement_t(MYSQL_STMT* _val = 0) : common_holder_t<MYSQL_STMT,my_bool STDCALL (MYSQL_STMT *)>(_val,mysql_stmt_close){}
 	};
 
-	struct get_query_t
+	class statement_result_t : public common_holder_t<MYSQL_STMT,my_bool STDCALL (MYSQL_STMT *)>
+	{
+	public:
+		statement_result_t(MYSQL_STMT* _val = 0) : common_holder_t<MYSQL_STMT,my_bool STDCALL (MYSQL_STMT *)>(_val,mysql_stmt_free_result){}
+	};
+
+	static const unsigned def_buf_size = 800;
+
+	struct base_query_t
 	{
 		statement_t st;
-		MYSQL_BIND params[1];
+
 		data_t key_buf;
 		unsigned long key_buf_size;
+
+		unsigned st_state;
+		unsigned long long st_wins_count;
+		unsigned long long st_fails_count;
+
+		data_t neitrals_buf;
+		unsigned long neitrals_buf_size;
+
+		data_t solved_wins_buf;
+		unsigned long solved_wins_buf_size;
+
+		data_t solved_fails_buf;
+		unsigned long solved_fails_buf_size;
+
+		data_t tree_wins_buf;
+		unsigned long tree_wins_buf_size;
+
+		data_t tree_fails_buf;
+		unsigned long tree_fails_buf_size;
+	};
+
+	struct get_query_t : public base_query_t
+	{
+		MYSQL_BIND params[1];
+		MYSQL_BIND results[8];
+
+		void init(MYSQL* conn,size_t key_len);
+	};
+
+	struct set_query_t : public base_query_t
+	{
+		MYSQL_BIND params[17];
 
 		void init(MYSQL* conn,size_t key_len);
 	};
@@ -37,8 +77,7 @@ namespace Gomoku{ namespace Mysql
 		MYSQL* conn;
 
 		get_query_t qget;
-
-		void create_set_statement();
+		set_query_t qset;
 
 		level_t(const level_t&);
 		void operator=(const level_t&);
@@ -47,6 +86,7 @@ namespace Gomoku{ namespace Mysql
 		level_t(size_t _key_len,MYSQL* _conn);
 		
 		bool get(const steps_t& key,sol_state_t& res);
+		void set(const sol_state_t& res);
 	};
 
 	typedef boost::shared_ptr<level_t> level_ptr;

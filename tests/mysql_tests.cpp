@@ -4,6 +4,7 @@
 namespace fs=boost::filesystem;
 #include "../db/solution_tree.h"
 #include "../db/bin_index.h"
+#include "../db/mysql_solution_base.h"
 #include "../algo/wsplayer.h"
 #include "../algo/wsplayer_node.h"
 #include <boost/algorithm/string.hpp>
@@ -38,7 +39,15 @@ void mysql::TearDown()
 {
 }
 
-TEST_F(mysql, real_data_cycle)
+void mysql::recreate_dirs()
+{
+    if(fs::exists(index_dir))
+        fs::remove_all(index_dir);
+
+    fs::create_directories(index_dir);
+}
+
+TEST_F(mysql, DISABLED_real_data_cycle)
 {
 	static const unsigned perf_mod=200000;
 
@@ -139,5 +148,107 @@ TEST_F(mysql, real_data_cycle)
 
 	mysql_close(con);
 }
+
+TEST_F(mysql, DISABLED_generate_index_data)
+{
+	recreate_dirs();
+
+	Mysql::base_t mysql_db("f5");
+	solution_tree_t tr(mysql_db);
+	tr.init(index_dir);
+
+	std::string str("(-1,0:O);(-1,1:X);(-1,2:X);(0,0:X);(0,1:X);(0,2:O);(1,1:O);(1,2:X);(2,2:O)");
+    steps_t steps;
+    hex_or_str2points(str,steps);
+	tr.create_init_tree(steps);
+
+	WsPlayer::stored_deep=1;
+	WsPlayer::def_lookup_deep=0;
+	WsPlayer::treat_deep=0;
+	WsPlayer::ant_count=0;
+
+	size_t key_size=0;
+
+	std::string file_name;
+	file_access_ptr fi;
+	file_access_ptr fd;
+
+	ObjectProgress::log_generator lg(true);
+	ObjectProgress::perfomance perf;
+
+	for(int i=0;i<1000000;i++)
+	{
+		steps_t key;
+        if(!tr.get_job(key))
+		{
+			printf("no job anymore\n");
+			break;
+		}
+
+		reorder_state_to_game_order(key);
+
+		game_t gm;
+		gm.field().set_steps(key);
+
+		WsPlayer::wsplayer_t pl;
+
+		pl.init(gm,other_color(key.back().step));
+		pl.solve();
+
+		const WsPlayer::wide_item_t& r=static_cast<const WsPlayer::wide_item_t&>(*pl.root);
+
+		points_t neitrals;
+		items2points(r.get_neitrals(),neitrals);
+
+		npoints_t wins;
+		items2depth_npoints(r.get_wins().get_vals(),wins);
+
+		npoints_t fails;
+		items2depth_npoints(r.get_fails().get_vals(),fails);
+
+		tr.save_job(key,neitrals,wins,fails);
+
+
+		if(key_size!=key.size())
+		{
+			file_name=std::string(index_dir)+"/"+boost::lexical_cast<std::string>(key.size());
+			fi=file_access_ptr(new paged_file_t(file_name+".idx") );
+			fd=file_access_ptr(new paged_file_t(file_name+".data") );
+			key_size=key.size();
+			lg<<i<<": key_size="<<key.size();
+		}
+
+		sol_state_t st;
+		st.key=key;
+		st.neitrals=neitrals;
+		st.solved_wins=wins;
+		st.solved_fails=fails;
+		
+		steps_t sorted_key=key;
+		sort_steps(sorted_key);
+		data_t bin_key;
+		Gomoku::points2bin(sorted_key,bin_key);
+		
+		data_t st_bin;
+		st.pack(st_bin);
+
+		fi->append(bin_key);
+
+		data_t st_bin_size(sizeof(size_t));
+		*reinterpret_cast<size_t*>(&st_bin_size.front())=st_bin.size();
+		fd->append(st_bin_size);
+		fd->append(st_bin);
+
+		static const int perf_mod=10000;
+		if((i!=0)&&(i%perf_mod)==0)
+		{
+			ObjectProgress::perfomance::val_t v=perf.delay();
+			lg<<i<<": perf="<<(v/1000.0)<<"ms   rate="<<(1.0*perf_mod/v*1000000.0)<<" kps";
+			perf.reset();
+		}
+	}
+
+}
+
 
 }//namespace

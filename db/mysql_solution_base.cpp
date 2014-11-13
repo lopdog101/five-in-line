@@ -9,13 +9,13 @@ base_t::base_t(const std::string& db_name)
 	
 	if(c == 0)
 	{
-		mysql_init(NULL);
+		c=mysql_init(NULL);
 		if(c==0)
 			throw std::runtime_error("mysql_init() has failed");
 	}
 
 	conn.set(mysql_real_connect(c, "localhost", NULL, NULL, db_name.c_str(), 0, NULL, 0));
-	if(conn.get())
+	if(!conn.get())
 		throw std::runtime_error("mysql_real_connect() has failed");
 }
 
@@ -44,17 +44,9 @@ void base_t::set(const sol_state_t& _val)
 {
 	sol_state_t val=_val;
 	sort_steps(val.key);
-/*
-	ibin_index_t& idx=indexes.get_index(val.key.size());
 
-	data_t bin_key;
-	points2bin(val.key,bin_key);
-
-	data_t bin;
-	val.pack(bin);
-
-	idx.set(bin_key,bin);
-*/
+	level_ptr l=get_level(val.key.size());
+	return l->set(val);
 }
 
 steps_t base_t::get_root_key() const
@@ -90,17 +82,7 @@ level_t::level_t(size_t _key_len,MYSQL* _conn) :
 	key_len(_key_len),conn(_conn)
 {
 	qget.init(conn,key_len);
-	create_set_statement();
-}
-
-bool level_t::get(const steps_t& key,sol_state_t& res)
-{
-	points2bin(key,qget.key_buf);
-	int query_ret = mysql_stmt_execute(qget.st.get());
-	if(query_ret!=0)
-		throw std::runtime_error("level_t::get(): mysql_stmt_execute() failed");
-
-	return false;
+	qset.init(conn,key_len);
 }
 
 void get_query_t::init(MYSQL* conn,size_t key_len)
@@ -118,11 +100,11 @@ void get_query_t::init(MYSQL* conn,size_t key_len)
 	if(query_ret!=0)
 		throw std::runtime_error("get_query_t::init(): mysql_stmt_prepare() failed");
 
+
 	memset(params, 0, sizeof(params));
 
-	unsigned long key_buf_size=key_len*3;
+	key_buf_size=key_len*3;
 	key_buf.resize(key_buf_size);
-
 
 	MYSQL_BIND* p=&params[0];
 	p->buffer_type=MYSQL_TYPE_BLOB;
@@ -134,42 +116,286 @@ void get_query_t::init(MYSQL* conn,size_t key_len)
 	query_ret = mysql_stmt_bind_param(stmt, params);
 	if(query_ret!=0)
 		throw std::runtime_error("get_query_t::init(): mysql_stmt_bind_param() failed");
+
+
+	neitrals_buf.resize(def_buf_size);
+	solved_wins_buf.resize(def_buf_size);
+	solved_fails_buf.resize(def_buf_size);
+	tree_wins_buf.resize(def_buf_size);
+	tree_fails_buf.resize(def_buf_size);
+
+	neitrals_buf_size=def_buf_size;
+	solved_wins_buf_size=def_buf_size;
+	solved_fails_buf_size=def_buf_size;
+	tree_wins_buf_size=def_buf_size;
+	tree_fails_buf_size=def_buf_size;
+	
+	memset(results, 0, sizeof(results));
+
+	p=&results[0];
+	p->buffer_type=MYSQL_TYPE_LONG;
+	p->buffer=(char *)&st_state;
+
+	p=&results[1];
+	p->buffer_type=MYSQL_TYPE_LONGLONG;
+	p->buffer=(char *)&st_wins_count;
+
+	p=&results[2];
+	p->buffer_type=MYSQL_TYPE_LONGLONG;
+	p->buffer=(char *)&st_fails_count;
+	
+	p=&results[3];
+	p->buffer_type=MYSQL_TYPE_BLOB;
+	p->buffer=(char *)&neitrals_buf.front();
+	p->buffer_length=def_buf_size;
+	p->is_null=0;
+	p->length=&neitrals_buf_size;
+	
+	p=&results[4];
+	p->buffer_type=MYSQL_TYPE_BLOB;
+	p->buffer=(char *)&solved_wins_buf.front();
+	p->buffer_length=def_buf_size;
+	p->is_null=0;
+	p->length=&solved_wins_buf_size;
+	
+	p=&results[5];
+	p->buffer_type=MYSQL_TYPE_BLOB;
+	p->buffer=(char *)&solved_fails_buf.front();
+	p->buffer_length=def_buf_size;
+	p->is_null=0;
+	p->length=&solved_fails_buf_size;
+	
+	p=&results[6];
+	p->buffer_type=MYSQL_TYPE_BLOB;
+	p->buffer=(char *)&tree_wins_buf.front();
+	p->buffer_length=def_buf_size;
+	p->is_null=0;
+	p->length=&tree_wins_buf_size;
+	
+	p=&results[7];
+	p->buffer_type=MYSQL_TYPE_BLOB;
+	p->buffer=(char *)&tree_fails_buf.front();
+	p->buffer_length=def_buf_size;
+	p->is_null=0;
+	p->length=&tree_fails_buf_size;
+
+	query_ret = mysql_stmt_bind_result(stmt, results);
+	if(query_ret!=0)
+		throw std::runtime_error("get_query_t::init(): mysql_stmt_bind_result() failed");
 }
 
-void level_t::create_set_statement()
+bool level_t::get(const steps_t& key,sol_state_t& res)
 {
-/*
-INSERT INTO table (a,b,c) VALUES (1,2,3)
-  ON DUPLICATE KEY UPDATE c=c+1;
-  static const char* query="insert into f5(k,d) values(?,?)";
-	int query_ret = mysql_stmt_prepare(stmt, query, strlen(query));
-	ASSERT_EQ(query_ret,0);
+	get_query_t& q=qget;
+	MYSQL_STMT* stmt=q.st.get();
 
-	ASSERT_EQ(mysql_stmt_param_count(stmt),2);
+	q.neitrals_buf.resize(def_buf_size);
+	q.solved_wins_buf.resize(def_buf_size);
+	q.solved_fails_buf.resize(def_buf_size);
+	q.tree_wins_buf.resize(def_buf_size);
+	q.tree_fails_buf.resize(def_buf_size);
 
-	MYSQL_BIND    bind[2];
-	memset(bind, 0, sizeof(bind));
+	points2bin(key,q.key_buf);
+	int query_ret=mysql_stmt_execute(stmt);
+	if(query_ret!=0)
+		throw std::runtime_error("level_t::get(): mysql_stmt_execute() failed");
+	
+	query_ret=mysql_stmt_store_result(stmt);
+	if(query_ret!=0)
+		throw std::runtime_error("level_t::get(): mysql_stmt_store_result() failed");
 
-	unsigned long key_buf_size=key_len;
-	unsigned long data_buf_size=0;
-	val.resize(2048);
+	statement_result_t hld_result(stmt);
 
-	bind[0].buffer_type= MYSQL_TYPE_BLOB;
-	bind[0].buffer= (char *)&key.front();
-	bind[0].buffer_length= key_len;
-	bind[0].is_null= 0;
-	bind[0].length= &key_buf_size;
+	if(mysql_stmt_num_rows(stmt)==0)
+		return false;
+	
+	query_ret=mysql_stmt_fetch(stmt);
+	if(query_ret!=0)
+		throw std::runtime_error("level_t::get(): mysql_stmt_fetch() failed");
 
-	bind[1].buffer_type= MYSQL_TYPE_BLOB;
-	bind[1].buffer= (char *)&val.front();
-	bind[1].buffer_length= val.capacity();
-	bind[1].is_null= 0;
-	bind[1].length= &data_buf_size;
+	res.state=static_cast<SolState>(q.st_state);
+	res.wins_count=q.st_wins_count;
+	res.fails_count=q.st_fails_count;
 
-	query_ret = mysql_stmt_bind_param(stmt, bind);
-	ASSERT_EQ(query_ret,0);
-*/
+	q.neitrals_buf.resize(q.neitrals_buf_size);
+	q.solved_wins_buf.resize(q.solved_wins_buf_size);
+	q.solved_fails_buf.resize(q.solved_fails_buf_size);
+	q.tree_wins_buf.resize(q.tree_wins_buf_size);
+	q.tree_fails_buf.resize(q.tree_fails_buf_size);
+
+	bin2points(q.neitrals_buf,res.neitrals);
+	bin2points(q.solved_wins_buf,res.solved_wins);
+	bin2points(q.solved_fails_buf,res.solved_fails);
+	bin2points(q.tree_wins_buf,res.tree_wins);
+	bin2points(q.tree_fails_buf,res.tree_fails);
+	
+	return true;
 }
 
+void set_query_t::init(MYSQL* conn,size_t key_len)
+{
+	MYSQL_STMT* stmt = mysql_stmt_init(conn);
+	if(stmt == NULL)
+		throw std::runtime_error("set_query_t::init(): mysql_stmt_init() failed");
+
+	st.set(stmt);
+
+	std::string query="insert into s"+boost::lexical_cast<std::string>(key_len)
+		+"(k,state,wins_count,fails_count,neitrals,solved_wins,solved_fails,tree_wins,tree_fails) values(?,?,?,?,?,?,?,?,?)"
+		 " ON DUPLICATE KEY UPDATE state=?,wins_count=?,fails_count=?,neitrals=?,solved_wins=?,solved_fails=?,tree_wins=?,tree_fails=?";
+
+	int query_ret = mysql_stmt_prepare(stmt, query.c_str(), query.size());
+	if(query_ret!=0)
+		throw std::runtime_error("set_query_t::init(): mysql_stmt_prepare() failed");
+
+	neitrals_buf.resize(def_buf_size);
+	solved_wins_buf.resize(def_buf_size);
+	solved_fails_buf.resize(def_buf_size);
+	tree_wins_buf.resize(def_buf_size);
+	tree_fails_buf.resize(def_buf_size);
+
+	neitrals_buf_size=def_buf_size;
+	solved_wins_buf_size=def_buf_size;
+	solved_fails_buf_size=def_buf_size;
+	tree_wins_buf_size=def_buf_size;
+	tree_fails_buf_size=def_buf_size;
+
+	memset(params, 0, sizeof(params));
+
+	key_buf_size=key_len*3;
+	key_buf.resize(key_buf_size);
+
+	MYSQL_BIND* p=&params[0];
+	p->buffer_type=MYSQL_TYPE_BLOB;
+	p->buffer=(char *)&key_buf.front();
+	p->buffer_length=key_buf_size;
+	p->is_null=0;
+	p->length=&key_buf_size;
+
+	p=&params[1];
+	p->buffer_type=MYSQL_TYPE_LONG;
+	p->buffer=(char *)&st_state;
+
+	p=&params[2];
+	p->buffer_type=MYSQL_TYPE_LONGLONG;
+	p->buffer=(char *)&st_wins_count;
+
+	p=&params[3];
+	p->buffer_type=MYSQL_TYPE_LONGLONG;
+	p->buffer=(char *)&st_fails_count;
+	
+	p=&params[4];
+	p->buffer_type=MYSQL_TYPE_BLOB;
+	p->buffer=(char *)&neitrals_buf.front();
+	p->buffer_length=def_buf_size;
+	p->is_null=0;
+	p->length=&neitrals_buf_size;
+	
+	p=&params[5];
+	p->buffer_type=MYSQL_TYPE_BLOB;
+	p->buffer=(char *)&solved_wins_buf.front();
+	p->buffer_length=def_buf_size;
+	p->is_null=0;
+	p->length=&solved_wins_buf_size;
+	
+	p=&params[6];
+	p->buffer_type=MYSQL_TYPE_BLOB;
+	p->buffer=(char *)&solved_fails_buf.front();
+	p->buffer_length=def_buf_size;
+	p->is_null=0;
+	p->length=&solved_fails_buf_size;
+	
+	p=&params[7];
+	p->buffer_type=MYSQL_TYPE_BLOB;
+	p->buffer=(char *)&tree_wins_buf.front();
+	p->buffer_length=def_buf_size;
+	p->is_null=0;
+	p->length=&tree_wins_buf_size;
+	
+	p=&params[8];
+	p->buffer_type=MYSQL_TYPE_BLOB;
+	p->buffer=(char *)&tree_fails_buf.front();
+	p->buffer_length=def_buf_size;
+	p->is_null=0;
+	p->length=&tree_fails_buf_size;
+
+	p=&params[9];
+	p->buffer_type=MYSQL_TYPE_LONG;
+	p->buffer=(char *)&st_state;
+
+	p=&params[10];
+	p->buffer_type=MYSQL_TYPE_LONGLONG;
+	p->buffer=(char *)&st_wins_count;
+
+	p=&params[11];
+	p->buffer_type=MYSQL_TYPE_LONGLONG;
+	p->buffer=(char *)&st_fails_count;
+	
+	p=&params[12];
+	p->buffer_type=MYSQL_TYPE_BLOB;
+	p->buffer=(char *)&neitrals_buf.front();
+	p->buffer_length=def_buf_size;
+	p->is_null=0;
+	p->length=&neitrals_buf_size;
+	
+	p=&params[13];
+	p->buffer_type=MYSQL_TYPE_BLOB;
+	p->buffer=(char *)&solved_wins_buf.front();
+	p->buffer_length=def_buf_size;
+	p->is_null=0;
+	p->length=&solved_wins_buf_size;
+	
+	p=&params[14];
+	p->buffer_type=MYSQL_TYPE_BLOB;
+	p->buffer=(char *)&solved_fails_buf.front();
+	p->buffer_length=def_buf_size;
+	p->is_null=0;
+	p->length=&solved_fails_buf_size;
+	
+	p=&params[15];
+	p->buffer_type=MYSQL_TYPE_BLOB;
+	p->buffer=(char *)&tree_wins_buf.front();
+	p->buffer_length=def_buf_size;
+	p->is_null=0;
+	p->length=&tree_wins_buf_size;
+	
+	p=&params[16];
+	p->buffer_type=MYSQL_TYPE_BLOB;
+	p->buffer=(char *)&tree_fails_buf.front();
+	p->buffer_length=def_buf_size;
+	p->is_null=0;
+	p->length=&tree_fails_buf_size;
+
+	query_ret = mysql_stmt_bind_param(stmt, params);
+	if(query_ret!=0)
+		throw std::runtime_error("set_query_t::init(): mysql_stmt_bind_param() failed");
+}
+
+void level_t::set(const sol_state_t& res)
+{
+	set_query_t& q=qset;
+	MYSQL_STMT* stmt=q.st.get();
+
+	points2bin(res.key,q.key_buf);
+	points2bin(res.neitrals,q.neitrals_buf);
+	points2bin(res.solved_wins,q.solved_wins_buf);
+	points2bin(res.solved_fails,q.solved_fails_buf);
+	points2bin(res.tree_wins,q.tree_wins_buf);
+	points2bin(res.tree_fails,q.tree_fails_buf);
+
+	q.neitrals_buf_size=q.neitrals_buf.size();
+	q.solved_wins_buf_size=q.solved_wins_buf.size();
+	q.solved_fails_buf_size=q.solved_fails_buf.size();
+	q.tree_wins_buf_size=q.tree_wins_buf.size();
+	q.tree_fails_buf_size=q.tree_fails_buf.size();
+
+	q.st_state=res.state;
+	q.st_wins_count=res.wins_count;
+	q.st_fails_count=res.fails_count;
+
+	int query_ret=mysql_stmt_execute(stmt);
+	if(query_ret!=0)
+		throw std::runtime_error(std::string("level_t::get(): mysql_stmt_execute() failed: ")+mysql_stmt_error(stmt));
+}
 
 }}//namespace
