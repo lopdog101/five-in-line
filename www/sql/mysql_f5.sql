@@ -24,3 +24,6 @@ CREATE TABLE f5(k varbinary(600) NOT NULL DEFAULT '',d varbinary(60000) NOT NULL
 
 
 select hex(k) from f5 order by k>x'F70001F90002FB0101FD0302FF0002FF0101FF0201000001000101000202010102010201020202' order by k limit 1;
+
+analyze table s9;analyze table s10;analyze table s11;analyze table s12;analyze table s13;analyze table s14;
+delete from s8;delete from s9;delete from s10;delete from s11;delete from s12;delete from s13;delete from s14;

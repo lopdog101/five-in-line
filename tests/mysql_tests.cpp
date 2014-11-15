@@ -167,12 +167,6 @@ TEST_F(mysql, DISABLED_generate_index_data)
 	WsPlayer::treat_deep=0;
 	WsPlayer::ant_count=0;
 
-	size_t key_size=0;
-
-	std::string file_name;
-	file_access_ptr fi;
-	file_access_ptr fd;
-
 	ObjectProgress::log_generator lg(true);
 	ObjectProgress::perfomance perf;
 
@@ -209,35 +203,13 @@ TEST_F(mysql, DISABLED_generate_index_data)
 		tr.save_job(key,neitrals,wins,fails);
 
 
-		if(key_size!=key.size())
-		{
-			file_name=std::string(index_dir)+"/"+boost::lexical_cast<std::string>(key.size());
-			fi=file_access_ptr(new paged_file_t(file_name+".idx") );
-			fd=file_access_ptr(new paged_file_t(file_name+".data") );
-			key_size=key.size();
-			lg<<i<<": key_size="<<key.size();
-		}
-
 		sol_state_t st;
 		st.key=key;
-		st.neitrals=neitrals;
-		st.solved_wins=wins;
-		st.solved_fails=fails;
-		
-		steps_t sorted_key=key;
-		sort_steps(sorted_key);
-		data_t bin_key;
-		Gomoku::points2bin(sorted_key,bin_key);
-		
-		data_t st_bin;
-		st.pack(st_bin);
 
-		fi->append(bin_key);
-
-		data_t st_bin_size(sizeof(size_t));
-		*reinterpret_cast<size_t*>(&st_bin_size.front())=st_bin.size();
-		fd->append(st_bin_size);
-		fd->append(st_bin);
+		ASSERT_TRUE(tr.get(st));
+		ASSERT_EQ(st.neitrals,neitrals);
+		ASSERT_EQ(st.solved_wins,wins);
+		ASSERT_EQ(st.solved_fails,fails);
 
 		static const int perf_mod=10000;
 		if((i!=0)&&(i%perf_mod)==0)

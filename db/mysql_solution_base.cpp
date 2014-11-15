@@ -51,20 +51,15 @@ void base_t::set(const sol_state_t& _val)
 
 steps_t base_t::get_root_key() const
 {
+	for(unsigned i=1;i<=max_level;i++)
+	{
+		steps_t steps;
+		level_ptr l=get_level(i);
+		if(l->first(steps))
+			return steps;
+	}
+
 	return steps_t();
-/*
-	unsigned level=indexes.get_root_level();
-	if(level==0)return steps_t();
-	ibin_index_t& idx=indexes.get_index(level);
-
-	data_t bin_key,bin_val;
-	if(!idx.first(bin_key,bin_val))return steps_t();
-
-	steps_t ret;
-	bin2points(bin_key,ret);
-	
-	return ret;
-*/
 }
 
 void base_t::width_first_search_from_bottom_to_top(sol_state_width_pr& pr)
@@ -83,13 +78,14 @@ level_t::level_t(size_t _key_len,MYSQL* _conn) :
 {
 	qget.init(conn,key_len);
 	qset.init(conn,key_len);
+	qfirst.init(conn,key_len);
 }
 
 void get_query_t::init(MYSQL* conn,size_t key_len)
 {
 	MYSQL_STMT* stmt = mysql_stmt_init(conn);
 	if(stmt == NULL)
-		throw std::runtime_error("get_query_t::init(): mysql_stmt_init() failed");
+		throw std::runtime_error(__FUNCTION__ ": mysql_stmt_init() failed");
 
 	st.set(stmt);
 
@@ -98,7 +94,7 @@ void get_query_t::init(MYSQL* conn,size_t key_len)
 
 	int query_ret = mysql_stmt_prepare(stmt, query.c_str(), query.size());
 	if(query_ret!=0)
-		throw std::runtime_error("get_query_t::init(): mysql_stmt_prepare() failed");
+		throw std::runtime_error(__FUNCTION__ ": mysql_stmt_prepare() failed");
 
 
 	memset(params, 0, sizeof(params));
@@ -115,7 +111,7 @@ void get_query_t::init(MYSQL* conn,size_t key_len)
 
 	query_ret = mysql_stmt_bind_param(stmt, params);
 	if(query_ret!=0)
-		throw std::runtime_error("get_query_t::init(): mysql_stmt_bind_param() failed");
+		throw std::runtime_error(__FUNCTION__ ": mysql_stmt_bind_param() failed");
 
 
 	neitrals_buf.resize(def_buf_size);
@@ -181,28 +177,27 @@ void get_query_t::init(MYSQL* conn,size_t key_len)
 
 	query_ret = mysql_stmt_bind_result(stmt, results);
 	if(query_ret!=0)
-		throw std::runtime_error("get_query_t::init(): mysql_stmt_bind_result() failed");
+		throw std::runtime_error(__FUNCTION__ ": mysql_stmt_bind_result() failed");
 }
 
-bool level_t::get(const steps_t& key,sol_state_t& res)
+bool get_query_t::execute(const steps_t& key,sol_state_t& res)
 {
-	get_query_t& q=qget;
-	MYSQL_STMT* stmt=q.st.get();
+	MYSQL_STMT* stmt=st.get();
 
-	q.neitrals_buf.resize(def_buf_size);
-	q.solved_wins_buf.resize(def_buf_size);
-	q.solved_fails_buf.resize(def_buf_size);
-	q.tree_wins_buf.resize(def_buf_size);
-	q.tree_fails_buf.resize(def_buf_size);
+	neitrals_buf.resize(def_buf_size);
+	solved_wins_buf.resize(def_buf_size);
+	solved_fails_buf.resize(def_buf_size);
+	tree_wins_buf.resize(def_buf_size);
+	tree_fails_buf.resize(def_buf_size);
 
-	points2bin(key,q.key_buf);
+	points2bin(key,key_buf);
 	int query_ret=mysql_stmt_execute(stmt);
 	if(query_ret!=0)
-		throw std::runtime_error("level_t::get(): mysql_stmt_execute() failed");
+		throw std::runtime_error(__FUNCTION__ ": mysql_stmt_execute() failed");
 	
 	query_ret=mysql_stmt_store_result(stmt);
 	if(query_ret!=0)
-		throw std::runtime_error("level_t::get(): mysql_stmt_store_result() failed");
+		throw std::runtime_error(__FUNCTION__ ": mysql_stmt_store_result() failed");
 
 	statement_result_t hld_result(stmt);
 
@@ -211,23 +206,23 @@ bool level_t::get(const steps_t& key,sol_state_t& res)
 	
 	query_ret=mysql_stmt_fetch(stmt);
 	if(query_ret!=0)
-		throw std::runtime_error("level_t::get(): mysql_stmt_fetch() failed");
+		throw std::runtime_error(__FUNCTION__ ": mysql_stmt_fetch() failed");
 
-	res.state=static_cast<SolState>(q.st_state);
-	res.wins_count=q.st_wins_count;
-	res.fails_count=q.st_fails_count;
+	res.state=static_cast<SolState>(st_state);
+	res.wins_count=st_wins_count;
+	res.fails_count=st_fails_count;
 
-	q.neitrals_buf.resize(q.neitrals_buf_size);
-	q.solved_wins_buf.resize(q.solved_wins_buf_size);
-	q.solved_fails_buf.resize(q.solved_fails_buf_size);
-	q.tree_wins_buf.resize(q.tree_wins_buf_size);
-	q.tree_fails_buf.resize(q.tree_fails_buf_size);
+	neitrals_buf.resize(neitrals_buf_size);
+	solved_wins_buf.resize(solved_wins_buf_size);
+	solved_fails_buf.resize(solved_fails_buf_size);
+	tree_wins_buf.resize(tree_wins_buf_size);
+	tree_fails_buf.resize(tree_fails_buf_size);
 
-	bin2points(q.neitrals_buf,res.neitrals);
-	bin2points(q.solved_wins_buf,res.solved_wins);
-	bin2points(q.solved_fails_buf,res.solved_fails);
-	bin2points(q.tree_wins_buf,res.tree_wins);
-	bin2points(q.tree_fails_buf,res.tree_fails);
+	bin2points(neitrals_buf,res.neitrals);
+	bin2points(solved_wins_buf,res.solved_wins);
+	bin2points(solved_fails_buf,res.solved_fails);
+	bin2points(tree_wins_buf,res.tree_wins);
+	bin2points(tree_fails_buf,res.tree_fails);
 	
 	return true;
 }
@@ -236,7 +231,7 @@ void set_query_t::init(MYSQL* conn,size_t key_len)
 {
 	MYSQL_STMT* stmt = mysql_stmt_init(conn);
 	if(stmt == NULL)
-		throw std::runtime_error("set_query_t::init(): mysql_stmt_init() failed");
+		throw std::runtime_error(__FUNCTION__ ": mysql_stmt_init() failed");
 
 	st.set(stmt);
 
@@ -246,7 +241,7 @@ void set_query_t::init(MYSQL* conn,size_t key_len)
 
 	int query_ret = mysql_stmt_prepare(stmt, query.c_str(), query.size());
 	if(query_ret!=0)
-		throw std::runtime_error("set_query_t::init(): mysql_stmt_prepare() failed");
+		throw std::runtime_error(__FUNCTION__ ": mysql_stmt_prepare() failed");
 
 	neitrals_buf.resize(def_buf_size);
 	solved_wins_buf.resize(def_buf_size);
@@ -368,34 +363,94 @@ void set_query_t::init(MYSQL* conn,size_t key_len)
 
 	query_ret = mysql_stmt_bind_param(stmt, params);
 	if(query_ret!=0)
-		throw std::runtime_error("set_query_t::init(): mysql_stmt_bind_param() failed");
+		throw std::runtime_error(__FUNCTION__ ": mysql_stmt_bind_param() failed");
 }
 
-void level_t::set(const sol_state_t& res)
+void set_query_t::execute(const sol_state_t& res)
 {
-	set_query_t& q=qset;
-	MYSQL_STMT* stmt=q.st.get();
+	MYSQL_STMT* stmt=st.get();
 
-	points2bin(res.key,q.key_buf);
-	points2bin(res.neitrals,q.neitrals_buf);
-	points2bin(res.solved_wins,q.solved_wins_buf);
-	points2bin(res.solved_fails,q.solved_fails_buf);
-	points2bin(res.tree_wins,q.tree_wins_buf);
-	points2bin(res.tree_fails,q.tree_fails_buf);
+	points2bin(res.key,key_buf);
+	points2bin(res.neitrals,neitrals_buf);
+	points2bin(res.solved_wins,solved_wins_buf);
+	points2bin(res.solved_fails,solved_fails_buf);
+	points2bin(res.tree_wins,tree_wins_buf);
+	points2bin(res.tree_fails,tree_fails_buf);
 
-	q.neitrals_buf_size=q.neitrals_buf.size();
-	q.solved_wins_buf_size=q.solved_wins_buf.size();
-	q.solved_fails_buf_size=q.solved_fails_buf.size();
-	q.tree_wins_buf_size=q.tree_wins_buf.size();
-	q.tree_fails_buf_size=q.tree_fails_buf.size();
+	neitrals_buf_size=neitrals_buf.size();
+	solved_wins_buf_size=solved_wins_buf.size();
+	solved_fails_buf_size=solved_fails_buf.size();
+	tree_wins_buf_size=tree_wins_buf.size();
+	tree_fails_buf_size=tree_fails_buf.size();
 
-	q.st_state=res.state;
-	q.st_wins_count=res.wins_count;
-	q.st_fails_count=res.fails_count;
+	st_state=res.state;
+	st_wins_count=res.wins_count;
+	st_fails_count=res.fails_count;
 
 	int query_ret=mysql_stmt_execute(stmt);
 	if(query_ret!=0)
-		throw std::runtime_error(std::string("level_t::get(): mysql_stmt_execute() failed: ")+mysql_stmt_error(stmt));
+		throw std::runtime_error(std::string(__FUNCTION__ ": mysql_stmt_execute() failed: ")+mysql_stmt_error(stmt));
 }
+
+void first_query_t::init(MYSQL* conn,size_t key_len)
+{
+	MYSQL_STMT* stmt = mysql_stmt_init(conn);
+	if(stmt == NULL)
+		throw std::runtime_error(__FUNCTION__ ": mysql_stmt_init() failed");
+
+	st.set(stmt);
+
+	std::string query="select k from s"
+		+boost::lexical_cast<std::string>(key_len)+" order by k limit 1";
+
+	int query_ret = mysql_stmt_prepare(stmt, query.c_str(), query.size());
+	if(query_ret!=0)
+		throw std::runtime_error(__FUNCTION__ ": mysql_stmt_prepare() failed");
+
+
+	key_buf_size=key_len*3;
+	key_buf.resize(key_buf_size);
+
+	memset(results, 0, sizeof(results));
+
+	MYSQL_BIND* p=&results[0];
+	p->buffer_type=MYSQL_TYPE_BLOB;
+	p->buffer=(char *)&key_buf.front();
+	p->buffer_length=key_buf_size;
+	p->is_null=0;
+	p->length=&key_buf_size;
+
+	query_ret = mysql_stmt_bind_result(stmt, results);
+	if(query_ret!=0)
+		throw std::runtime_error(__FUNCTION__ ": mysql_stmt_bind_result() failed");
+}
+
+bool first_query_t::execute(steps_t& res)
+{
+	MYSQL_STMT* stmt=st.get();
+
+	int query_ret=mysql_stmt_execute(stmt);
+	if(query_ret!=0)
+		throw std::runtime_error(__FUNCTION__ ": mysql_stmt_execute() failed");
+	
+	query_ret=mysql_stmt_store_result(stmt);
+	if(query_ret!=0)
+		throw std::runtime_error(__FUNCTION__ ": mysql_stmt_store_result() failed");
+
+	statement_result_t hld_result(stmt);
+
+	if(mysql_stmt_num_rows(stmt)==0)
+		return false;
+	
+	query_ret=mysql_stmt_fetch(stmt);
+	if(query_ret!=0)
+		throw std::runtime_error(__FUNCTION__ ": mysql_stmt_fetch() failed");
+
+	bin2points(key_buf,res);
+
+	return true;
+}
+
+
 
 }}//namespace
