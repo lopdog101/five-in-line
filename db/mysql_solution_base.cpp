@@ -1,3 +1,4 @@
+#include <my_global.h>
 #include "mysql_solution_base.h"
 
 namespace Gomoku{ namespace Mysql

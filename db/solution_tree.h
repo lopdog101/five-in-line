@@ -126,10 +126,13 @@ namespace Gomoku
         virtual void width_first_search_from_bottom_to_top(sol_state_width_pr& pr) = 0;
 	};
 
+	typedef boost::shared_ptr<isolution_tree_base_t> isolution_tree_base_ptr;
+
     class solution_tree_t
 	{
 	private:
 		std::string base_dir;
+		isolution_tree_base_ptr db_ptr;
 		isolution_tree_base_t& db;
 		mutable deep_solve_t first_solving;
 		mutable deep_solve_t last_solving;
@@ -161,7 +164,7 @@ namespace Gomoku
 		static const char* last_solving_file_name;
 		static unsigned win_neitrals;
 		
-		solution_tree_t(isolution_tree_base_t& _db) : db(_db){}
+		solution_tree_t(const isolution_tree_base_ptr _db_ptr) : db_ptr(_db_ptr),db(*_db_ptr){}
 
 		void init(const std::string& _base_dir);
 		void create_init_tree();

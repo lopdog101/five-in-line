@@ -19,6 +19,7 @@ namespace fs=boost::filesystem;
 #include "../extern/object_progress.hpp"
 #include "../algo/env_variables.h"
 #include "bin_index_solution_base.h"
+#include "mysql_solution_base.h"
 
 using namespace Gomoku;
 
@@ -42,6 +43,7 @@ void print_use()
 	printf("db <root_dir> fix_not_solved_wins\n");
     Gomoku::print_enviropment_variables_hint();
 	printf("win_neitrals (default: %u)\n",solution_tree_t::win_neitrals);
+	printf("mysql_db  (no default)\n");
 }
 
 void self_solve(solution_tree_t& tr,const steps_t& key)
@@ -260,10 +262,14 @@ int main(int argc,char** argv)
 		if(cmd=="init_state"&&fs::exists(root_dir))
 			throw std::runtime_error("solution tree already inited");
 
-		bin_indexes_t indexes(root_dir.string(),3);
-		bin_index_solution_base_t bin_index_db(indexes);
-
-		solution_tree_t tr(bin_index_db);
+		isolution_tree_base_ptr db;
+		
+		const char* mysql_db=getenv("mysql_db");
+		
+		if(mysql_db!=0&&(*mysql_db)!=0) db=isolution_tree_base_ptr(new Mysql::base_t(mysql_db));
+		else  db=isolution_tree_base_ptr(new bin_index_solution_base_t(root_dir.string()));
+		 
+		solution_tree_t tr(db);
 		tr.init(root_dir.string());
 
 		if(!fs::exists(root_dir))

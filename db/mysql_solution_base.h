@@ -1,7 +1,7 @@
 #ifndef mysql_solution_baseH
 #define mysql_solution_baseH
 #include <map>
-#include <my_global.h>
+//#include <my_global.h>
 #include <mysql.h>
 #include "solution_tree.h"
 #include "../extern/common_holder.h"

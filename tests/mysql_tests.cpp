@@ -1,3 +1,5 @@
+#include <my_global.h>
+#include <mysql.h>
 #include <fstream>
 #include "gtest/gtest.h"
 #include <boost/filesystem/operations.hpp>
@@ -8,8 +10,6 @@ namespace fs=boost::filesystem;
 #include "../algo/wsplayer.h"
 #include "../algo/wsplayer_node.h"
 #include <boost/algorithm/string.hpp>
-#include <my_global.h>
-#include <mysql.h>
 
 namespace fs=boost::filesystem;
 
@@ -153,8 +153,8 @@ TEST_F(mysql, DISABLED_generate_index_data)
 {
 	recreate_dirs();
 
-	Mysql::base_t mysql_db("f5");
-	solution_tree_t tr(mysql_db);
+	isolution_tree_base_ptr db(new Mysql::base_t("f5"));
+	solution_tree_t tr(db);
 	tr.init(index_dir);
 
 	std::string str("(-1,0:O);(-1,1:X);(-1,2:X);(0,0:X);(0,1:X);(0,2:O);(1,1:O);(1,2:X);(2,2:O)");
@@ -255,8 +255,8 @@ TEST_F(mysql, DISABLED_width_search)
 {
 	recreate_dirs();
 
-	Mysql::base_t mysql_db("f5");
-	solution_tree_t tr(mysql_db);
+	isolution_tree_base_ptr db(new Mysql::base_t("f5"));
+	solution_tree_t tr(db);
 	tr.init(index_dir);
 
 	mysql_search_dump_visitor vs;
