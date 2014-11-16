@@ -222,5 +222,45 @@ TEST_F(mysql, DISABLED_generate_index_data)
 
 }
 
+class mysql_search_dump_visitor : public sol_state_width_pr
+{
+	ObjectProgress::log_generator lg;
+	ObjectProgress::perfomance perf;
+	unsigned i;
+	static const unsigned perf_mod=10000;
+
+public:
+	mysql_search_dump_visitor() : lg(true)
+	{
+		i=0;
+	}
+
+    bool on_enter_node(sol_state_t& val)
+	{
+		if((i!=0)&&(i%perf_mod)==0)
+		{
+			ObjectProgress::perfomance::val_t v=perf.delay();
+			lg<<i<<": perf="<<(v/1000.0)<<"ms   rate="<<(1.0*perf_mod/v*1000000.0)<<" kps";
+			lg<<"key="<<print_steps(val.key);
+			perf.reset();
+		}
+
+		i++;
+		return false;
+	}
+};
+
+
+TEST_F(mysql, DISABLED_width_search)
+{
+	recreate_dirs();
+
+	Mysql::base_t mysql_db("f5");
+	solution_tree_t tr(mysql_db);
+	tr.init(index_dir);
+
+	mysql_search_dump_visitor vs;
+	tr.width_first_search_from_bottom_to_top(vs);
+}
 
 }//namespace

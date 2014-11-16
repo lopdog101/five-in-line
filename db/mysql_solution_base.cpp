@@ -62,15 +62,28 @@ steps_t base_t::get_root_key() const
 	return steps_t();
 }
 
+
 void base_t::width_first_search_from_bottom_to_top(sol_state_width_pr& pr)
 {
-/*
-    for(size_t l=retreive_max_level();l>0;l--)
-    {
-        ibin_index_t& idx=indexes.get_index(l);
-        width_first_search_from_bottom_to_top(pr,idx);
-    }
-*/
+	for(unsigned i=max_level;i>0;i--)
+	{
+		level_ptr l=get_level(i);
+		sol_state_t st;
+		
+		for(bool j=l->first(st.key);j;j=l->next(st.key))
+		{
+			if(pr.is_canceled())
+				throw e_cancel();
+			
+			if(!l->get(st.key,st))
+				throw std::runtime_error(__FUNCTION__ ": state doesn't exists");
+
+			if(pr.on_enter_node(st))
+			{
+				set(st);
+			}
+		}
+	}
 }
 
 level_t::level_t(size_t _key_len,MYSQL* _conn) :
@@ -79,6 +92,7 @@ level_t::level_t(size_t _key_len,MYSQL* _conn) :
 	qget.init(conn,key_len);
 	qset.init(conn,key_len);
 	qfirst.init(conn,key_len);
+	qnext.init(conn,key_len);
 }
 
 void get_query_t::init(MYSQL* conn,size_t key_len)
@@ -447,6 +461,81 @@ bool first_query_t::execute(steps_t& res)
 		throw std::runtime_error(__FUNCTION__ ": mysql_stmt_fetch() failed");
 
 	bin2points(key_buf,res);
+
+	return true;
+}
+
+void next_query_t::init(MYSQL* conn,size_t key_len)
+{
+	MYSQL_STMT* stmt = mysql_stmt_init(conn);
+	if(stmt == NULL)
+		throw std::runtime_error(__FUNCTION__ ": mysql_stmt_init() failed");
+
+	st.set(stmt);
+
+	std::string query="select k from s"
+		+boost::lexical_cast<std::string>(key_len)+" where k>? order by k limit 1";
+
+	int query_ret = mysql_stmt_prepare(stmt, query.c_str(), query.size());
+	if(query_ret!=0)
+		throw std::runtime_error(__FUNCTION__ ": mysql_stmt_prepare() failed");
+
+
+	key_buf_size=key_len*3;
+	key_buf.resize(key_buf_size);
+
+	MYSQL_BIND* p=&params[0];
+	p->buffer_type=MYSQL_TYPE_BLOB;
+	p->buffer=(char *)&key_buf.front();
+	p->buffer_length=key_buf_size;
+	p->is_null=0;
+	p->length=&key_buf_size;
+
+	query_ret = mysql_stmt_bind_param(stmt, params);
+	if(query_ret!=0)
+		throw std::runtime_error(__FUNCTION__ ": mysql_stmt_bind_param() failed");
+
+	res_key_size=key_len*3;
+	res_key.resize(res_key_size);
+
+	memset(results, 0, sizeof(results));
+
+	p=&results[0];
+	p->buffer_type=MYSQL_TYPE_BLOB;
+	p->buffer=(char *)&res_key.front();
+	p->buffer_length=res_key_size;
+	p->is_null=0;
+	p->length=&res_key_size;
+
+	query_ret = mysql_stmt_bind_result(stmt, results);
+	if(query_ret!=0)
+		throw std::runtime_error(__FUNCTION__ ": mysql_stmt_bind_result() failed");
+}
+
+bool next_query_t::execute(steps_t& res)
+{
+	MYSQL_STMT* stmt=st.get();
+
+	points2bin(res,key_buf);
+
+	int query_ret=mysql_stmt_execute(stmt);
+	if(query_ret!=0)
+		throw std::runtime_error(__FUNCTION__ ": mysql_stmt_execute() failed");
+	
+	query_ret=mysql_stmt_store_result(stmt);
+	if(query_ret!=0)
+		throw std::runtime_error(__FUNCTION__ ": mysql_stmt_store_result() failed");
+
+	statement_result_t hld_result(stmt);
+
+	if(mysql_stmt_num_rows(stmt)==0)
+		return false;
+	
+	query_ret=mysql_stmt_fetch(stmt);
+	if(query_ret!=0)
+		throw std::runtime_error(__FUNCTION__ ": mysql_stmt_fetch() failed");
+
+	bin2points(res_key,res);
 
 	return true;
 }

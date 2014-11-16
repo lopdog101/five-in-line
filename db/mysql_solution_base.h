@@ -83,6 +83,18 @@ namespace Gomoku{ namespace Mysql
 		bool execute(steps_t& res);
 	};
 
+	struct next_query_t : public base_query_t
+	{
+		MYSQL_BIND params[1];
+		MYSQL_BIND results[1];
+
+		data_t res_key;
+		unsigned long res_key_size;
+
+		void init(MYSQL* conn,size_t key_len);
+		bool execute(steps_t& res);
+	};
+
 	class level_t
 	{
 		const size_t key_len;
@@ -91,6 +103,7 @@ namespace Gomoku{ namespace Mysql
 		get_query_t qget;
 		set_query_t qset;
 		first_query_t qfirst;
+		next_query_t qnext;
 
 		level_t(const level_t&);
 		void operator=(const level_t&);
@@ -101,6 +114,7 @@ namespace Gomoku{ namespace Mysql
 		bool get(const steps_t& key,sol_state_t& res){return qget.execute(key,res);}
 		void set(const sol_state_t& res){return qset.execute(res);}
 		bool first(steps_t& res){return qfirst.execute(res);}
+		bool next(steps_t& res){return qnext.execute(res);}
 	};
 
 	typedef boost::shared_ptr<level_t> level_ptr;
