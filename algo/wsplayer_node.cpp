@@ -169,7 +169,7 @@ Result item_t::process_predictable_move(bool need_fill_neitrals,unsigned lookup_
 			return r_win;
 		}
 
-		neitrals.push_back(item_ptr(new item_t(player,d5_pts.front(),other_color(step))) );
+		neitrals.push_back(create_neitral_item(d5_pts.front(),other_color(step)) );
 
 		if(lookup_deep==0)return r_neitral;
 
@@ -595,9 +595,15 @@ void item_t::add_neitrals(const Points& pts)
 	for(;i!=ei;++i,++j)
 	{
 		static_cast<point&>(s)=*i;
-		*j=item_ptr(new item_t(player,s));
+		*j=create_neitral_item(s);
 	}
 }
+
+item_ptr item_t::create_neitral_item(const step_t& s)
+{
+	return item_ptr(new item_t(player,s));
+}
+
 
 void item_t::calculate_deep_wins_fails()
 {
@@ -778,6 +784,14 @@ Result wide_item_t::process_neitrals(bool need_fill_neitrals,unsigned lookup_dee
 	return r_neitral;
 }
 
+item_ptr wide_item_t::create_neitral_item(const step_t& s)
+{
+	unsigned st_idx=player.current_state_index();
+	if(st_idx+1<stored_deep)
+		return item_ptr(new wide_item_t(player,s));
+
+	return item_ptr(new item_t(player,s));
+}
 
 ///////////////////////////////////////////////////////////////
 selected_wins_childs::selected_wins_childs()

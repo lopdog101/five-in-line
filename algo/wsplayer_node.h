@@ -86,6 +86,9 @@ namespace Gomoku { namespace WsPlayer
 		Result process_deep_ant();
 		void calculate_deep_wins_fails();
 		Result solve_ant(const item_t* parent_node=0);
+
+		virtual item_ptr create_neitral_item(const step_t& s);
+		item_ptr create_neitral_item(const Gomoku::point& p,Step s){return create_neitral_item(step_t(s,p.x,p.y));}
 	public:
 		wsplayer_t& player;
 		long long deep_wins_count;
@@ -116,6 +119,8 @@ namespace Gomoku { namespace WsPlayer
 		void process(bool need_fill_neitrals,unsigned lookup_deep);
 		void process_deep_stored();
 		virtual Result process_neitrals(bool need_fill_neitrals,unsigned lookup_deep,unsigned from=0,const item_t* parent_node=0);
+
+		virtual item_ptr create_neitral_item(const step_t& s);
 	public:
 		wide_item_t(wsplayer_t& _player,const step_t& s) : item_t(_player,s){}
 		wide_item_t(wsplayer_t& _player,const Gomoku::point& p,Step s) : item_t(_player,p,s){}

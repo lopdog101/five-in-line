@@ -19,6 +19,110 @@ void print_use()
     Gomoku::print_enviropment_variables_hint();
 }
 
+std::string print_state(const WsPlayer::wide_item_t& r,const steps_t& key,unsigned& cnt)
+{
+	points_t neitrals;
+	items2points(r.get_neitrals(),neitrals);
+
+	npoints_t wins;
+	items2depth_npoints(r.get_wins().get_vals(),wins);
+
+	npoints_t fails;
+	items2depth_npoints(r.get_fails().get_vals(),fails);
+
+	std::string str;
+	data_t bin;
+
+	std::string slevel=boost::lexical_cast<std::string>(cnt);
+	cnt++;
+
+	std::string ret;
+
+	points2bin(key,bin);
+	bin2hex(bin,str);
+	ret+="k"+slevel+"="+str;
+
+	if(!neitrals.empty())
+	{
+		points2bin(neitrals,bin);
+		bin2hex(bin,str);
+		ret+="&n"+slevel+"="+str;
+	}
+
+	if(!wins.empty())
+	{
+		points2bin(wins,bin);
+		bin2hex(bin,str);
+		ret+="&w"+slevel+"="+str;
+	}
+
+	if(!fails.empty())
+	{
+		points2bin(fails,bin);
+		bin2hex(bin,str);
+		ret+="&f"+slevel+"="+str;
+	}
+
+	ObjectProgress::log_generator lg(true);
+
+	lg<<"k="<<print_steps(key);
+	lg<<"n="<<print_points(neitrals);
+	lg<<"w="<<print_points(wins);
+	lg<<"f="<<print_points(fails);
+
+	return ret;
+}
+
+void print_sub_states(const WsPlayer::wide_item_t& r,steps_t& init_state,unsigned& cnt)
+{
+	const Gomoku::WsPlayer::items_t& neitrals=r.get_neitrals();
+
+	init_state.push_back(step_t(next_color(init_state.size()),0,0));
+	
+	for(size_t i=0;i<neitrals.size();i++)
+	{
+		const WsPlayer::wide_item_t* sub=dynamic_cast<const WsPlayer::wide_item_t*>(&*neitrals[i]);
+		if(!sub)
+			continue;
+
+		if(sub->get_neitrals().empty()&&
+			sub->get_wins().empty()&&
+			sub->get_fails().empty())
+			continue;
+
+		static_cast<point&>(init_state.back())=*sub;
+
+		std::string ln=print_state(*sub,init_state,cnt);
+		printf("&%s",ln.c_str());
+	}
+	
+	for(size_t i=0;i<neitrals.size();i++)
+	{
+		const WsPlayer::wide_item_t* sub=dynamic_cast<const WsPlayer::wide_item_t*>(&*neitrals[i]);
+		if(!sub)
+			continue;
+
+		if(sub->get_neitrals().empty()&&
+			sub->get_wins().empty()&&
+			sub->get_fails().empty())
+			continue;
+
+		static_cast<point&>(init_state.back())=*sub;
+		print_sub_states(*sub,init_state,cnt);
+	}
+
+	init_state.pop_back();
+
+}
+
+void print_states(const WsPlayer::wide_item_t& r,steps_t& init_state)
+{
+	unsigned cnt=0;
+	std::string ln=print_state(r,init_state,cnt);
+	printf("%s",ln.c_str());
+	print_sub_states(r,init_state,cnt);
+}
+
 
 int main(int argc,char** argv)
 {
@@ -41,10 +145,8 @@ int main(int argc,char** argv)
 
 	try
 	{
-        data_t bin;
-		hex2bin(argv[1],bin);
 		steps_t init_state;
-		bin2points(bin,init_state);
+		hex_or_str2points(argv[1],init_state);
 
 		if(init_state.empty())
 		{
@@ -77,45 +179,7 @@ int main(int argc,char** argv)
 		pl.solve();
 
 		const WsPlayer::wide_item_t& r=static_cast<const WsPlayer::wide_item_t&>(*pl.root);
-
-		points_t neitrals;
-		items2points(r.get_neitrals(),neitrals);
-
-		npoints_t wins;
-		items2depth_npoints(r.get_wins().get_vals(),wins);
-
-		npoints_t fails;
-		items2depth_npoints(r.get_fails().get_vals(),fails);
-
-		std::string str;
-
-		std::string ret=argv[1];
-
-		points2bin(neitrals,bin);
-		bin2hex(bin,str);
-		ret+=" ";
-		if(str.empty())ret+="empty";
-		else ret+=str;
-
-		points2bin(wins,bin);
-		bin2hex(bin,str);
-		ret+=" ";
-		if(str.empty())ret+="empty";
-		else ret+=str;
-
-		points2bin(fails,bin);
-		bin2hex(bin,str);
-		ret+=" ";
-		if(str.empty())ret+="empty";
-		else ret+=str;
-
-		printf("%s",ret.c_str());
-
-		ObjectProgress::log_generator lg(true);
-
-		lg<<"n="<<print_points(neitrals);
-		lg<<"w="<<print_points(wins);
-		lg<<"f="<<print_points(fails);
+		print_states(r,init_state);
 	}
 	catch(std::exception& e)
 	{

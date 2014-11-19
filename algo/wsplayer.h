@@ -40,6 +40,7 @@ namespace Gomoku { namespace WsPlayer
 		inline const state_t& get_state() const {return *states[current_state];}
 		void increase_state();
 		inline void decrease_state(){--current_state;}
+		unsigned current_state_index() const{return current_state;}
 
         void increase_treat_check_count();
         void increase_treat_check_rebuild_tree_count();
