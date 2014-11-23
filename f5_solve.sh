@@ -9,9 +9,6 @@ if [ "$key" = "" ]; then
 exit 1
 fi
 
-result=`../../solver $key`
-n=`echo $result | awk '{print $2}'`
-w=`echo $result | awk '{print $3}'`
-f=`echo $result | awk '{print $4}'`
-wget -q -O result_file $url'?src_name='$src_name'&cmd=save_job&key='$key'&n='$n'&w='$w'&f='$f
+../../solver $key >solve_content
+wget -q -O result_file --post-file=solve_content $url'?src_name='$src_name'&cmd=save_job&key='$key'&sd='$stored_deep'&ld='$lookup_deep'&ac='$ant_count'&pc='$process_count
 done

@@ -63,12 +63,12 @@ std::string print_state(const WsPlayer::wide_item_t& r,const steps_t& key,unsign
 		ret+="&f"+slevel+"="+str;
 	}
 
-	ObjectProgress::log_generator lg(true);
+	//ObjectProgress::log_generator lg(true);
 
-	lg<<"k="<<print_steps(key);
-	lg<<"n="<<print_points(neitrals);
-	lg<<"w="<<print_points(wins);
-	lg<<"f="<<print_points(fails);
+	//lg<<"k="<<print_steps(key);
+	//lg<<"n="<<print_points(neitrals);
+	//lg<<"w="<<print_points(wins);
+	//lg<<"f="<<print_points(fails);
 
 	return ret;
 }
