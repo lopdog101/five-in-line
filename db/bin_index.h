@@ -8,10 +8,12 @@
 #include <unordered_map>
 #include <boost/weak_ptr.hpp>
 
+#ifdef _WIN32
 namespace std
 {
 	using namespace std::tr1;
 }
+#endif
 
 namespace Gomoku
 {
@@ -285,7 +287,7 @@ public:
 		inline page_ptr get_page(file_offset_t page_offset) const{return const_cast<file_node*>(this)->get_page(page_offset);}
 		void add_page(const page_ptr& p);
 		void remove_from_list(const page_ptr& p);
-		void insert_into_list(const page_ptr& p,page_ptr& right);
+		void insert_into_list(const page_ptr& p,const page_ptr& right);
 
 		page_ptr create_page() const;
 		void align_key(const data_t& key,index_t& res) const;

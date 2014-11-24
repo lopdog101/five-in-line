@@ -1,4 +1,6 @@
-#include <my_global.h>
+#ifdef _WIN32
+#  include <my_global.h>
+#endif
 #include "mysql_solution_base.h"
 
 namespace Gomoku{ namespace Mysql
@@ -77,7 +79,7 @@ void base_t::width_first_search_from_bottom_to_top(sol_state_width_pr& pr)
 				throw e_cancel();
 			
 			if(!l->get(st.key,st))
-				throw std::runtime_error(__FUNCTION__ ": state doesn't exists");
+				throw std::runtime_error(std::string(__FUNCTION__)+ ": state doesn't exists");
 
 			if(pr.on_enter_node(st))
 			{
@@ -100,7 +102,7 @@ void get_query_t::init(MYSQL* conn,size_t key_len)
 {
 	MYSQL_STMT* stmt = mysql_stmt_init(conn);
 	if(stmt == NULL)
-		throw std::runtime_error(__FUNCTION__ ": mysql_stmt_init() failed");
+		throw std::runtime_error(std::string(__FUNCTION__)+ ": mysql_stmt_init() failed");
 
 	st.set(stmt);
 
@@ -109,7 +111,7 @@ void get_query_t::init(MYSQL* conn,size_t key_len)
 
 	int query_ret = mysql_stmt_prepare(stmt, query.c_str(), query.size());
 	if(query_ret!=0)
-		throw std::runtime_error(__FUNCTION__ ": mysql_stmt_prepare() failed");
+		throw std::runtime_error(std::string(__FUNCTION__)+ ": mysql_stmt_prepare() failed");
 
 
 	memset(params, 0, sizeof(params));
@@ -126,7 +128,7 @@ void get_query_t::init(MYSQL* conn,size_t key_len)
 
 	query_ret = mysql_stmt_bind_param(stmt, params);
 	if(query_ret!=0)
-		throw std::runtime_error(__FUNCTION__ ": mysql_stmt_bind_param() failed");
+		throw std::runtime_error(std::string(__FUNCTION__)+ ": mysql_stmt_bind_param() failed");
 
 
 	neitrals_buf.resize(def_buf_size);
@@ -192,7 +194,7 @@ void get_query_t::init(MYSQL* conn,size_t key_len)
 
 	query_ret = mysql_stmt_bind_result(stmt, results);
 	if(query_ret!=0)
-		throw std::runtime_error(__FUNCTION__ ": mysql_stmt_bind_result() failed");
+		throw std::runtime_error(std::string(__FUNCTION__)+ ": mysql_stmt_bind_result() failed");
 }
 
 bool get_query_t::execute(const steps_t& key,sol_state_t& res)
@@ -208,11 +210,11 @@ bool get_query_t::execute(const steps_t& key,sol_state_t& res)
 	points2bin(key,key_buf);
 	int query_ret=mysql_stmt_execute(stmt);
 	if(query_ret!=0)
-		throw std::runtime_error(__FUNCTION__ ": mysql_stmt_execute() failed");
+		throw std::runtime_error(std::string(__FUNCTION__)+ ": mysql_stmt_execute() failed");
 	
 	query_ret=mysql_stmt_store_result(stmt);
 	if(query_ret!=0)
-		throw std::runtime_error(__FUNCTION__ ": mysql_stmt_store_result() failed");
+		throw std::runtime_error(std::string(__FUNCTION__)+ ": mysql_stmt_store_result() failed");
 
 	statement_result_t hld_result(stmt);
 
@@ -221,7 +223,7 @@ bool get_query_t::execute(const steps_t& key,sol_state_t& res)
 	
 	query_ret=mysql_stmt_fetch(stmt);
 	if(query_ret!=0)
-		throw std::runtime_error(__FUNCTION__ ": mysql_stmt_fetch() failed");
+		throw std::runtime_error(std::string(__FUNCTION__)+ ": mysql_stmt_fetch() failed");
 
 	res.state=static_cast<SolState>(st_state);
 	res.wins_count=st_wins_count;
@@ -246,7 +248,7 @@ void set_query_t::init(MYSQL* conn,size_t key_len)
 {
 	MYSQL_STMT* stmt = mysql_stmt_init(conn);
 	if(stmt == NULL)
-		throw std::runtime_error(__FUNCTION__ ": mysql_stmt_init() failed");
+		throw std::runtime_error(std::string(__FUNCTION__)+ ": mysql_stmt_init() failed");
 
 	st.set(stmt);
 
@@ -256,7 +258,7 @@ void set_query_t::init(MYSQL* conn,size_t key_len)
 
 	int query_ret = mysql_stmt_prepare(stmt, query.c_str(), query.size());
 	if(query_ret!=0)
-		throw std::runtime_error(__FUNCTION__ ": mysql_stmt_prepare() failed");
+		throw std::runtime_error(std::string(__FUNCTION__)+ ": mysql_stmt_prepare() failed");
 
 	neitrals_buf.resize(def_buf_size);
 	solved_wins_buf.resize(def_buf_size);
@@ -378,7 +380,7 @@ void set_query_t::init(MYSQL* conn,size_t key_len)
 
 	query_ret = mysql_stmt_bind_param(stmt, params);
 	if(query_ret!=0)
-		throw std::runtime_error(__FUNCTION__ ": mysql_stmt_bind_param() failed");
+		throw std::runtime_error(std::string(__FUNCTION__)+ ": mysql_stmt_bind_param() failed");
 }
 
 void set_query_t::execute(const sol_state_t& res)
@@ -404,14 +406,14 @@ void set_query_t::execute(const sol_state_t& res)
 
 	int query_ret=mysql_stmt_execute(stmt);
 	if(query_ret!=0)
-		throw std::runtime_error(std::string(__FUNCTION__ ": mysql_stmt_execute() failed: ")+mysql_stmt_error(stmt));
+		throw std::runtime_error(std::string(std::string(__FUNCTION__)+ ": mysql_stmt_execute() failed: ")+mysql_stmt_error(stmt));
 }
 
 void first_query_t::init(MYSQL* conn,size_t key_len)
 {
 	MYSQL_STMT* stmt = mysql_stmt_init(conn);
 	if(stmt == NULL)
-		throw std::runtime_error(__FUNCTION__ ": mysql_stmt_init() failed");
+		throw std::runtime_error(std::string(__FUNCTION__)+ ": mysql_stmt_init() failed");
 
 	st.set(stmt);
 
@@ -420,7 +422,7 @@ void first_query_t::init(MYSQL* conn,size_t key_len)
 
 	int query_ret = mysql_stmt_prepare(stmt, query.c_str(), query.size());
 	if(query_ret!=0)
-		throw std::runtime_error(__FUNCTION__ ": mysql_stmt_prepare() failed");
+		throw std::runtime_error(std::string(__FUNCTION__)+ ": mysql_stmt_prepare() failed");
 
 
 	key_buf_size=key_len*3;
@@ -437,7 +439,7 @@ void first_query_t::init(MYSQL* conn,size_t key_len)
 
 	query_ret = mysql_stmt_bind_result(stmt, results);
 	if(query_ret!=0)
-		throw std::runtime_error(__FUNCTION__ ": mysql_stmt_bind_result() failed");
+		throw std::runtime_error(std::string(__FUNCTION__)+ ": mysql_stmt_bind_result() failed");
 }
 
 bool first_query_t::execute(steps_t& res)
@@ -446,11 +448,11 @@ bool first_query_t::execute(steps_t& res)
 
 	int query_ret=mysql_stmt_execute(stmt);
 	if(query_ret!=0)
-		throw std::runtime_error(__FUNCTION__ ": mysql_stmt_execute() failed");
+		throw std::runtime_error(std::string(__FUNCTION__)+ ": mysql_stmt_execute() failed");
 	
 	query_ret=mysql_stmt_store_result(stmt);
 	if(query_ret!=0)
-		throw std::runtime_error(__FUNCTION__ ": mysql_stmt_store_result() failed");
+		throw std::runtime_error(std::string(__FUNCTION__)+ ": mysql_stmt_store_result() failed");
 
 	statement_result_t hld_result(stmt);
 
@@ -459,7 +461,7 @@ bool first_query_t::execute(steps_t& res)
 	
 	query_ret=mysql_stmt_fetch(stmt);
 	if(query_ret!=0)
-		throw std::runtime_error(__FUNCTION__ ": mysql_stmt_fetch() failed");
+		throw std::runtime_error(std::string(__FUNCTION__)+ ": mysql_stmt_fetch() failed");
 
 	bin2points(key_buf,res);
 
@@ -470,7 +472,7 @@ void next_query_t::init(MYSQL* conn,size_t key_len)
 {
 	MYSQL_STMT* stmt = mysql_stmt_init(conn);
 	if(stmt == NULL)
-		throw std::runtime_error(__FUNCTION__ ": mysql_stmt_init() failed");
+		throw std::runtime_error(std::string(__FUNCTION__)+ ": mysql_stmt_init() failed");
 
 	st.set(stmt);
 
@@ -479,7 +481,7 @@ void next_query_t::init(MYSQL* conn,size_t key_len)
 
 	int query_ret = mysql_stmt_prepare(stmt, query.c_str(), query.size());
 	if(query_ret!=0)
-		throw std::runtime_error(__FUNCTION__ ": mysql_stmt_prepare() failed");
+		throw std::runtime_error(std::string(__FUNCTION__)+ ": mysql_stmt_prepare() failed");
 
 
 	key_buf_size=key_len*3;
@@ -494,7 +496,7 @@ void next_query_t::init(MYSQL* conn,size_t key_len)
 
 	query_ret = mysql_stmt_bind_param(stmt, params);
 	if(query_ret!=0)
-		throw std::runtime_error(__FUNCTION__ ": mysql_stmt_bind_param() failed");
+		throw std::runtime_error(std::string(__FUNCTION__)+ ": mysql_stmt_bind_param() failed");
 
 	res_key_size=key_len*3;
 	res_key.resize(res_key_size);
@@ -510,7 +512,7 @@ void next_query_t::init(MYSQL* conn,size_t key_len)
 
 	query_ret = mysql_stmt_bind_result(stmt, results);
 	if(query_ret!=0)
-		throw std::runtime_error(__FUNCTION__ ": mysql_stmt_bind_result() failed");
+		throw std::runtime_error(std::string(__FUNCTION__)+ ": mysql_stmt_bind_result() failed");
 }
 
 bool next_query_t::execute(steps_t& res)
@@ -521,11 +523,11 @@ bool next_query_t::execute(steps_t& res)
 
 	int query_ret=mysql_stmt_execute(stmt);
 	if(query_ret!=0)
-		throw std::runtime_error(__FUNCTION__ ": mysql_stmt_execute() failed");
+		throw std::runtime_error(std::string(__FUNCTION__)+ ": mysql_stmt_execute() failed");
 	
 	query_ret=mysql_stmt_store_result(stmt);
 	if(query_ret!=0)
-		throw std::runtime_error(__FUNCTION__ ": mysql_stmt_store_result() failed");
+		throw std::runtime_error(std::string(__FUNCTION__)+ ": mysql_stmt_store_result() failed");
 
 	statement_result_t hld_result(stmt);
 
@@ -534,7 +536,7 @@ bool next_query_t::execute(steps_t& res)
 	
 	query_ret=mysql_stmt_fetch(stmt);
 	if(query_ret!=0)
-		throw std::runtime_error(__FUNCTION__ ": mysql_stmt_fetch() failed");
+		throw std::runtime_error(std::string(__FUNCTION__)+ ": mysql_stmt_fetch() failed");
 
 	bin2points(res_key,res);
 

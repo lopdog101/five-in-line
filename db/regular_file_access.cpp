@@ -29,6 +29,7 @@ file_offset_t regular_file_t::get_size()
 {
 	open();
 
+#ifdef _WIN32
 	if(_fseeki64(fd,0,SEEK_END)!=0)
 		throw std::runtime_error("get_size(): seek error at end: "+file_name);
 
@@ -37,6 +38,16 @@ file_offset_t regular_file_t::get_size()
 		throw std::runtime_error("get_size(): fgetpos() failed: "+file_name);
 
 	return ret;
+#else
+	if(fseeko(fd,0,SEEK_END)!=0)
+		throw std::runtime_error("get_size(): seek error at end: "+file_name);
+
+	file_offset_t ret=ftello(fd);
+	if(ret!=(off_t)-1)
+		throw std::runtime_error("get_size(): ftello() failed: "+file_name);
+
+	return ret;
+#endif
 }
 
 void regular_file_t::load(file_offset_t offset,data_t& res)
@@ -45,7 +56,11 @@ void regular_file_t::load(file_offset_t offset,data_t& res)
 
 	open();
 
+#ifdef _WIN32
 	if(fsetpos(fd,&offset)!=0)
+#else
+	if(fseeko(fd,offset,SEEK_SET)!=0)
+#endif
 		throw std::runtime_error("load(): seek error at "+boost::lexical_cast<std::string>(offset)+
 			": "+file_name);
 
@@ -62,7 +77,11 @@ void regular_file_t::save(file_offset_t offset,const data_t& res)
 
 	open();
 
+#ifdef _WIN32
 	if(fsetpos(fd,&offset)!=0)
+#else
+	if(fseeko(fd,offset,SEEK_SET)!=0)
+#endif
 		throw std::runtime_error("save(): seek error at "+boost::lexical_cast<std::string>(offset)+
 			": "+file_name);
 
@@ -79,12 +98,22 @@ file_offset_t regular_file_t::append(const data_t& res)
 
 	open();
 
+	file_offset_t ret=0;
+
+#ifdef _WIN32
 	if(_fseeki64(fd,0,SEEK_END)!=0)
 		throw std::runtime_error("append(): seek error at end: "+file_name);
 
-	file_offset_t ret=0;
 	if(fgetpos(fd,&ret)!=0)
-		throw std::runtime_error("get_size(): fgetpos() failed: "+file_name);
+		throw std::runtime_error("append(): fgetpos() failed: "+file_name);
+#else
+	if(fseeko(fd,0,SEEK_END)!=0)
+		throw std::runtime_error("append(): seek error at end: "+file_name);
+
+	ret=ftello(fd);
+	if(ret!=(off_t)-1)
+		throw std::runtime_error("append(): ftello() failed: "+file_name);
+#endif
 
 	if(fwrite(&res.front(),1,res.size(),fd)!=res.size())
 		throw std::runtime_error(

@@ -6,10 +6,12 @@
 #include <unordered_map>
 #include <boost/weak_ptr.hpp>
 
+#ifdef _WIN32
 namespace std
 {
 	using namespace std::tr1;
 }
+#endif
 
 namespace Gomoku
 {

@@ -180,7 +180,11 @@ void self_solve(solution_tree_t& tr,size_t iteration_count,const steps_t& root_k
 		    if(key_len==0)key_len=key.size();
 		    else if(key.size()!=key_len)
 		    {
-			    printf("level %d succesefully solved\n",key_len);
+#ifdef _WIN32
+			    printf("level %u succesefully solved\n",key_len);
+#else
+			    printf("level %lu succesefully solved\n",key_len);
+#endif
 			    return;
 		    }
         }

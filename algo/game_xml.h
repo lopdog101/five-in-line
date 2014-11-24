@@ -14,8 +14,10 @@ template<class Archive>
 void save(Archive & ar,const  Gomoku::game_t& v, const unsigned int version)
 {
     ar & make_nvp(BOOST_PP_STRINGIZE(field),v.field());
-    ar & make_nvp(BOOST_PP_STRINGIZE(krestik),v.get_krestik());
-    ar & make_nvp(BOOST_PP_STRINGIZE(nolik),v.get_nolik());
+	::Gomoku::player_ptr krestik;
+    ar & make_nvp(BOOST_PP_STRINGIZE(krestik),krestik);
+	::Gomoku::player_ptr nolik;
+    ar & make_nvp(BOOST_PP_STRINGIZE(nolik),nolik);
 }
 
 template<class Archive>

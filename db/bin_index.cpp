@@ -41,7 +41,11 @@ namespace Gomoku
 		if(!f)throw std::runtime_error("could not open items count file for read: "+file_name.string());
 		file_hldr hld(f);
 
+#ifdef _WIN32
 		if(fscanf(f,"%u",&items_count)!=1)
+#else
+		if(fscanf(f,"%lluu",&items_count)!=1)
+#endif
 			throw std::runtime_error("could not read items count: "+file_name.string());
 	}
 
@@ -52,7 +56,11 @@ namespace Gomoku
 		if(!f)throw std::runtime_error("could not open items count file for write: "+file_name.string());
 		file_hldr hld(f);
 
+#ifdef _WIN32
 		if(fprintf(f,"%u",items_count)<0)
+#else
+		if(fprintf(f,"%llu",items_count)<0)
+#endif
 			throw std::runtime_error("could not write items count: "+file_name.string());
 	}
 
@@ -538,7 +546,7 @@ namespace Gomoku
 		p->right.reset();
 	}
 
-	void bin_index_t::file_node::insert_into_list(const page_ptr& p,page_ptr& right)
+	void bin_index_t::file_node::insert_into_list(const page_ptr& p,const page_ptr& right)
 	{
 		if(!right)
 		{
