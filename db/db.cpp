@@ -9,6 +9,7 @@
 #endif
 
 #include <boost/filesystem/operations.hpp>
+#include <boost/algorithm/string.hpp>
 namespace fs=boost::filesystem;
 #include "solution_tree.h"
 #include "solution_tree_fixes.h"
@@ -31,7 +32,7 @@ void print_use()
 	printf("USE: \n");
 	printf("db <root_dir> get_job\n");
 	printf("db <root_dir> get_ant_job [root_key]\n");
-	printf("db <root_dir> save_job <key> <neitrals|empty> <win|empty> <fail|empty>\n");
+	printf("db <root_dir> save_job <file_name>\n");
 	printf("db <root_dir> get <key>\n");
 	printf("db <root_dir> view <printable_steps>\n");
 	printf("db <root_dir> view_hex <printable_steps>\n");
@@ -239,6 +240,57 @@ bool show_state(solution_tree_t& tr,steps_t req)
 	return true;
 }
 
+void save_job(solution_tree_t& tr,const std::string& file_name)
+{
+	data_t file_content;
+	Gomoku::load_file(file_name,file_content);
+
+	std::string content(file_content.begin(),file_content.end());
+
+    std::vector< std::string > lines;
+	boost::split( lines, content, boost::is_any_of("\n"));
+
+	for(size_t i=0;i<lines.size();i++)
+	{
+		std::string& s=lines[i];
+		boost::trim(s);
+		
+		if(s.empty())
+			continue;
+		
+		std::vector< std::string > parts;
+		boost::split( parts, s, boost::is_any_of(";"));
+
+		if(parts.size()!=4)
+			throw std::runtime_error("Couldn't parse line: '"+s+"'");
+
+		for(size_t i=0;i<parts.size();i++)
+			boost::trim(parts[i]);
+
+		data_t bin;
+
+		steps_t key;
+		points_t neitrals;
+		npoints_t win;
+		npoints_t fails;
+		
+		hex2bin(parts[0],bin);
+		bin2points(bin,key);
+		
+		hex2bin(parts[1],bin);
+		bin2points(bin,neitrals);
+		
+		hex2bin(parts[2],bin);
+		bin2points(bin,win);
+		
+		hex2bin(parts[3],bin);
+		bin2points(bin,fails);
+		
+		tr.trunc_neitrals(key,neitrals,win,fails);
+		tr.save_job(key,neitrals,win,fails);
+	}
+}
+
 int main(int argc,char** argv)
 {
 	if(argc<3)
@@ -316,46 +368,13 @@ int main(int argc,char** argv)
 		}
 		else if(cmd=="save_job")
 		{
-			if(argc!=7)
+			if(argc!=2)
 			{
 				print_use();
 				return 1;
 			}
 
-			steps_t key;
-			points_t neitrals;
-			npoints_t win;
-			npoints_t fails;
-
-			data_t bin;
-			std::string str;
-
-			str=argv[3];
-			if(str=="empty")bin.clear();
-			else hex2bin(str,bin);
-			bin2points(bin,key);
-
-			str=argv[4];
-			if(str=="empty")bin.clear();
-			else hex2bin(str,bin);
-			bin2points(bin,neitrals);
-
-			str=argv[5];
-			if(str=="empty")bin.clear();
-			else hex2bin(str,bin);
-			bin2points(bin,win);
-
-			str=argv[6];
-			if(str=="empty")bin.clear();
-			else hex2bin(str,bin);
-			bin2points(bin,fails);
-
-//			if(!win.empty())throw std::runtime_error("check point: wins not empty");
-//			if(neitrals.empty()&&!fails.empty())throw std::runtime_error("check point: fails not empty");
-
-			tr.trunc_neitrals(key,neitrals,win,fails);
-
-			tr.save_job(key,neitrals,win,fails);
+			save_job(tr,argv[1]);
 		}
 		else if(cmd=="get")
 		{
