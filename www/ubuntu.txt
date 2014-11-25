@@ -24,13 +24,14 @@ root:x:... -> root:*:...
 2. Build application
 apt-get install mc
 apt-get install build-essential cmake
-apt-get install libboost1.49-all-dev
+apt-get install libboost1.55
+apt-get install git
 
 3. Nginx + php fastcgi
 http://help.ubuntu.ru/wiki/nginx-phpfpm
 
 apt-get install nginx
-apt-get install php5-cli php5-common php5-fpm php5-cgi
+apt-get install php5-cli php5-common php5-fpm php5-cgi php5-mysql
 
 sudo service nginx stop
 sudo service php5-fpm stop
@@ -58,4 +59,8 @@ sudo -u postgres -s
 createdb f5
 createuser www-data
 
+
+8. mysql
+apt-get install mysql-server
+apt-get install libmysqlclient-dev
 
