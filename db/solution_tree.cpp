@@ -387,6 +387,9 @@ namespace Gomoku
 
 	void solution_tree_t::update_base_wins_and_fails(const sol_state_t& child_st,unsigned long long delta_wins,unsigned long long delta_fails)
 	{
+		if(child_st.key.size()<=1)
+			return;
+
 		Step cur_step=last_color(child_st.key.size());
 		
 		sol_state_t prev_st;

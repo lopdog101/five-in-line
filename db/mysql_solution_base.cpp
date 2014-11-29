@@ -111,7 +111,7 @@ void get_query_t::init(MYSQL* conn,size_t key_len)
 
 	int query_ret = mysql_stmt_prepare(stmt, query.c_str(), query.size());
 	if(query_ret!=0)
-		throw std::runtime_error(std::string(__FUNCTION__)+ ": mysql_stmt_prepare() failed");
+		throw std::runtime_error("mysql_stmt_prepare() failed: "+query);
 
 
 	memset(params, 0, sizeof(params));
@@ -258,7 +258,7 @@ void set_query_t::init(MYSQL* conn,size_t key_len)
 
 	int query_ret = mysql_stmt_prepare(stmt, query.c_str(), query.size());
 	if(query_ret!=0)
-		throw std::runtime_error(std::string(__FUNCTION__)+ ": mysql_stmt_prepare() failed");
+		throw std::runtime_error("mysql_stmt_prepare() failed: "+query);
 
 	neitrals_buf.resize(def_buf_size);
 	solved_wins_buf.resize(def_buf_size);
@@ -422,7 +422,7 @@ void first_query_t::init(MYSQL* conn,size_t key_len)
 
 	int query_ret = mysql_stmt_prepare(stmt, query.c_str(), query.size());
 	if(query_ret!=0)
-		throw std::runtime_error(std::string(__FUNCTION__)+ ": mysql_stmt_prepare() failed");
+		throw std::runtime_error("mysql_stmt_prepare() failed: "+query);
 
 
 	key_buf_size=key_len*3;
@@ -481,7 +481,7 @@ void next_query_t::init(MYSQL* conn,size_t key_len)
 
 	int query_ret = mysql_stmt_prepare(stmt, query.c_str(), query.size());
 	if(query_ret!=0)
-		throw std::runtime_error(std::string(__FUNCTION__)+ ": mysql_stmt_prepare() failed");
+		throw std::runtime_error("mysql_stmt_prepare() failed: "+query);
 
 
 	key_buf_size=key_len*3;
