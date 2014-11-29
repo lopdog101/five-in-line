@@ -6,7 +6,7 @@
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 </head>
 <body>
-<?
+<?php
 $conn=pg_connect("dbname=f5");
 if($conn === FALSE)
 {
@@ -16,7 +16,7 @@ if($conn === FALSE)
 ?>
 <h3>All</h3>
 <table border="1px" cellPadding="4px" cellSpacing="0px">
-<?
+<?php
   $sql="select src_name, sum(solve_count) as sum_cnt from solve_stat where root_name='".$ROOT_NAME."' group by src_name order by sum_cnt desc";
   
   $res = pg_query($conn,$sql);
@@ -35,7 +35,7 @@ if($conn === FALSE)
 </table>
 <h3>Yesterday</h3>
 <table border="1px" cellPadding="4px" cellSpacing="0px">
-<?
+<?php
   $sql="select src_name, sum(solve_count) as sum_cnt from solve_stat where root_name='".$ROOT_NAME."' AND log_date>=now()::date-'1 day'::interval AND log_date<now()::date group by src_name order by sum_cnt desc";
 
   $res = pg_query($conn,$sql);
@@ -52,7 +52,7 @@ if($conn === FALSE)
   pg_free_result($res);
 ?>
 </table>
-<?
+<?php
 pg_close($conn);
 ?>
 </body>

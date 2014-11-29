@@ -7,8 +7,9 @@
 </head>
 <body>
 <h3><a href="stat.php">Statistic</a>&nbsp;&nbsp;&nbsp;&nbsp;Participate in solving <a href="solver.zip">Windows</a> <a href="solver.tar.gz">Ubuntu</a></h3>
-<?
+<?php
 $EXEC_PATH='/home/shebeko/bin/db';
+putenv("mysql_db=f5");
 $x1=-7;
 $y1=-7;
 $x2=7;
@@ -271,7 +272,7 @@ $tree_fails=make_point_key_array($tree_fails);
 
 ?>
 <table border="1" cellpadding="0" cellspacing="0">
-<?
+<?php
 for($y=$y1;$y<=$y2;$y++)
 {
 	echo '<tr height="32">';
@@ -371,7 +372,7 @@ for($y=$y1;$y<=$y2;$y++)
 </table>
 
 <pre>
-<?
+<?php
 passthru($cmd,$r);
 ?>
 </pre>

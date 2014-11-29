@@ -27,5 +27,5 @@ $$ LANGUAGE plpgsql;
 
 
 GRANT ALL ON solve_stat to "www-data";
-GRANT EXECUTE ON FUNCTION insert_solve_stat(asrc_name text,aip text,aroot_name text,alog_date text,asolve_count integer) to "www-data";
+GRANT EXECUTE ON FUNCTION insert_solve_stat(asrc_name text,aip text,aroot_name text,alog_date date,asolve_count integer) to "www-data";
 GRANT ALL ON SEQUENCE solve_stat_id_seq to "www-data";
