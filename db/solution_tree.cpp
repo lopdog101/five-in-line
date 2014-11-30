@@ -244,7 +244,7 @@ namespace Gomoku
 		st.key=key;
 		if(!get(st))return;
 
-		if(st.state!=ss_solving)
+		if(st.state==ss_solved)
 			return;
 
 		st.neitrals=neitrals;

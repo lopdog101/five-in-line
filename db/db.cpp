@@ -254,7 +254,7 @@ void save_job(solution_tree_t& tr,const std::string& file_name)
 	{
 		std::string& s=lines[i];
 		boost::trim(s);
-		
+
 		if(s.empty())
 			continue;
 		
@@ -368,13 +368,13 @@ int main(int argc,char** argv)
 		}
 		else if(cmd=="save_job")
 		{
-			if(argc!=2)
+			if(argc!=4)
 			{
 				print_use();
 				return 1;
 			}
 
-			save_job(tr,argv[1]);
+			save_job(tr,argv[3]);
 		}
 		else if(cmd=="get")
 		{
