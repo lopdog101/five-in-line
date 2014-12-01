@@ -213,6 +213,72 @@ function make_point_key_array($arr)
 	return $ret;
 }
 
+function step2str($step,$small)
+{
+	if($step==st_krestik)
+	{
+		if($small)return "x";
+		else return "X";
+	}
+	else
+	{
+		if($small)return "o";
+		else return "O";
+	}
+}
+
+function estimate_neitrals()
+{
+	global $nestimate,$neitrals,$next_step,$hex_state,$EXEC_PATH,$DB_PATH,$min_rate,$max_rate;
+	$nestimate=array();
+	
+	foreach($neitrals as $key => $p)
+	{
+		$e=new point;
+		$e->x=0;
+		$e->y=0;
+		
+		$o=new step_t;
+		$o->x=$p->x;
+		$o->y=$p->y;
+		$o->step=$next_step;
+
+		$h=$hex_state.step2hex($o);
+		$cmd=$EXEC_PATH." ".$DB_PATH." "."view_hex ".escapeshellarg($h);
+		
+		$output=array();
+		exec($cmd,$output);
+		foreach($output as $s)
+		{
+			$ps=strpos($s,"wins_count=");
+			if($ps===false)
+				continue;
+
+			$ps1=strpos($s," fails_count=");
+			if($ps1===false)
+				continue;
+				
+			$e->x=intval(substr($s,$ps+11,$ps1-$ps-11));
+			$e->y=intval(substr($s,$ps1+13));
+		}
+		
+		$nestimate[$key]=$e;
+	}
+	
+	$min_rate=1.0;
+	$max_rate=1.0;
+
+	foreach($nestimate as $key => $e)
+	{
+		$rate=($e->y+1)/($e->x+1);
+		
+		if($rate<$min_rate)
+			$min_rate=$rate;
+
+		if($rate>$max_rate)
+			$max_rate=$rate;
+	}
+}
 
 if (count($_GET)>0) $HTTP_VARS=$_GET;
 else $HTTP_VARS=$_POST;
@@ -270,6 +336,11 @@ $solved_fails=make_point_key_array($solved_fails);
 $tree_wins=make_point_key_array($tree_wins);
 $tree_fails=make_point_key_array($tree_fails);
 
+if((count($steps)%2)==0)$next_step=st_krestik;
+else $next_step=st_nolik;
+
+estimate_neitrals();
+
 ?>
 <table border="1" cellpadding="0" cellspacing="0">
 <?php
@@ -280,6 +351,7 @@ for($y=$y1;$y<=$y2;$y++)
 	{
 		$skey=$x."_".$y;
 		$cnt="";
+		$style="";
 		
 		if(array_key_exists($skey,$key_steps))
 		{
@@ -298,40 +370,47 @@ for($y=$y1;$y<=$y2;$y++)
 				}
 			}
 			
-			if($p->step==st_krestik)
-			{
-				if($special)$cnt="x";
-				else $cnt="X";
-			}
-			else
-			{
-				if($special)$cnt="o";
-				else $cnt="O";
-			}
+			$style="background-color:rgb(220,220,220);";
+			$cnt=step2str($p->step,$special);
 		}
 		else if(array_key_exists($skey,$neitrals))
 		{
 			$p=$neitrals[$skey];
+			
+			$e=$nestimate[$skey];
+			$rate=($e->y+1)/($e->x+1);
 
 			$o=new step_t;
 			$o->x=$p->x;
 			$o->y=$p->y;
-			
-			if((count($steps)%2)==0)$o->step=st_krestik;
-			else $o->step=st_nolik;
+			$o->step=$next_step;
 		
 			$h=$hex_state.step2hex($o);
-			$cnt='<a href="'.$OWN_PATH.'?st='.$h.'">n</a>';
+			$title=sprintf("%.3lf=%d/%d",$rate,$e->y,$e->x);
+			$cnt='<a href="'.$OWN_PATH.'?st='.$h.'" title="'.$title.'">'.step2str($next_step,true).'</a>';
+			
+			if($rate<1.0)
+			{
+				$c=intval((1.0-$rate)/(1.0-$min_rate)*155)+100;
+				$style="background-color:rgb($c,0,0);";
+			}
+			else if($rate>1.0)
+			{
+				$c=intval(($rate-1.0)/($max_rate-1.0)*155)+100;
+				$style="background-color:rgb(0,$c,0);";
+			}
 		}
 		else if(array_key_exists($skey,$solved_wins))
 		{
 			$p=$solved_wins[$skey];
-			$cnt="w".$p->n;
+			$cnt=step2str($next_step,true).$p->n;
+			$style="background-color:rgb(220,220,220);color:green";
 		}
 		else if(array_key_exists($skey,$solved_fails))
 		{
 			$p=$solved_fails[$skey];
-			$cnt="f".$p->n;
+			$cnt=step2str($next_step,true).$p->n;
+			$style="background-color:rgb(220,220,220);color:red";
 		}
 		else if(array_key_exists($skey,$tree_wins))
 		{
@@ -340,12 +419,11 @@ for($y=$y1;$y<=$y2;$y++)
 			$o=new step_t;
 			$o->x=$p->x;
 			$o->y=$p->y;
+			$o->step=$next_step;
 			
-			if((count($steps)%2)==0)$o->step=st_krestik;
-			else $o->step=st_nolik;
-		
 			$h=$hex_state.step2hex($o);
-			$cnt='<a href="'.$OWN_PATH.'?st='.$h.'">'."W".$p->n.'</a>';
+			$cnt='<a href="'.$OWN_PATH.'?st='.$h.'" style="color:green;">'.step2str($next_step,false).$p->n.'</a>';
+			$style="background-color:rgb(220,220,220);";
 		}
 		else if(array_key_exists($skey,$tree_fails))
 		{
@@ -354,15 +432,14 @@ for($y=$y1;$y<=$y2;$y++)
 			$o=new step_t;
 			$o->x=$p->x;
 			$o->y=$p->y;
-			
-			if((count($steps)%2)==0)$o->step=st_krestik;
-			else $o->step=st_nolik;
+			$o->step=$next_step;
 		
 			$h=$hex_state.step2hex($o);
-			$cnt='<a href="'.$OWN_PATH.'?st='.$h.'">'."F".$p->n.'</a>';
+			$cnt='<a href="'.$OWN_PATH.'?st='.$h.'" style="color:red;">'.step2str($next_step,false).$p->n.'</a>';
+			$style="background-color:rgb(220,220,220);";
 		}
 
-		echo '<td width="32" align="center" valign="middle">';
+		echo '<td width="32" align="center" valign="middle" style="'.$style.'">';
 		echo $cnt;
 		echo "</td>";
 	}
