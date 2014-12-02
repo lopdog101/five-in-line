@@ -29,6 +29,47 @@ function write_result_file($file_name)
 	fclose($handle);
 }
 
+function get_job_from_list()
+{
+	global $EXEC_PATH,$DB_PATH,$USE_ANT;
+	
+	if($USE_ANT)
+		$cmd='get_ant_job';
+	else 
+		$cmd='get_job';
+
+	$cmd=$EXEC_PATH." ".$DB_PATH." ".escapeshellarg($cmd);
+	$file_name=$DB_PATH."/marked.txt";
+	$lst=file_get_contents($file_name);
+
+	if($lst === false)
+	  return false;
+  
+	$lst=explode("\n",$lst);
+	
+	foreach ($lst as $k => $v) 
+	{
+		$cc=$cmd." ".escapeshellarg($v);
+		
+		$output=array();
+		exec($cc,$output);
+		
+		$output=implode("\n",$output);
+		
+		if(strpos($output,"no job anymore") === false)
+		{
+			echo $output;
+			return true;
+		}
+		
+		unset($lst[$k]);
+		file_put_contents($file_name,implode("\n",$lst));
+	}
+	
+	return false;
+}
+
+
 if($cmd=='get_job')
 {
 	if($USE_ANT)
@@ -37,10 +78,19 @@ if($cmd=='get_job')
 	$cmd=$EXEC_PATH." ".$DB_PATH." ".escapeshellarg($cmd);
 	
 	if(array_key_exists("root",$HTTP_VARS))
-	  $cmd=$cmd." ".escapeshellarg($HTTP_VARS["root"]);
+	  $root=$HTTP_VARS["root"];
 	else if(isset($OWN_ROOT))
-	  $cmd=$cmd." ".escapeshellarg($OWN_ROOT);
-
+	  $root=$OWN_ROOT;
+	  
+    if(!$root)
+	{
+	  if(get_job_from_list())
+	    exit(0);
+	}
+	
+    if($root)
+	  $cmd=$cmd." ".escapeshellarg($root);
+	  
 	passthru($cmd,$r);
 }
 else if($cmd=='save_job')

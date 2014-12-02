@@ -341,6 +341,13 @@ else $next_step=st_nolik;
 
 estimate_neitrals();
 
+if(array_key_exists("godmode",$HTTP_VARS))
+{
+	$godmode_val=file_get_contents($DB_PATH."/godmode");
+	if(!($godmode_val === false) && $HTTP_VARS["godmode"]!=$godmode_val)
+	  $godmode_val=null;
+}
+
 ?>
 <table border="1" cellpadding="0" cellspacing="0">
 <?php
@@ -387,17 +394,23 @@ for($y=$y1;$y<=$y2;$y++)
 		
 			$h=$hex_state.step2hex($o);
 			$title=sprintf("%.3lf=%d/%d",$rate,$e->y,$e->x);
-			$cnt='<a href="'.$OWN_PATH.'?st='.$h.'" title="'.$title.'">'.step2str($next_step,true).'</a>';
+			
+			$cnt='<a href="'.$OWN_PATH.'?st='.$h;
+			
+			if($godmode_val)
+			  $cnt=$cnt.'&godmode='.$godmode_val;
+			
+			$cnt=$cnt.'" title="'.$title.'">'.step2str($next_step,true).'</a>';
 			
 			if($rate<1.0)
 			{
-				$c=intval((1.0-$rate)/(1.0-$min_rate)*155)+100;
-				$style="background-color:rgb($c,0,0);";
+				$c=255-intval((1.0-$rate)/(1.0-$min_rate)*255);
+				$style="background-color:rgb(255,$c,$c);";
 			}
 			else if($rate>1.0)
 			{
-				$c=intval(($rate-1.0)/($max_rate-1.0)*155)+100;
-				$style="background-color:rgb(0,$c,0);";
+				$c=255-intval(($rate-1.0)/($max_rate-1.0)*255);
+				$style="background-color:rgb($c,255,$c);";
 			}
 		}
 		else if(array_key_exists($skey,$solved_wins))
@@ -447,6 +460,13 @@ for($y=$y1;$y<=$y2;$y++)
 }
 ?>
 </table>
+
+<?php
+if($godmode_val)
+{
+	echo '<a href="'.$OWN_PATH.'mark_state.php?st='.$hex_state.'&godmode='.$godmode_val.'">Mark state</a>';
+}
+?>
 
 <pre>
 <?php
