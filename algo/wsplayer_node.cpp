@@ -773,7 +773,7 @@ Result wide_item_t::process_neitrals(bool need_fill_neitrals,unsigned lookup_dee
 item_ptr wide_item_t::create_neitral_item(const step_t& s)
 {
 	unsigned st_idx=player.current_state_index();
-	if(st_idx+1<stored_deep)
+	if(st_idx+1<wide_item_deep)
 		return item_ptr(new wide_item_t(player,s));
 
 	return item_ptr(new item_t(player,s));

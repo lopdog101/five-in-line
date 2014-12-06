@@ -13,6 +13,7 @@ namespace Gomoku { namespace WsPlayer
 
 unsigned nodes_count=0;
 unsigned stored_deep=2;
+unsigned wide_item_deep=1;
 unsigned def_lookup_deep=0;
 unsigned treat_deep=16;
 unsigned max_treat_check = 1000;
