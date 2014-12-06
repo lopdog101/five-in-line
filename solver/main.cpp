@@ -76,6 +76,10 @@ std::string print_state(const WsPlayer::wide_item_t& r,const steps_t& key,unsign
 void print_sub_states(const WsPlayer::wide_item_t& r,steps_t& init_state,unsigned& cnt)
 {
 	const Gomoku::WsPlayer::items_t& neitrals=r.get_neitrals();
+	
+	//base state already completed
+	if(neitrals.empty() || !r.get_wins().empty())
+		return;
 
 	init_state.push_back(step_t(next_color(init_state.size()),0,0));
 	
@@ -100,11 +104,6 @@ void print_sub_states(const WsPlayer::wide_item_t& r,steps_t& init_state,unsigne
 	{
 		const WsPlayer::wide_item_t* sub=dynamic_cast<const WsPlayer::wide_item_t*>(&*neitrals[i]);
 		if(!sub)
-			continue;
-
-		if(sub->get_neitrals().empty()&&
-			sub->get_wins().empty()&&
-			sub->get_fails().empty())
 			continue;
 
 		static_cast<point&>(init_state.back())=*sub;
