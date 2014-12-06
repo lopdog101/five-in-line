@@ -49,7 +49,7 @@ function get_job_from_list()
 	
 	while(count($lst)>0)
 	{
-		$k=mt_rand(0,count($lst)+2);
+		$k=mt_rand(0,count($lst)+1);
 		//force first state
 		if($k<2)$k=0;
 		else $k=$k-2;
