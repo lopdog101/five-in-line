@@ -465,6 +465,8 @@ for($y=$y1;$y<=$y2;$y++)
 if($godmode_val)
 {
 	echo '<a href="'.$OWN_PATH.'mark_state.php?st='.$hex_state.'&godmode='.$godmode_val.'">Mark state</a>';
+	echo '&nbsp;&nbsp;&nbsp;&nbsp;';
+	echo '<a href="'.$OWN_PATH.'explore_state.php?st='.$hex_state.'&godmode='.$godmode_val.'">Explore state</a>';
 }
 ?>
 

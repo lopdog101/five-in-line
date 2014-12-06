@@ -45,10 +45,16 @@ function get_job_from_list()
 	if($lst === false)
 	  return false;
   
-	$lst=explode("\n",$lst);
+	$lst=explode("\n",trim($lst));
 	
-	foreach ($lst as $k => $v) 
+	while(count($lst)>0)
 	{
+		$k=mt_rand(0,count($lst)+2);
+		//force first state
+		if($k<2)$k=0;
+		else $k=$k-2;
+		
+		$v=$lst[$k];
 		$cc=$cmd." ".escapeshellarg($v);
 		
 		$output=array();
@@ -63,7 +69,7 @@ function get_job_from_list()
 		}
 		
 		unset($lst[$k]);
-		file_put_contents($file_name,implode("\n",$lst));
+		file_put_contents($file_name,implode("\n",trim($lst)));
 	}
 	
 	return false;

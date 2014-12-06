@@ -1,6 +1,8 @@
 <?php
 $EXEC_PATH='/home/shebeko/bin/db';
 putenv("mysql_db=f5");
+putenv("stored_deep=1");
+putenv("ant_count=100");
 
 if (count($_GET)>0) $HTTP_VARS=$_GET;
 else $HTTP_VARS=$_POST;
@@ -28,28 +30,8 @@ if(!$st)
 	exit(1);
 }
 
+$cmd=$EXEC_PATH." ".$DB_PATH." solve_ant ".escapeshellarg($st)." 1";
+passthru($cmd,$r);
 
-$file_name=$DB_PATH."/marked.txt";
-$lst=file_get_contents($file_name);
-
-if($lst === false)
-  $lst=array();
-else
-  $lst=explode("\n",$lst);
-  
-foreach ($lst as $k => $v) 
-{
-  if($v==$st)
-    unset($lst[$k]);
-}
-
-while(count($lst)>$MAX_MARKED)
-  array_pop($lst);
-  
-array_unshift($lst,$st);
-
-$content=implode("<br>",$lst);
-echo $content;
-file_put_contents($file_name,implode("\n",$lst));
 
 ?>
