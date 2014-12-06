@@ -1,5 +1,6 @@
 #include "solution_tree_utils.h"
 #include <stdexcept>
+#include <numeric>
 #include <boost/lexical_cast.hpp>
 
 namespace Gomoku
@@ -140,6 +141,27 @@ namespace Gomoku
 
 			Gomoku::bin2points(bin,pts);
         }
+    }
+
+    size_t normalize_marks_select_shift(std::vector<double>& marks)
+    {
+        double max_rate=std::accumulate(marks.begin(),marks.end(),0.0);
+
+        double adj=0;
+        for(size_t i=0;i<marks.size();i++)
+        {
+            double v=marks[i]/max_rate;
+            marks[i]=adj;
+            adj+=v;
+        }
+
+        double r=static_cast<double>(rand())/RAND_MAX;
+
+        std::vector<double>::const_iterator it=std::lower_bound(marks.begin(),marks.end(),r);
+        if(it==marks.end())
+            --it;
+
+        return it-marks.begin();
     }
 
 }//namespace

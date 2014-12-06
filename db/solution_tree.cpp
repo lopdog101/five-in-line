@@ -270,7 +270,7 @@ namespace Gomoku
 		else generate_new(st);
 
         if(st.wins_count!=0 || st.fails_count!=0)
-            update_base_wins_and_fails(st,st.wins_count,st.fails_count);
+            update_base_wins_and_fails(st,st.wins_count,st.fails_count,5);
 	}
 
 	void solution_tree_t::generate_new(const sol_state_t& base_st)
@@ -385,7 +385,7 @@ namespace Gomoku
 		}
     }
 
-	void solution_tree_t::update_base_wins_and_fails(const sol_state_t& child_st,unsigned long long delta_wins,unsigned long long delta_fails)
+	void solution_tree_t::update_base_wins_and_fails(const sol_state_t& child_st,unsigned long long delta_wins,unsigned long long delta_fails,int propagation_deep)
 	{
 		if(child_st.key.size()<=1)
 			return;
@@ -414,7 +414,8 @@ namespace Gomoku
 
 			set(prev_st);
 
-            update_base_wins_and_fails(prev_st,delta_fails,delta_wins);
+            if(propagation_deep>0)
+				update_base_wins_and_fails(prev_st,delta_fails,delta_wins,propagation_deep-1);
 		}
 	}
 
@@ -501,9 +502,11 @@ namespace Gomoku
                 npoints_t::const_iterator it=binary_find(wins_hint.begin(),wins_hint.end(),ref.first,less_point_pr());
                 if(it!=wins_hint.end())
                 {
-                    mark*=it->n;
+                    mark*=it->n*2;
                 }
             }
+
+			mark*=(marks.size()-i);
         }
         
         size_t shift=normalize_marks_select_shift(marks);
@@ -587,27 +590,6 @@ namespace Gomoku
         }
 
         make_unique(wins);
-    }
-
-    size_t solution_tree_t::normalize_marks_select_shift(std::vector<double>& marks)
-    {
-        double max_rate=std::accumulate(marks.begin(),marks.end(),0.0);
-
-        double adj=0;
-        for(size_t i=0;i<marks.size();i++)
-        {
-            double v=marks[i]/max_rate;
-            marks[i]=adj;
-            adj+=v;
-        }
-
-        double r=static_cast<double>(rand())/RAND_MAX;
-
-        std::vector<double>::const_iterator it=std::lower_bound(marks.begin(),marks.end(),r);
-        if(it==marks.end() || (*it!=r && it!=marks.begin()))
-            --it;
-
-        return it-marks.begin();
     }
 
     void solution_tree_t::depth_first_search(sol_state_visitor_pr& pr)

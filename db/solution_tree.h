@@ -145,7 +145,7 @@ namespace Gomoku
 
 		void generate_new(const sol_state_t& base_st);
         void scan_already_solved_neitrals(sol_state_t& base_st);
-        void update_base_wins_and_fails(const sol_state_t& child_st,unsigned long long delta_wins,unsigned long long delta_fails);
+        void update_base_wins_and_fails(const sol_state_t& child_st,unsigned long long delta_wins,unsigned long long delta_fails,int propagation_deep);
 		
 		bool get_root_first_deep(deep_solve_t& _val);
 		bool get_first_deep(deep_solve_t& val,unsigned max_key_size);
@@ -156,7 +156,6 @@ namespace Gomoku
         bool get_ant_job(const sol_state_t& base_st,const npoints_t& wins_hint,steps_t& result_key);
         bool select_ant_job(const sol_state_refs_t& childs,const npoints_t& wins_hint,size_t shift,steps_t& result_key);
         void load_all_childs_neitrals(const sol_state_t base_st,std::vector<sol_state_t>& childs,sol_state_refs_t& refs);
-        size_t normalize_marks_select_shift(std::vector<double>& marks);
         void load_all_fails_its_wins(const sol_state_t base_st,npoints_t& wins);
 
 	public:

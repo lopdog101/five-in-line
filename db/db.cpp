@@ -6,6 +6,7 @@
 
 #ifndef _WIN32
 #  include <signal.h>
+#  include <sys/time.h>
 #endif
 
 #include <boost/filesystem/operations.hpp>
@@ -307,7 +308,13 @@ int main(int argc,char** argv)
 
     ObjectProgress::log_generator lg(true);
 
-    srand(static_cast<unsigned>(time(0)));
+#ifdef _WIN32
+	srand(static_cast<unsigned>(time(0)));
+#else
+	struct timeval time; 
+    gettimeofday(&time,NULL);
+    srand((time.tv_sec * 1000) + (time.tv_usec / 1000));
+#endif
 
 	try
 	{

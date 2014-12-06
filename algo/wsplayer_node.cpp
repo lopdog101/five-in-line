@@ -8,6 +8,7 @@
 
 #include "wsplayer.h"
 #include "wsplayer_treat.h"
+#include "../db/solution_tree_utils.h"
 
 namespace Gomoku { namespace WsPlayer
 {
@@ -702,23 +703,8 @@ size_t item_t::select_ant_neitral(const item_t* parent_node)
 		}
 	}
 	
-	double max_rate=std::accumulate(marks.begin(),marks.end(),0.0);
-
-    double adj=0;
-    for(size_t i=0;i<marks.size();i++)
-    {
-        double v=marks[i]/max_rate;
-        marks[i]=adj;
-        adj+=v;
-    }
-
-    double r=static_cast<double>(rand())/RAND_MAX;
-
-    std::vector<double>::const_iterator it=std::lower_bound(marks.begin(),marks.end(),r);
-    if(it==marks.end() || (*it!=r && it!=marks.begin()))
-        --it;
-
-    return it-marks.begin();
+    size_t shift=normalize_marks_select_shift(marks);
+    return shift;
 }
 
 
