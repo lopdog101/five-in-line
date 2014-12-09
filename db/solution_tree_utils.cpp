@@ -151,8 +151,8 @@ namespace Gomoku
         for(size_t i=0;i<marks.size();i++)
         {
             double v=marks[i]/max_rate;
-            marks[i]=adj;
             adj+=v;
+            marks[i]=adj;
         }
 
         double r=static_cast<double>(rand())/RAND_MAX;
