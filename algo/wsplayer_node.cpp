@@ -686,6 +686,7 @@ size_t item_t::select_ant_neitral(const item_t* parent_node)
     {
 		const item_t& v=*neitrals[i];
         marks[i]=1.0/v.get_win_rate();
+		marks[i]*=(marks.size()-i);
     }
 
 	if(parent_node&&!parent_node->get_fails().empty())
