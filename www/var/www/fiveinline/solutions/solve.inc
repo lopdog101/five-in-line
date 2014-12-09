@@ -69,7 +69,7 @@ function get_job_from_list()
 		}
 		
 		unset($lst[$k]);
-		file_put_contents($file_name,implode("\n",trim($lst)));
+		file_put_contents($file_name,trim(implode("\n",$lst)) );
 	}
 	
 	return false;
