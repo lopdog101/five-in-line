@@ -444,7 +444,7 @@ namespace Gomoku
 			throw std::runtime_error("get_ant_job(key): state not found: "+print_steps(st.key));
         }
 
-        if(st.is_completed())
+        if(st.state==ss_solved && st.is_completed())
             return false;
         
         npoints_t empty_wins_hint;
