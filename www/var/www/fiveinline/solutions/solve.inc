@@ -55,6 +55,10 @@ function get_job_from_list()
 		else $k=$k-2;
 		
 		$v=$lst[$k];
+		
+		if(!v || v=='')
+		  return false;
+		
 		$cc=$cmd." ".escapeshellarg($v);
 		
 		$output=array();
