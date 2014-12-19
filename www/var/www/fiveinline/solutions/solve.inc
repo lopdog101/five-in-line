@@ -73,7 +73,10 @@ function get_job_from_list()
 		}
 		
 		unset($lst[$k]);
-		file_put_contents($file_name,trim(implode("\n",$lst)) );
+		
+		$content = trim(implode("\n",$lst));
+		file_put_contents($file_name, $content );
+		$lst=explode("\n",$content);
 	}
 	
 	return false;
