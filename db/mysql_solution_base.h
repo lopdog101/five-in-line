@@ -38,7 +38,6 @@ namespace Gomoku{ namespace Mysql
 		data_t key_buf;
 		unsigned long key_buf_size;
 
-		unsigned st_state;
 		unsigned long long st_wins_count;
 		unsigned long long st_fails_count;
 
@@ -61,7 +60,7 @@ namespace Gomoku{ namespace Mysql
 	struct get_query_t : public base_query_t
 	{
 		MYSQL_BIND params[1];
-		MYSQL_BIND results[8];
+		MYSQL_BIND results[7];
 
 		void init(MYSQL* conn,size_t key_len);
 		bool execute(const steps_t& key,sol_state_t& res);
@@ -69,7 +68,7 @@ namespace Gomoku{ namespace Mysql
 
 	struct set_query_t : public base_query_t
 	{
-		MYSQL_BIND params[17];
+		MYSQL_BIND params[15];
 
 		void init(MYSQL* conn,size_t key_len);
 		void execute(const sol_state_t& res);

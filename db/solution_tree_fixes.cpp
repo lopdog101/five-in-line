@@ -64,18 +64,5 @@ namespace Gomoku
         
         return ret;
     }
-    
-    bool fix_not_solved_wins::on_enter_node(sol_state_t& val)
-    {
-        if(val.state == ss_not_solved && !val.tree_wins.empty())
-        {
-            lg<<"fix_not_solved_wins::on_enter_node(): key="<<print_steps(val.key);
-            tree.relax(val);
-            fixed_count++;
-        }
-
-        //no changes in node itself
-        return false;
-    }
 
 }//namespace

@@ -8,11 +8,9 @@
 
 namespace Gomoku
 {
-	enum SolState{ss_not_solved,ss_solving,ss_solved};
 	
 	struct sol_state_t
 	{
-        SolState state;
         //wins for next step from state key
         unsigned long long wins_count;
         //fails for next step from state key
@@ -31,7 +29,6 @@ namespace Gomoku
 
 		sol_state_t()
 		{
-			state=ss_not_solved;
             wins_count = 0;
             fails_count = 0;
 		}
@@ -40,7 +37,7 @@ namespace Gomoku
 		void unpack(const data_t& bin);
 
 		bool is_win() const{return !solved_wins.empty()||!tree_wins.empty();}
-        bool is_completed() const{return is_win() || state==ss_solved&&neitrals.empty();}
+        bool is_completed() const{return is_win() || neitrals.empty();}
 		unsigned min_win_chain() const;
 		unsigned max_fail_chain() const;
 
@@ -77,16 +74,8 @@ namespace Gomoku
 		inline size_t get_root_key_size() const{return key.size()-neitrals.size();}
 	};
 
-    typedef std::pair<point,sol_state_t*> sol_state_ref_t;
-    typedef std::vector<sol_state_ref_t> sol_state_refs_t;
-
-    struct sol_state_ref_complete_pr
-    {
-        inline bool operator()(const sol_state_ref_t& val)
-        {
-            return val.second->is_completed();
-        }
-    };
+    typedef std::pair<point,steps_t*> state_ref_t;
+    typedef std::vector<state_ref_t> state_refs_t;
 
     struct sol_state_width_pr
     {
@@ -141,9 +130,7 @@ namespace Gomoku
 		void save_solve(const deep_solve_t& val,const std::string& _file_name) const;
 
         bool rewind_to_not_solved(bool first_rewind,deep_solve_t& key);
-		void mark_solving(const steps_t& key);
 
-		void generate_new(const sol_state_t& base_st);
         void scan_already_solved_neitrals(sol_state_t& base_st);
         void update_base_wins_and_fails(const sol_state_t& child_st,unsigned long long delta_wins,unsigned long long delta_fails,int propagation_deep);
 		
@@ -153,9 +140,8 @@ namespace Gomoku
         template<typename T>
         static void check_really_unique(const steps_t& key,const std::vector<T>& vals,const std::string& vals_name);
 
-        bool get_ant_job(const sol_state_t& base_st,const npoints_t& wins_hint,steps_t& result_key);
-        bool select_ant_job(const sol_state_refs_t& childs,const npoints_t& wins_hint,size_t shift,steps_t& result_key);
-        void load_all_childs_neitrals(const sol_state_t base_st,std::vector<sol_state_t>& childs,sol_state_refs_t& refs);
+        bool get_ant_job(const steps_t& base_st_key,const npoints_t& wins_hint,steps_t& result_key);
+        void load_all_childs_neitrals(const sol_state_t base_st,std::vector<steps_t>& childs,state_refs_t& refs);
         void load_all_fails_its_wins(const sol_state_t base_st,npoints_t& wins);
 
 	public:

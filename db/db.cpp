@@ -42,7 +42,6 @@ void print_use()
 	printf("db <root_dir> solve_ant [root_key] [iteration_count]\n");
 	printf("db <root_dir> init_state <printable_steps>\n");
 	printf("db <root_dir> fix_zero_fails\n");
-	printf("db <root_dir> fix_not_solved_wins\n");
     Gomoku::print_enviropment_variables_hint();
 	printf("win_neitrals (default: %u)\n",solution_tree_t::win_neitrals);
 	printf("mysql_db  (no default)\n");
@@ -110,12 +109,6 @@ void sig_handler(int v)
 struct fix_zero_deep_fails_impls : public fix_zero_deep_fails
 {
     fix_zero_deep_fails_impls(solution_tree_t& _tree) : fix_zero_deep_fails(_tree) {}
-    virtual bool is_canceled(){return need_break;}
-};
-
-struct fix_not_solved_wins_impl : public fix_not_solved_wins
-{
-    fix_not_solved_wins_impl(solution_tree_t& _tree) : fix_not_solved_wins(_tree) {}
     virtual bool is_canceled(){return need_break;}
 };
 
@@ -223,16 +216,8 @@ bool show_state(solution_tree_t& tr,steps_t req)
 	std::string tf=print_points(st.tree_fails);
 	std::string field_str=print_field(req);
 
-	std::string sst;
-	switch(st.state)
-	{
-	case Gomoku::ss_not_solved:sst="not_solved";break;
-	case Gomoku::ss_solving:sst="solving";break;
-	case Gomoku::ss_solved:sst="solved";break;
-	}
-
-	printf("key: %s\nhex_key: %s\nstate=%s wins_count=%llu fails_count=%llu\nneitrals: %s\nsolved wins: %s\ntree wins: %s\nsolved fails: %s\ntree fails: %s\nfield:\n%s",
-        k.c_str(),h.c_str(),sst.c_str(),st.wins_count,st.fails_count,
+	printf("key: %s\nhex_key: %s\nwins_count=%llu fails_count=%llu\nneitrals: %s\nsolved wins: %s\ntree wins: %s\nsolved fails: %s\ntree fails: %s\nfield:\n%s",
+        k.c_str(),h.c_str(),st.wins_count,st.fails_count,
 		n.c_str(),
 		sw.c_str(),tw.c_str(),
 		sf.c_str(),tf.c_str(),
@@ -521,22 +506,6 @@ int main(int argc,char** argv)
             }
 
             lg<<"fix_zero_fails: fixed="<<pr.fixed_count;
-		}
-		else if(cmd=="fix_not_solved_wins")
-		{
-            set_ctrl_handler();
-            fix_not_solved_wins_impl pr(tr);
-
-            try
-            {
-                tr.width_first_search_from_bottom_to_top(pr);
-            }
-            catch(Gomoku::e_cancel& )
-            {
-                lg<<"fix_not_solved_wins canceled";
-            }
-
-            lg<<"fix_not_solved_wins: fixed="<<pr.fixed_count;
 		}
 		else 
 		{

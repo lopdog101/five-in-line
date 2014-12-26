@@ -50,7 +50,6 @@ namespace Gomoku
 	{
 		sol_state_t s;
 		s.key.push_back(step_t(st_krestik,0,0));
-		s.state=ss_solving;
 
 		set(s);
 
@@ -67,7 +66,6 @@ namespace Gomoku
 	{
 		sol_state_t s;
 		s.key=key;
-		s.state=ss_not_solved;
 
 		set(s);
 	}
@@ -104,15 +102,14 @@ namespace Gomoku
 		sol_state_t ss;
 		ss.key=val.key;
 		
+		if(ss.key.size()>=max_key_size)
+			return false;
+
 		if(!get(ss))
-        {
-            steps_t sorted_key=ss.key;
-            sort_steps(sorted_key);
-			throw std::runtime_error("get_first_deep(): state not found: "+print_steps(ss.key)+" sorted="+print_steps(sorted_key));
-        }
-			
-		if(ss.state!=ss_solved)return true;
-		if(ss.key.size()>=max_key_size)return false;
+			return true;
+
+		if(ss.is_completed())
+			return false;
 
 		Step move_step=next_color(val.key.size());
 		
@@ -144,7 +141,6 @@ namespace Gomoku
 
 			save_solve(first_solving,first_solving_file_name);
 			save_solve(last_solving,last_solving_file_name);
-			mark_solving(key);
 
 			return true;
 		}
@@ -153,7 +149,6 @@ namespace Gomoku
 		{
 			key=last_solving.key;
 			save_solve(last_solving,last_solving_file_name);
-			mark_solving(key);
 			return true;
 		}
 
@@ -163,7 +158,6 @@ namespace Gomoku
 		{
 			key=last_solving.key;
 			save_solve(last_solving,last_solving_file_name);
-			mark_solving(key);
 			return true;
 		}
 
@@ -173,7 +167,6 @@ namespace Gomoku
 
 		save_solve(first_solving,first_solving_file_name);
 		save_solve(last_solving,last_solving_file_name);
-		mark_solving(key);
 
 		return true;
 	}
@@ -184,11 +177,8 @@ namespace Gomoku
 		{
 			sol_state_t st;
 			st.key=key.key;
-			get(st);
-			if(st.state!=ss_solved)
-            {
+			if(!get(st))
 				return true;
-            }
 		}
 
 		steps_t p;
@@ -223,17 +213,6 @@ namespace Gomoku
 		return false;
 	}
 
-	void solution_tree_t::mark_solving(const steps_t& key)
-	{
-		sol_state_t st;
-		st.key=key;
-		if(!get(st))throw std::runtime_error("mark_solving(): bin_key not found: "+print_steps(key));
-
-		if(st.state==ss_solving)return;
-		st.state=ss_solving;
-		set(st);
-	}
-
 	void solution_tree_t::save_job(const steps_t& key,const points_t& neitrals,const npoints_t& win,const npoints_t& fails)
 	{
         check_really_unique(key,neitrals,"neitrals");
@@ -242,15 +221,13 @@ namespace Gomoku
 
 		sol_state_t st;
 		st.key=key;
-		if(!get(st))return;
-
-		if(st.state==ss_solved)
+		
+		if(get(st))
 			return;
 
 		st.neitrals=neitrals;
 		st.solved_wins=win;
 		st.solved_fails=fails;
-		st.state=ss_solved;
 
         st.wins_count=st.solved_wins.size();
         st.fails_count=st.solved_fails.size();
@@ -267,33 +244,9 @@ namespace Gomoku
 		}
 
 		if(st.is_completed())relax(st);
-		else generate_new(st);
 
         if(st.wins_count!=0 || st.fails_count!=0)
             update_base_wins_and_fails(st,st.wins_count,st.fails_count,5);
-	}
-
-	void solution_tree_t::generate_new(const sol_state_t& base_st)
-	{
-		Step next_step=next_color(base_st.key.size());
-		
-		sol_state_t new_st;
-		steps_t& key=new_st.key;
-		new_st.state=ss_not_solved;
-
-		for(size_t i=0;i<base_st.neitrals.size();i++)
-		{
-			const point& p=base_st.neitrals[i];
-			
-			key=base_st.key;
-			key.push_back(step_t(next_step,p.x,p.y));
-
-			sol_state_t exist_st;
-			exist_st.key=key;
-
-			if(!get(exist_st))
-				set(new_st);
-		}
 	}
 
 	void solution_tree_t::trunc_neitrals(const steps_t& key,points_t& neitrals,const npoints_t& win,const npoints_t& fails)
@@ -364,9 +317,6 @@ namespace Gomoku
             if(!get(st))
                 continue;
 
-            if(st.state!=ss_solved)
-                continue;
-            
             if(st.neitrals.empty())
             {
                 unsigned n=st.max_fail_chain()+1;
@@ -435,67 +385,44 @@ namespace Gomoku
     
     bool solution_tree_t::get_ant_job(const steps_t& root_key,steps_t& key)
     {
-        sol_state_t st;
-        st.key=root_key;
-        if(st.key.empty()) return false;
-
-        if(!get(st))
-        {
-			throw std::runtime_error("get_ant_job(key): state not found: "+print_steps(st.key));
-        }
-
-        if(st.state==ss_solved && st.is_completed())
-            return false;
-        
         npoints_t empty_wins_hint;
-
-        return get_ant_job(st,empty_wins_hint,key);
+        return get_ant_job(root_key,empty_wins_hint,key);
     }
 
 
-    bool solution_tree_t::get_ant_job(const sol_state_t& base_st,const npoints_t& wins_hint,steps_t& result_key)
+    bool solution_tree_t::get_ant_job(const steps_t& base_st_key,const npoints_t& wins_hint,steps_t& result_key)
     {
-        if(base_st.state!=ss_solved)
-        {
+		sol_state_t base_st;
+		base_st.key=base_st_key;
+
+		if(!get(base_st))
+		{
             result_key=base_st.key;
-            
-            if(base_st.state==ss_not_solved)
-            {
-                sol_state_t st(base_st);
-                st.state=ss_solving;
-                set(st);
-            }
+			return true;
+		}
 
-            return true;
-        }
-
-        std::vector<sol_state_t> childs_states;
-        sol_state_refs_t childs;
+        std::vector<steps_t> childs_states;
+        state_refs_t childs;
         load_all_childs_neitrals(base_st,childs_states,childs);
 
-        childs.erase(
-            std::remove_if(childs.begin(),childs.end(),sol_state_ref_complete_pr()),
-            childs.end());
+		if(childs.empty())
+			return false;
 
         npoints_t wins_hints_for_childs;
         load_all_fails_its_wins(base_st,wins_hints_for_childs);
-
-
-        if(base_st.is_win_fail_stat_empty() && wins_hint.empty())
-        {
-            return select_ant_job(childs,wins_hints_for_childs,0,result_key);
-        }
 
         std::vector<double> marks(childs.size());
 
         for(size_t i=0;i<marks.size();i++)
         {
-            sol_state_ref_t& ref=childs[i];
-            sol_state_t& ss=*ref.second;
+            state_ref_t& ref=childs[i];
+            sol_state_t ss;
+			ss.key=*ref.second;
 
             double& mark=marks[i];
-            
-            mark=1.0/ss.get_win_rate();
+
+			if(get(ss))mark=1.0/ss.get_win_rate();
+			else mark=1.0;
 
             if(!wins_hint.empty())
             {
@@ -511,39 +438,10 @@ namespace Gomoku
         
         size_t shift=normalize_marks_select_shift(marks);
 
-        return select_ant_job(childs,wins_hints_for_childs,shift,result_key);
-    }
-    
-    bool solution_tree_t::select_ant_job(const sol_state_refs_t& childs,const npoints_t& wins_hint,size_t shift,steps_t& result_key)
-    {
-        for(size_t i=0;i<childs.size();i++)
-        {
-            size_t ii=(i+shift)%childs.size();
-            const sol_state_t& ss=*childs[ii].second;
-
-            if(ss.state==ss_solving)
-                continue;
-
-            if(get_ant_job(ss,wins_hint,result_key))
-                return true;
-        }
-
-        for(size_t i=0;i<childs.size();i++)
-        {
-            size_t ii=(i+shift)%childs.size();
-            const sol_state_t& ss=*childs[ii].second;
-
-            if(ss.state!=ss_solving)
-                continue;
-
-            if(get_ant_job(ss,wins_hint,result_key))
-                return true;
-        }
-
-        return false;
+        return get_ant_job(*childs[shift].second,wins_hints_for_childs,result_key);
     }
 
-    void solution_tree_t::load_all_childs_neitrals(const sol_state_t base_st,std::vector<sol_state_t>& childs,sol_state_refs_t& refs)
+    void solution_tree_t::load_all_childs_neitrals(const sol_state_t base_st,std::vector<steps_t>& childs,state_refs_t& refs)
     {
         size_t mi=base_st.neitrals.size();
         childs.resize(mi);
@@ -555,13 +453,10 @@ namespace Gomoku
         for(size_t i=0;i<mi;i++)
         {
             static_cast<point&>(k.back())=base_st.neitrals[i];
-            sol_state_t& st=childs[i];
-            st.key=k;
+            steps_t& st=childs[i];
+            st=k;
 
-            if(!get(st))
-                throw std::runtime_error("load_all_childs_neitrals(): state not found: k="+print_steps(k)+" base_st="+print_steps(base_st.key));
-
-            refs[i]=sol_state_ref_t(k.back(),&st);
+            refs[i]=state_ref_t(k.back(),&st);
         }
     }
     
@@ -659,7 +554,6 @@ namespace Gomoku
 	void sol_state_t::pack(data_t& bin) const
 	{
 		bin.resize(0);
-		bin.push_back((unsigned char)state);
 
         pack_raw(wins_count,bin);
         pack_raw(fails_count,bin);
@@ -675,11 +569,6 @@ namespace Gomoku
 	void sol_state_t::unpack(const data_t& bin)
 	{
 		size_t from=0;
-
-		if(from+1>=bin.size())
-			throw std::runtime_error("sol_state_t::unpack(): unpack state failed");
-		state=(SolState)bin[from];
-		++from;
 
 		unpack_raw(bin,wins_count,from,"sol_state_t::unpack(): unpack wins_count failed");
 		unpack_raw(bin,fails_count,from,"sol_state_t::unpack(): unpack fails_count failed");

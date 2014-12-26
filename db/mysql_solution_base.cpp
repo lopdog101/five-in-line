@@ -106,7 +106,7 @@ void get_query_t::init(MYSQL* conn,size_t key_len)
 
 	st.set(stmt);
 
-	std::string query="select state,wins_count,fails_count,neitrals,solved_wins,solved_fails,tree_wins,tree_fails from s"
+	std::string query="select wins_count,fails_count,neitrals,solved_wins,solved_fails,tree_wins,tree_fails from s"
 		+boost::lexical_cast<std::string>(key_len)+" where k=?";
 
 	int query_ret = mysql_stmt_prepare(stmt, query.c_str(), query.size());
@@ -146,46 +146,42 @@ void get_query_t::init(MYSQL* conn,size_t key_len)
 	memset(results, 0, sizeof(results));
 
 	p=&results[0];
-	p->buffer_type=MYSQL_TYPE_LONG;
-	p->buffer=(char *)&st_state;
-
-	p=&results[1];
 	p->buffer_type=MYSQL_TYPE_LONGLONG;
 	p->buffer=(char *)&st_wins_count;
 
-	p=&results[2];
+	p=&results[1];
 	p->buffer_type=MYSQL_TYPE_LONGLONG;
 	p->buffer=(char *)&st_fails_count;
 	
-	p=&results[3];
+	p=&results[2];
 	p->buffer_type=MYSQL_TYPE_BLOB;
 	p->buffer=(char *)&neitrals_buf.front();
 	p->buffer_length=def_buf_size;
 	p->is_null=0;
 	p->length=&neitrals_buf_size;
 	
-	p=&results[4];
+	p=&results[3];
 	p->buffer_type=MYSQL_TYPE_BLOB;
 	p->buffer=(char *)&solved_wins_buf.front();
 	p->buffer_length=def_buf_size;
 	p->is_null=0;
 	p->length=&solved_wins_buf_size;
 	
-	p=&results[5];
+	p=&results[4];
 	p->buffer_type=MYSQL_TYPE_BLOB;
 	p->buffer=(char *)&solved_fails_buf.front();
 	p->buffer_length=def_buf_size;
 	p->is_null=0;
 	p->length=&solved_fails_buf_size;
 	
-	p=&results[6];
+	p=&results[5];
 	p->buffer_type=MYSQL_TYPE_BLOB;
 	p->buffer=(char *)&tree_wins_buf.front();
 	p->buffer_length=def_buf_size;
 	p->is_null=0;
 	p->length=&tree_wins_buf_size;
 	
-	p=&results[7];
+	p=&results[6];
 	p->buffer_type=MYSQL_TYPE_BLOB;
 	p->buffer=(char *)&tree_fails_buf.front();
 	p->buffer_length=def_buf_size;
@@ -225,7 +221,6 @@ bool get_query_t::execute(const steps_t& key,sol_state_t& res)
 	if(query_ret!=0)
 		throw std::runtime_error(std::string(__FUNCTION__)+ ": mysql_stmt_fetch() failed");
 
-	res.state=static_cast<SolState>(st_state);
 	res.wins_count=st_wins_count;
 	res.fails_count=st_fails_count;
 
@@ -253,8 +248,8 @@ void set_query_t::init(MYSQL* conn,size_t key_len)
 	st.set(stmt);
 
 	std::string query="insert into s"+boost::lexical_cast<std::string>(key_len)
-		+"(k,state,wins_count,fails_count,neitrals,solved_wins,solved_fails,tree_wins,tree_fails) values(?,?,?,?,?,?,?,?,?)"
-		 " ON DUPLICATE KEY UPDATE state=?,wins_count=?,fails_count=?,neitrals=?,solved_wins=?,solved_fails=?,tree_wins=?,tree_fails=?";
+		+"(k,wins_count,fails_count,neitrals,solved_wins,solved_fails,tree_wins,tree_fails) values(?,?,?,?,?,?,?,?)"
+		 " ON DUPLICATE KEY UPDATE wins_count=?,fails_count=?,neitrals=?,solved_wins=?,solved_fails=?,tree_wins=?,tree_fails=?";
 
 	int query_ret = mysql_stmt_prepare(stmt, query.c_str(), query.size());
 	if(query_ret!=0)
@@ -285,93 +280,85 @@ void set_query_t::init(MYSQL* conn,size_t key_len)
 	p->length=&key_buf_size;
 
 	p=&params[1];
-	p->buffer_type=MYSQL_TYPE_LONG;
-	p->buffer=(char *)&st_state;
-
-	p=&params[2];
 	p->buffer_type=MYSQL_TYPE_LONGLONG;
 	p->buffer=(char *)&st_wins_count;
 
-	p=&params[3];
+	p=&params[2];
 	p->buffer_type=MYSQL_TYPE_LONGLONG;
 	p->buffer=(char *)&st_fails_count;
 	
-	p=&params[4];
+	p=&params[3];
 	p->buffer_type=MYSQL_TYPE_BLOB;
 	p->buffer=(char *)&neitrals_buf.front();
 	p->buffer_length=def_buf_size;
 	p->is_null=0;
 	p->length=&neitrals_buf_size;
 	
-	p=&params[5];
+	p=&params[4];
 	p->buffer_type=MYSQL_TYPE_BLOB;
 	p->buffer=(char *)&solved_wins_buf.front();
 	p->buffer_length=def_buf_size;
 	p->is_null=0;
 	p->length=&solved_wins_buf_size;
 	
-	p=&params[6];
+	p=&params[5];
 	p->buffer_type=MYSQL_TYPE_BLOB;
 	p->buffer=(char *)&solved_fails_buf.front();
 	p->buffer_length=def_buf_size;
 	p->is_null=0;
 	p->length=&solved_fails_buf_size;
 	
-	p=&params[7];
+	p=&params[6];
 	p->buffer_type=MYSQL_TYPE_BLOB;
 	p->buffer=(char *)&tree_wins_buf.front();
 	p->buffer_length=def_buf_size;
 	p->is_null=0;
 	p->length=&tree_wins_buf_size;
 	
-	p=&params[8];
+	p=&params[7];
 	p->buffer_type=MYSQL_TYPE_BLOB;
 	p->buffer=(char *)&tree_fails_buf.front();
 	p->buffer_length=def_buf_size;
 	p->is_null=0;
 	p->length=&tree_fails_buf_size;
 
-	p=&params[9];
-	p->buffer_type=MYSQL_TYPE_LONG;
-	p->buffer=(char *)&st_state;
-
-	p=&params[10];
+	p=&params[8];
 	p->buffer_type=MYSQL_TYPE_LONGLONG;
 	p->buffer=(char *)&st_wins_count;
 
-	p=&params[11];
+	p=&params[9];
 	p->buffer_type=MYSQL_TYPE_LONGLONG;
 	p->buffer=(char *)&st_fails_count;
 	
-	p=&params[12];
+	p=&params[10];
 	p->buffer_type=MYSQL_TYPE_BLOB;
 	p->buffer=(char *)&neitrals_buf.front();
 	p->buffer_length=def_buf_size;
 	p->is_null=0;
 	p->length=&neitrals_buf_size;
 	
-	p=&params[13];
+	p=&params[11];
 	p->buffer_type=MYSQL_TYPE_BLOB;
 	p->buffer=(char *)&solved_wins_buf.front();
 	p->buffer_length=def_buf_size;
 	p->is_null=0;
 	p->length=&solved_wins_buf_size;
 	
-	p=&params[14];
+	p=&params[12];
 	p->buffer_type=MYSQL_TYPE_BLOB;
 	p->buffer=(char *)&solved_fails_buf.front();
 	p->buffer_length=def_buf_size;
 	p->is_null=0;
 	p->length=&solved_fails_buf_size;
 	
-	p=&params[15];
+	p=&params[13];
 	p->buffer_type=MYSQL_TYPE_BLOB;
 	p->buffer=(char *)&tree_wins_buf.front();
 	p->buffer_length=def_buf_size;
 	p->is_null=0;
 	p->length=&tree_wins_buf_size;
 	
-	p=&params[16];
+	p=&params[14];
 	p->buffer_type=MYSQL_TYPE_BLOB;
 	p->buffer=(char *)&tree_fails_buf.front();
 	p->buffer_length=def_buf_size;
@@ -400,7 +387,6 @@ void set_query_t::execute(const sol_state_t& res)
 	tree_wins_buf_size=tree_wins_buf.size();
 	tree_fails_buf_size=tree_fails_buf.size();
 
-	st_state=res.state;
 	st_wins_count=res.wins_count;
 	st_fails_count=res.fails_count;
 

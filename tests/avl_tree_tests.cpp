@@ -126,7 +126,6 @@ TEST_F(avl_tree, check_sol_state_pack)
 {
 	data_t bin;
 	sol_state_t st;
-	st.state=ss_solving;
 	st.key.push_back(step_t(st_nolik,1,2));
 	st.solved_wins.push_back(point(-1,-2));
 	st.solved_fails.push_back(point(-2,-3));
