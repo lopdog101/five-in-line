@@ -246,7 +246,7 @@ namespace Gomoku
 		if(st.is_completed())relax(st);
 
         if(st.wins_count!=0 || st.fails_count!=0)
-            update_base_wins_and_fails(st,st.wins_count,st.fails_count,5);
+            update_base_wins_and_fails(st,st.wins_count,st.fails_count);
 	}
 
 	void solution_tree_t::trunc_neitrals(const steps_t& key,points_t& neitrals,const npoints_t& win,const npoints_t& fails)
@@ -330,13 +330,18 @@ namespace Gomoku
                 base_st.neitrals.erase(base_st.neitrals.begin()+i);
             }
 
-            base_st.wins_count+=st.fails_count;
-            base_st.fails_count+=st.wins_count;
+            base_st.wins_count+=st.fails_count/2;
+            base_st.fails_count+=st.wins_count/2;
 		}
     }
 
-	void solution_tree_t::update_base_wins_and_fails(const sol_state_t& child_st,unsigned long long delta_wins,unsigned long long delta_fails,int propagation_deep)
+	void solution_tree_t::update_base_wins_and_fails(const sol_state_t& child_st,unsigned long long delta_wins,unsigned long long delta_fails)
 	{
+		delta_wins/=2;
+		delta_fails/=2;
+
+		if(delta_wins==0 || delta_fails==0)
+
 		if(child_st.key.size()<=1)
 			return;
 
@@ -364,8 +369,7 @@ namespace Gomoku
 
 			set(prev_st);
 
-            if(propagation_deep>0)
-				update_base_wins_and_fails(prev_st,delta_fails,delta_wins,propagation_deep-1);
+			update_base_wins_and_fails(prev_st,delta_fails,delta_wins);
 		}
 	}
 

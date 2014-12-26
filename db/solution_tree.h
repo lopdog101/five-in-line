@@ -132,7 +132,7 @@ namespace Gomoku
         bool rewind_to_not_solved(bool first_rewind,deep_solve_t& key);
 
         void scan_already_solved_neitrals(sol_state_t& base_st);
-        void update_base_wins_and_fails(const sol_state_t& child_st,unsigned long long delta_wins,unsigned long long delta_fails,int propagation_deep);
+        void update_base_wins_and_fails(const sol_state_t& child_st,unsigned long long delta_wins,unsigned long long delta_fails);
 		
 		bool get_root_first_deep(deep_solve_t& _val);
 		bool get_first_deep(deep_solve_t& val,unsigned max_key_size);
