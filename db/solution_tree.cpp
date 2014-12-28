@@ -306,16 +306,16 @@ namespace Gomoku
             if(!get(st))
                 continue;
 
-            if(st.neitrals.empty())
-            {
-                unsigned n=st.max_fail_chain()+1;
-                base_st.tree_wins.push_back(npoint(p,n));
-                base_st.neitrals.erase(base_st.neitrals.begin()+i);
-            }
-            else if(st.is_win())
+            if(st.is_win())
             {
                 unsigned n=st.min_win_chain()+1;
                 base_st.tree_fails.push_back(npoint(p,n));
+                base_st.neitrals.erase(base_st.neitrals.begin()+i);
+            }
+            else if(st.neitrals.empty())
+            {
+                unsigned n=st.max_fail_chain()+1;
+                base_st.tree_wins.push_back(npoint(p,n));
                 base_st.neitrals.erase(base_st.neitrals.begin()+i);
             }
 
