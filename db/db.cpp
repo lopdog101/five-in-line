@@ -40,7 +40,6 @@ void print_use()
 	printf("db <root_dir> view_root\n");
 	printf("db <root_dir> solve_level [iteration_count]\n");
 	printf("db <root_dir> solve_ant [root_key] [iteration_count]\n");
-	printf("db <root_dir> init_state <printable_steps>\n");
 	printf("db <root_dir> fix_zero_fails\n");
     Gomoku::print_enviropment_variables_hint();
 	printf("win_neitrals (default: %u)\n",solution_tree_t::win_neitrals);
@@ -307,9 +306,6 @@ int main(int argc,char** argv)
 		fs::path root_dir(argv[1]);
 		std::string cmd=argv[2];
 
-		if(cmd=="init_state"&&fs::exists(root_dir))
-			throw std::runtime_error("solution tree already inited");
-
 		isolution_tree_base_ptr db;
 		
 		const char* mysql_db=getenv("mysql_db");
@@ -323,7 +319,7 @@ int main(int argc,char** argv)
 		if(!fs::exists(root_dir))
 		{
 			fs::create_directory(root_dir);
-			if(cmd!="init_state")tr.create_init_tree();
+			tr.create_init_tree();
 		}
 
 
@@ -477,19 +473,6 @@ int main(int argc,char** argv)
             if(argc>=5)iter_count=atol(argv[4]);
 
 			self_solve(tr,iter_count,root_key,true);
-		}
-		else if(cmd=="init_state")
-		{
-			if(argc!=4)
-			{
-				print_use();
-				return 1;
-			}
-
-			std::string str=argv[3];
-            steps_t steps;
-            hex_or_str2points(str,steps);
-			tr.create_init_tree(steps);
 		}
 		else if(cmd=="fix_zero_fails")
 		{

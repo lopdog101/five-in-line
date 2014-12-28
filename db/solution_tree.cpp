@@ -51,8 +51,6 @@ namespace Gomoku
 		sol_state_t s;
 		s.key.push_back(step_t(st_krestik,0,0));
 
-		set(s);
-
 		s.neitrals.push_back(point(1,0));
 		s.neitrals.push_back(point(1,1));
 		s.neitrals.push_back(point(2,0));
@@ -61,15 +59,6 @@ namespace Gomoku
 
 		save_job(s.key,s.neitrals,s.solved_wins,s.solved_fails);
 	}
-
-	void solution_tree_t::create_init_tree(const steps_t& key)
-	{
-		sol_state_t s;
-		s.key=key;
-
-		set(s);
-	}
-
 
 	bool solution_tree_t::get(sol_state_t& res) const
 	{

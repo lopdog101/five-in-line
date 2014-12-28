@@ -153,7 +153,6 @@ namespace Gomoku
 
 		void init(const std::string& _base_dir);
 		void create_init_tree();
-		void create_init_tree(const steps_t& key);
 
 		bool get_job(steps_t& key);
 		bool get_ant_job(steps_t& key);
