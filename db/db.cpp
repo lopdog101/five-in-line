@@ -41,6 +41,7 @@ void print_use()
 	printf("db <root_dir> solve_level [iteration_count]\n");
 	printf("db <root_dir> solve_ant [root_key] [iteration_count]\n");
 	printf("db <root_dir> fix_zero_fails\n");
+	printf("db <root_dir> relax <key>\n");
     Gomoku::print_enviropment_variables_hint();
 	printf("win_neitrals (default: %u)\n",solution_tree_t::win_neitrals);
 	printf("mysql_db  (no default)\n");
@@ -197,7 +198,7 @@ bool show_state(solution_tree_t& tr,steps_t req)
 
 	if(!tr.get(st))
 	{
-		printf("%s does not exists\n",print_steps(req).c_str());
+		printf("%s does not exist\n",print_steps(req).c_str());
 		return false;
 	}
 				
@@ -381,7 +382,7 @@ int main(int argc,char** argv)
 
 			if(!tr.get(st))
 			{
-				printf("%s does not exists\n",argv[3]);
+				printf("%s does not exist\n",argv[3]);
 				return 1;
 			}
 
@@ -489,6 +490,27 @@ int main(int argc,char** argv)
             }
 
             lg<<"fix_zero_fails: fixed="<<pr.fixed_count;
+		}
+		else if(cmd=="relax")
+		{
+			if(argc!=4)
+			{
+				print_use();
+				return 1;
+			}
+
+			steps_t req;
+            hex_or_str2points(argv[3],req);
+
+			sol_state_t st;
+			st.key=req;
+			if(!tr.get(st))
+				throw std::runtime_error("state not found");
+
+			if(!st.is_completed())
+				throw std::runtime_error("state is not completed");
+
+			tr.relax(st);
 		}
 		else 
 		{
