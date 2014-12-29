@@ -278,8 +278,10 @@ namespace Gomoku
 			npoint p(st);
 			p.n=n;
 
-			if(std::find(solved.begin(),solved.end(),st)==solved.end())
-				solved.push_back(p);
+			npoints_t::iterator it=std::find(solved.begin(),solved.end(),st);
+			if(it==solved.end())solved.push_back(p);
+			else *it=p;
+
 
 			set(prev_st);
 
