@@ -366,8 +366,6 @@ Result item_t::process_predictable_move(bool need_fill_neitrals,unsigned lookup_
 
 Result item_t::process_neitrals(bool need_fill_neitrals,unsigned lookup_deep,unsigned from,const item_t* parent_node)
 {
-//	reorder_neitrals_as_neighbor_win_hint(from,parent_node);
-
 	for(unsigned i=from;i<neitrals.size();i++)
 	{
 		player.check_cancel();
@@ -400,21 +398,6 @@ Result item_t::process_neitrals(bool need_fill_neitrals,unsigned lookup_deep,uns
 	if(neitrals.empty())return r_win;
 	return r_neitral;
 }
-
-void item_t::reorder_neitrals_as_neighbor_win_hint(unsigned from,const item_t* parent_node)
-{
-	if(!parent_node)
-		return;
-
-	const npoints_t& hint=parent_node->get_fails().get_win_hins();
-	
-	if(hint.empty())
-		return;
-
-	existing_npoints_sort_pr pr(hint);
-	std::stable_sort(neitrals.begin()+from,neitrals.end(),pr);
-}
-
 
 Result item_t::add_and_process_neitrals(const npoints_t& pts,unsigned lookup_deep,unsigned drop_generation)
 {

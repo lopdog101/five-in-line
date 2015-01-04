@@ -80,7 +80,6 @@ namespace Gomoku { namespace WsPlayer
 		void drop_neitrals_and_fail_child(unsigned generation=0);
 		Result process_deep_stored();
         bool is_defence_five_exists() const;
-		void reorder_neitrals_as_neighbor_win_hint(unsigned from,const item_t* parent_node);
 		size_t select_ant_neitral(const item_t* parent_node);
 
 		Result process_deep_ant();
