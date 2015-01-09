@@ -41,6 +41,7 @@ void solver::SetUp()
     backup_max_treat_check=WsPlayer::max_treat_check;
     backup_max_treat_check_rebuild_tree=WsPlayer::max_treat_check_rebuild_tree;
     ant_count=WsPlayer::ant_count;
+	srand(0);
 }
 
 void solver::TearDown()
@@ -141,5 +142,24 @@ TEST_F(solver, wrong_ant_win_lookup_enabled)
 
 	EXPECT_FALSE(wins_contains(point(0,-2)));
 }
+
+
+TEST_F(solver, regress_before_duplicated_states)
+{
+	WsPlayer::stored_deep=3;
+	WsPlayer::def_lookup_deep=2;
+	WsPlayer::ant_count=1000;
+
+	solve("(0,0:X);(2,1:O);(-1,1:X);(-2,-2:O);(-1,0:X);(-2,2:O)");
+
+	EXPECT_TRUE(wins_contains(point(0,-1)));
+	EXPECT_TRUE(wins_contains(point(0,1)));
+	EXPECT_TRUE(wins_contains(point(-2,-1)));
+	EXPECT_TRUE(wins_contains(point(-2,1)));
+
+	//517963
+	//523690
+}
+
 
 }//namespace
