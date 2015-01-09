@@ -69,21 +69,21 @@ namespace Gomoku { namespace WsPlayer
         template<class Points>
 		void add_neitrals(const Points& pts);
 
-		Result add_and_process_neitrals(const npoints_t& pts,unsigned lookup_deep,unsigned drop_generation);
+		void add_and_process_neitrals(const npoints_t& pts,unsigned lookup_deep,unsigned drop_generation);
 
 		void clear();
 
-		Result process_predict_treat_sequence(bool need_fill_neitrals,unsigned lookup_deep);
-		Result process_predictable_move(bool need_fill_neitrals,unsigned lookup_deep);
-		Result process_treat_sequence();
-		virtual Result process_neitrals(bool need_fill_neitrals,unsigned lookup_deep,unsigned from=0,const item_t* parent_node=0);
-		Result process_deep_stored();
+		void process_predict_treat_sequence(bool need_fill_neitrals,unsigned lookup_deep);
+		void process_predictable_move(bool need_fill_neitrals,unsigned lookup_deep);
+		void process_treat_sequence();
+		virtual void process_neitrals(bool need_fill_neitrals,unsigned lookup_deep,unsigned from=0,const item_t* parent_node=0);
+		void process_deep_stored();
         bool is_defence_five_exists() const;
 		size_t select_ant_neitral(const item_t* parent_node);
 
-		Result process_deep_ant();
+		void process_deep_ant();
 		void calculate_deep_wins_fails();
-		Result solve_ant(const item_t* parent_node=0);
+		void solve_ant(const item_t* parent_node=0);
 
 		virtual item_ptr create_neitral_item(const step_t& s);
 		item_ptr create_neitral_item(const Gomoku::point& p,Step s){return create_neitral_item(step_t(s,p.x,p.y));}
@@ -100,8 +100,8 @@ namespace Gomoku { namespace WsPlayer
 		item_ptr get_win_fail_step() const;
 		unsigned get_chain_depth() const;
 
-		Result process(bool need_fill_neitrals,unsigned lookup_deep,const item_t* parent_node=0);
-		Result process_deep_common();
+		void process(bool need_fill_neitrals,unsigned lookup_deep,const item_t* parent_node=0);
+		void process_deep_common();
 
 		inline void add_win(const item_ptr& val){wins.add(val);}
 		inline void add_fail(const item_ptr& val){fails.add(val);}
@@ -109,6 +109,11 @@ namespace Gomoku { namespace WsPlayer
 		inline const selected_fails_childs& get_fails() const{return fails;}
 		inline const items_t& get_neitrals() const{return neitrals;}
         inline double get_win_rate() const{return static_cast<double>(deep_wins_count+1)/(deep_fails_count+1);}
+
+		//next state from current state wins
+		inline bool is_win() const{return !wins.empty();}
+		inline bool is_fail() const{return !is_win() && !fails.empty() && neitrals.empty();}
+		inline bool is_completed() const{return is_win() || is_fail();}
 	};
 
 	class wide_item_t : public item_t
@@ -116,7 +121,7 @@ namespace Gomoku { namespace WsPlayer
 	protected:
 		void process(bool need_fill_neitrals,unsigned lookup_deep);
 		void process_deep_stored();
-		virtual Result process_neitrals(bool need_fill_neitrals,unsigned lookup_deep,unsigned from=0,const item_t* parent_node=0);
+		virtual void process_neitrals(bool need_fill_neitrals,unsigned lookup_deep,unsigned from=0,const item_t* parent_node=0);
 
 		virtual item_ptr create_neitral_item(const step_t& s);
 	public:

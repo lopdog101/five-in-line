@@ -19,8 +19,6 @@ namespace Gomoku { namespace WsPlayer
 
 	extern unsigned nodes_count;
 
-	enum Result{r_fail=-1,r_neitral=0,r_win=1};
-
 	class wsplayer_t;
 
 	struct atack_t

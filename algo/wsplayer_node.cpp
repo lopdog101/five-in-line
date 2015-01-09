@@ -31,17 +31,17 @@ item_t::item_t(wsplayer_t& _player,const Gomoku::point& p,Step s) :
 	deep_fails_count=0;
 }
 
-Result item_t::process_deep_common()
+void item_t::process_deep_common()
 {
 	ObjectProgress::log_generator lg(true);
 	ObjectProgress::perfomance perf;
 
 	player.predict_processed=0;
 
-	Result r=process_deep_stored();
+	process_deep_stored();
 
-	if(r==r_neitral && neitrals.size()>1)
-		r=process_deep_ant();
+	if(!is_completed() && neitrals.size()>1)
+		process_deep_ant();
 
 	point pt=*get_next_step();
 
@@ -50,19 +50,17 @@ Result item_t::process_deep_common()
 		<<" neitrals="<<neitrals.size()
 		<<" processed="<<player.predict_processed
 		<<" perf="<<perf;
-	
-	return r;
 }
 
-Result item_t::process_deep_ant()
+void item_t::process_deep_ant()
 {
 	calculate_deep_wins_fails();
 	for(unsigned i=0;i<ant_count;i++)
 	{
 		player.check_cancel();
-		Result r=solve_ant();
-		if(r!=r_neitral)
-			return r;
+		solve_ant();
+		if(is_completed())
+			return;
 	}
 
 	if(!neitrals.empty())
@@ -70,19 +68,17 @@ Result item_t::process_deep_ant()
 		items_t::iterator it=std::min_element(neitrals.begin(),neitrals.end(),win_rate_cmp_pr());
 		std::iter_swap(neitrals.begin(),it);
 	}
-
-	return r_neitral;
 }
 
-Result item_t::process_deep_stored()
+void item_t::process_deep_stored()
 {
 	for(unsigned i=0;i<stored_deep;i++)
 	{
-		Result r=process(i+1<stored_deep||stored_deep==1,(i+1<stored_deep? 0:def_lookup_deep));
-		if(r!=r_neitral)return r;
-		if(neitrals.size()==1)return r;
+		process(i+1<stored_deep||stored_deep==1,(i+1<stored_deep? 0:def_lookup_deep));
+
+		if(is_completed() || neitrals.size() == 1)
+			return;
 	}
-	return r_neitral;
 }
 
 void item_t::clear()
@@ -108,36 +104,33 @@ item_ptr item_t::get_win_fail_step() const
 }
 
 
-Result item_t::process(bool need_fill_neitrals,unsigned lookup_deep,const item_t* parent_node)
+void item_t::process(bool need_fill_neitrals,unsigned lookup_deep,const item_t* parent_node)
 {
-	if(!wins.empty())
-		return r_fail;
+	if(is_completed())
+		return;
 	
 	if(neitrals.empty())
-	{
-		if(!fails.empty())
-			return r_win;
-		
-		return process_predict_treat_sequence(need_fill_neitrals,lookup_deep);
-	}
-
-	return process_neitrals(need_fill_neitrals,lookup_deep,0,parent_node);
+		process_predict_treat_sequence(need_fill_neitrals,lookup_deep);
+	else
+		process_neitrals(need_fill_neitrals,lookup_deep,0,parent_node);
 }
 
-Result item_t::process_predict_treat_sequence(bool need_fill_neitrals,unsigned lookup_deep)
+void item_t::process_predict_treat_sequence(bool need_fill_neitrals,unsigned lookup_deep)
 {
-	Result r=process_predictable_move(false,0);
-	if(r!=r_neitral)return r;
+	process_predictable_move(false,0);
+	if(is_completed())
+		return;
 
 	clear();
 
-	r=process_treat_sequence();
-	if(r!=r_neitral)return r;
+	process_treat_sequence();
+	if(is_completed())
+		return;
 
-	return process_predictable_move(need_fill_neitrals,lookup_deep);
+	process_predictable_move(need_fill_neitrals,lookup_deep);
 }
 
-Result item_t::process_predictable_move(bool need_fill_neitrals,unsigned lookup_deep)
+void item_t::process_predictable_move(bool need_fill_neitrals,unsigned lookup_deep)
 {
 	unsigned& recursive_deep=player.predict_deep;
 	inc_t r(recursive_deep);
@@ -156,7 +149,7 @@ Result item_t::process_predictable_move(bool need_fill_neitrals,unsigned lookup_
 	if(!a5_pts.empty())
 	{
 		add_win(item_ptr(new item_t(player,a5_pts.front(),other_color(step) )) );
-		return r_fail;
+		return;
 	}
 
 	const points_t& d5_pts=state.get_make_five(step);
@@ -167,20 +160,22 @@ Result item_t::process_predictable_move(bool need_fill_neitrals,unsigned lookup_
 			item_ptr fail=item_ptr(new item_t(player,d5_pts.front(),step ));
 			fail->add_win(item_ptr(new item_t(player,d5_pts[1],other_color(step) )) );
 			add_fail(fail);
-			return r_win;
+			return;
 		}
 
 		neitrals.push_back(create_neitral_item(d5_pts.front(),other_color(step)) );
 
-		if(lookup_deep==0)return r_neitral;
+		if(lookup_deep==0)
+			return;
 
 #ifdef PRINT_PREDICT_STEPS
-		lg<<"five defence: recursive_deep="<<recursive_deep
+		lg<<"five defense: recursive_deep="<<recursive_deep
 			<<" d5_pts="<<print_points(d5_pts)
 			<<"\r\n"<<print_field(player.field.get_steps());
 #endif
 
-		return process_neitrals(need_fill_neitrals,lookup_deep-1);
+		process_neitrals(need_fill_neitrals,lookup_deep-1);
+		return;
 	}
 
 	points_t empty_points=state.empty_points;
@@ -195,7 +190,7 @@ Result item_t::process_predictable_move(bool need_fill_neitrals,unsigned lookup_
 		win_fail->add_win(item_ptr(new item_t(player,open_four.front().open[1],other_color(step) )) );
 		win->add_fail(win_fail);
 		add_win(win);
-		return r_fail;
+		return;
 	}
 
 	find_move_to_open_four(empty_points,step,player.field,open_four);
@@ -252,7 +247,8 @@ Result item_t::process_predictable_move(bool need_fill_neitrals,unsigned lookup_
 
 		add_neitrals(do4_pts);
 
-		if(lookup_deep==0)return r_neitral;
+		if(lookup_deep==0)
+			return;
 
 #ifdef PRINT_PREDICT_STEPS
 		lg<<"open_four defence: do4_pts.size()="<<do4_pts.size()<<" recursive_deep="<<recursive_deep
@@ -263,7 +259,8 @@ Result item_t::process_predictable_move(bool need_fill_neitrals,unsigned lookup_
 		return process_neitrals(false,lookup_deep-1);
 	}
 
-	if(!need_fill_neitrals&&lookup_deep==0)return r_neitral;
+	if(!need_fill_neitrals&&lookup_deep==0)
+		return;
 
 	if(!ac4_pts.empty())
 	{
@@ -279,9 +276,9 @@ Result item_t::process_predictable_move(bool need_fill_neitrals,unsigned lookup_
 				<<" pts="<<print_points(pts)
 				<<"\r\n"<<print_field(player.field.get_steps());
 #endif
-		Result r=add_and_process_neitrals(pts,lookup_deep,2);
-		if(r==r_fail)
-			return r;
+		add_and_process_neitrals(pts,lookup_deep,2);
+		if(is_win())
+			return;
 	}
 
 	exclude_exists(ac4_pts,ao3_pts);
@@ -300,9 +297,9 @@ Result item_t::process_predictable_move(bool need_fill_neitrals,unsigned lookup_
 				<<" pts="<<print_points(pts)
 				<<"\r\n"<<print_field(player.field.get_steps());
 #endif
-		Result r=add_and_process_neitrals(pts,lookup_deep,1);
-		if(r==r_fail)
-			return r;
+		add_and_process_neitrals(pts,lookup_deep,1);
+		if(is_win())
+			return;
 	}
 
 	exclude_exists(ao3_pts,ao3_open_pts);
@@ -318,9 +315,9 @@ Result item_t::process_predictable_move(bool need_fill_neitrals,unsigned lookup_
 				<<" pts="<<print_points(pts)
 				<<"\r\n"<<print_field(player.field.get_steps());
 #endif
-		Result r=add_and_process_neitrals(pts,lookup_deep,1);
-		if(r==r_fail)
-			return r;
+		add_and_process_neitrals(pts,lookup_deep,1);
+		if(is_win())
+			return;
 	}
 
 	exclude_exists(ac4_pts,empty_points);
@@ -352,10 +349,9 @@ Result item_t::process_predictable_move(bool need_fill_neitrals,unsigned lookup_
 	add(do3_pts,empty_points);
 
 	add_neitrals(do3_pts);
-	return r_neitral;
 }
 
-Result item_t::process_neitrals(bool need_fill_neitrals,unsigned lookup_deep,unsigned from,const item_t* parent_node)
+void item_t::process_neitrals(bool need_fill_neitrals,unsigned lookup_deep,unsigned from,const item_t* parent_node)
 {
 	for(unsigned i=from;i<neitrals.size();i++)
 	{
@@ -364,9 +360,9 @@ Result item_t::process_neitrals(bool need_fill_neitrals,unsigned lookup_deep,uns
 		item_t& ch=*pch;
 
 		temporary_state ts(player,ch);
-		Result r=ch.process(need_fill_neitrals,lookup_deep,this);
+		ch.process(need_fill_neitrals,lookup_deep,this);
 
-		if(r==r_win)
+		if(ch.is_fail())
 		{
 			add_win(pch);
 			pch.reset();
@@ -374,7 +370,7 @@ Result item_t::process_neitrals(bool need_fill_neitrals,unsigned lookup_deep,uns
 			--lookup_deep;
 			continue;
 		}
-		else if(r==r_fail)
+		else if(ch.is_win())
 		{
 			add_fail(pch);
 			pch.reset();
@@ -382,34 +378,23 @@ Result item_t::process_neitrals(bool need_fill_neitrals,unsigned lookup_deep,uns
 	}
 
 	neitrals.erase(std::remove(neitrals.begin(),neitrals.end(),item_ptr()),neitrals.end());
-
-	if(!wins.empty())
-		return r_fail;
-
-	if(neitrals.empty())return r_win;
-	return r_neitral;
 }
 
-Result item_t::add_and_process_neitrals(const npoints_t& pts,unsigned lookup_deep,unsigned drop_generation)
+void item_t::add_and_process_neitrals(const npoints_t& pts,unsigned lookup_deep,unsigned drop_generation)
 {
 	unsigned from=neitrals.size();
 	add_neitrals(pts);
 
 	if(lookup_deep==0)
-		return r_neitral;
-
-	Result r=process_neitrals(false,lookup_deep-1,from);
-
-	if(r==r_fail)
-		return r;
-
-	return r_neitral;
+		return;
+	
+	process_neitrals(false,lookup_deep-1,from);
 }
 
-Result item_t::process_treat_sequence()
+void item_t::process_treat_sequence()
 {
     if(treat_deep==0)
-        return r_neitral;
+        return;
 
 #ifdef PRINT_TREAT_PERFOMANCE
 	ObjectProgress::log_generator lg(true);
@@ -433,7 +418,9 @@ Result item_t::process_treat_sequence()
 
 		if(!tr->win)
 		{
-			if(deep<cur_deep)return r_neitral;
+			if(deep<cur_deep)
+				return;
+
 			continue;
 		}
 
@@ -475,7 +462,7 @@ Result item_t::process_treat_sequence()
 
         if(max_check_reached)
         {
-            return r_neitral;
+            return;
         }
 
 #ifdef PRINT_TREAT_PERFOMANCE
@@ -493,15 +480,16 @@ Result item_t::process_treat_sequence()
         if(r)
         {
             add_win(r);
-            return r_fail;
+            return;
         }
         
-        if(deep<cur_deep)return r_neitral;
+        if(deep<cur_deep)
+			return;
 
         if(last_treat_check_count==player.treat_check_count && 
            last_treat_check_rebuild_tree_count==player.treat_check_rebuild_tree_count)
         {
-            return r_neitral;
+            return;
         }
 
         last_treat_check_count=player.treat_check_count;
@@ -511,8 +499,6 @@ Result item_t::process_treat_sequence()
 #ifdef PRINT_TREAT_PERFOMANCE
 	lg<<"process_treat_sequence()4: "<<to_string(other_color(step))<<": max deep reached";
 #endif
-	return r_neitral;
-
 }
 
 unsigned item_t::get_chain_depth() const
@@ -565,67 +551,59 @@ void item_t::calculate_deep_wins_fails()
 	{
 		item_t& v=*neitrals[i];
 		v.calculate_deep_wins_fails();
-		deep_wins_count+=v.deep_fails_count;
-		deep_fails_count+=v.deep_wins_count;
+		deep_wins_count+=v.deep_fails_count/2;
+		deep_fails_count+=v.deep_wins_count/2;
 	}
 }
 
-Result item_t::solve_ant(const item_t* parent_node)
+void item_t::solve_ant(const item_t* parent_node)
 {
-	if(!wins.empty())
-		return r_fail;
+	if(is_completed())
+		return;
 	
 	if(neitrals.empty())
 	{
-		if(!fails.empty())
-			return r_win;
-		
-		Result r=process_predict_treat_sequence(true,0);
+		process_predict_treat_sequence(true,0);
 
-		if(r!=r_neitral)
+		if(is_completed())
 		{
 			deep_wins_count=wins.size();
 			deep_fails_count=fails.size();
 		}
-		return r;
+		return;
 	}
 
 	size_t shift=select_ant_neitral(parent_node);
 	item_ptr pch=neitrals[shift];
 	item_t& ch=*pch;
 
-	long long dw=ch.deep_wins_count;
-	long long df=ch.deep_fails_count;
+	long long dw=ch.deep_wins_count/2;
+	long long df=ch.deep_fails_count/2;
 
 	temporary_state ts(player,ch);
-	Result r=ch.solve_ant(this);
+	ch.solve_ant(this);
 
 	deep_wins_count-=df;
 	deep_fails_count-=dw;
 
-	if(r==r_neitral)
+	if(!ch.is_completed())
 	{
-		deep_wins_count+=ch.deep_fails_count;
-		deep_fails_count+=ch.deep_wins_count;
-		return r;
+		deep_wins_count+=ch.deep_fails_count/2;
+		deep_fails_count+=ch.deep_wins_count/2;
+		return;
 	}
 
 	neitrals.erase(neitrals.begin()+shift);
 
-	if(r==r_win)
+	if(ch.is_fail())
 	{
 		add_win(pch);
 		++deep_wins_count;
-		return r_fail;
+		return;
 	}
 	
 	add_fail(pch);
 	++deep_fails_count;
-	
-	if(neitrals.empty())
-		return r_win;
-
-	return r_neitral;
 }
 
 size_t item_t::select_ant_neitral(const item_t* parent_node)
@@ -681,13 +659,15 @@ void wide_item_t::process(bool need_fill_neitrals,unsigned lookup_deep)
 {
 	if(neitrals.empty()&&wins.empty()&&fails.empty())
 	{
-		Result r=process_predictable_move(false,0);
-		if(r!=r_neitral)return;
+		process_predictable_move(false,0);
+		if(is_completed())
+			return;
 
 		clear();
 
-		r=process_treat_sequence();
-		if(r!=r_neitral)return;
+		process_treat_sequence();
+		if(is_completed())
+			return;
 
 		process_predictable_move(need_fill_neitrals,lookup_deep);
 		return;
@@ -696,7 +676,7 @@ void wide_item_t::process(bool need_fill_neitrals,unsigned lookup_deep)
 	process_neitrals(need_fill_neitrals,lookup_deep);
 }
 
-Result wide_item_t::process_neitrals(bool need_fill_neitrals,unsigned lookup_deep,unsigned from,const item_t* parent_node)
+void wide_item_t::process_neitrals(bool need_fill_neitrals,unsigned lookup_deep,unsigned from,const item_t* parent_node)
 {
 	for(unsigned i=from;i<neitrals.size();i++)
 	{
@@ -705,20 +685,17 @@ Result wide_item_t::process_neitrals(bool need_fill_neitrals,unsigned lookup_dee
 		item_t& ch=*pch;
 
 		temporary_state ts(player,ch);
-		Result r=ch.process(need_fill_neitrals,lookup_deep);
-		if(r==r_neitral)continue;
-		if(r==r_win)add_win(pch);
-		else add_fail(pch);
+		ch.process(need_fill_neitrals,lookup_deep);
+		
+		if(!ch.is_completed())
+			continue;
+		
+		if(ch.is_win())add_fail(pch);
+		else add_win(pch);
 		pch.reset();
 	}
 
 	neitrals.erase(std::remove(neitrals.begin(),neitrals.end(),item_ptr()),neitrals.end());
-
-	if(!wins.empty())
-		return r_fail;
-
-	if(neitrals.empty())return r_win;
-	return r_neitral;
 }
 
 item_ptr wide_item_t::create_neitral_item(const step_t& s)
