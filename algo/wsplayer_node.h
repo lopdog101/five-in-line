@@ -77,7 +77,6 @@ namespace Gomoku { namespace WsPlayer
 		Result process_predictable_move(bool need_fill_neitrals,unsigned lookup_deep);
 		Result process_treat_sequence();
 		virtual Result process_neitrals(bool need_fill_neitrals,unsigned lookup_deep,unsigned from=0,const item_t* parent_node=0);
-		void drop_neitrals_and_fail_child(unsigned generation=0);
 		Result process_deep_stored();
         bool is_defence_five_exists() const;
 		size_t select_ant_neitral(const item_t* parent_node);

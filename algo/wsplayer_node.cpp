@@ -323,15 +323,6 @@ Result item_t::process_predictable_move(bool need_fill_neitrals,unsigned lookup_
 			return r;
 	}
 
-	if(!need_fill_neitrals)
-	{
-		//if fail exists all node would be mean as fail
-		//But it is not known yet
-		neitrals.resize(0);
-		fails.clear();
-		return r_neitral;
-	}
-
 	exclude_exists(ac4_pts,empty_points);
 	exclude_exists(ao3_pts,empty_points);
 	exclude_exists(ao3_open_pts,empty_points);
@@ -412,31 +403,7 @@ Result item_t::add_and_process_neitrals(const npoints_t& pts,unsigned lookup_dee
 	if(r==r_fail)
 		return r;
 
-	drop_neitrals_and_fail_child(drop_generation);
-
 	return r_neitral;
-}
-
-void item_t::drop_neitrals_and_fail_child(unsigned generation)
-{
-	if(generation!=0)
-	{
-		--generation;
-
-		for(unsigned i=0;i<neitrals.size();i++)
-			neitrals[i]->drop_neitrals_and_fail_child(generation);
-
-		return;
-	}
-
-	//neitrals.empty() && !fails.empty() means all fails
-	//but goal of this function just reset uncompleted branches to be in the same level of depth with others
-	if(neitrals.empty())
-		return;
-
-	neitrals.resize(0);
-	fails.clear();
-	return;
 }
 
 Result item_t::process_treat_sequence()
