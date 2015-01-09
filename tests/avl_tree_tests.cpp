@@ -296,7 +296,7 @@ TEST_F(avl_tree, DISABLED_generate_index_data)
 	std::string str("(-1,0:O);(-1,1:X);(-1,2:X);(0,0:X);(0,1:X);(0,2:O);(1,1:O);(1,2:X);(2,2:O)");
     steps_t steps;
     hex_or_str2points(str,steps);
-	tr.create_init_tree(steps);
+//	tr.create_init_tree(steps);
 
 	WsPlayer::stored_deep=1;
 	WsPlayer::def_lookup_deep=0;
