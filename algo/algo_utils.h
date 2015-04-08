@@ -20,6 +20,26 @@ namespace Gomoku
         }
 	};
 
+    template<class T>
+	struct restore_t
+	{
+		T& val;
+		T copied; 
+        bool active;
+
+		restore_t(T & _val):val(_val),copied(_val) {active=true;}
+		~restore_t(){reset();}
+
+        inline void reset()
+        {
+            if(!active)return;
+            val = copied;
+            active=false;
+        }
+	};
+
+	typedef restore_t<unsigned> unsigned_restore_t;
+
 }
 
 #endif

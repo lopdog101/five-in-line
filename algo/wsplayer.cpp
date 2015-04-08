@@ -18,6 +18,7 @@ wsplayer_t::wsplayer_t()
     treat_check_count=0;
     treat_check_rebuild_tree_count=0;
     thinking=0;
+	lookup_deep=def_lookup_deep;
 }
 
 void wsplayer_t::delegate_step()

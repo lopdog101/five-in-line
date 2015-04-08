@@ -20,6 +20,7 @@ item_t::item_t(wsplayer_t& _player,const step_t& s) :
 	++nodes_count;
 	deep_wins_count=0;
 	deep_fails_count=0;
+	neitrals_min_deep=0;
 }
 
 item_t::item_t(wsplayer_t& _player,const Gomoku::point& p,Step s) : 
@@ -29,6 +30,7 @@ item_t::item_t(wsplayer_t& _player,const Gomoku::point& p,Step s) :
 	++nodes_count;
 	deep_wins_count=0;
 	deep_fails_count=0;
+	neitrals_min_deep=0;
 }
 
 void item_t::process_deep_common()
@@ -74,7 +76,7 @@ void item_t::process_deep_stored()
 {
 	for(unsigned i=0;i<stored_deep;i++)
 	{
-		process(i+1<stored_deep||stored_deep==1,(i+1<stored_deep? 0:def_lookup_deep));
+		process(i+1<stored_deep||stored_deep==1);
 
 		if(is_completed() || neitrals.size() == 1)
 			return;
@@ -86,6 +88,9 @@ void item_t::clear()
 	neitrals.clear();
 	wins.clear();
 	fails.clear();
+	deep_wins_count=0;
+	deep_fails_count=0;
+	neitrals_min_deep=0;
 }
 
 item_ptr item_t::get_next_step() const
@@ -104,33 +109,39 @@ item_ptr item_t::get_win_fail_step() const
 }
 
 
-void item_t::process(bool need_fill_neitrals,unsigned lookup_deep,const item_t* parent_node)
+void item_t::process(bool need_fill_neitrals,const item_t* parent_node)
 {
 	if(is_completed())
 		return;
-	
+
 	if(neitrals.empty())
-		process_predict_treat_sequence(need_fill_neitrals,lookup_deep);
+		process_predict_treat_sequence(need_fill_neitrals);
 	else
-		process_neitrals(need_fill_neitrals,lookup_deep,0,parent_node);
+		process_neitrals(need_fill_neitrals,0,parent_node);
+
+	calculate_neitrals_min_deep();
 }
 
-void item_t::process_predict_treat_sequence(bool need_fill_neitrals,unsigned lookup_deep)
+void item_t::process_predict_treat_sequence(bool need_fill_neitrals)
 {
-	process_predictable_move(false,0);
+	unsigned_restore_t hld(player.lookup_deep);
+	player.lookup_deep=0;
+	process_predictable_move(false);
 	if(is_completed())
 		return;
 
 	clear();
+	
+	hld.reset();
 
 	process_treat_sequence();
 	if(is_completed())
 		return;
 
-	process_predictable_move(need_fill_neitrals,lookup_deep);
+	process_predictable_move(need_fill_neitrals);
 }
 
-void item_t::process_predictable_move(bool need_fill_neitrals,unsigned lookup_deep)
+void item_t::process_predictable_move(bool need_fill_neitrals)
 {
 	unsigned& recursive_deep=player.predict_deep;
 	inc_t r(recursive_deep);
@@ -164,8 +175,9 @@ void item_t::process_predictable_move(bool need_fill_neitrals,unsigned lookup_de
 		}
 
 		neitrals.push_back(create_neitral_item(d5_pts.front(),other_color(step)) );
+		neitrals_min_deep=1;
 
-		if(lookup_deep==0)
+		if(!player.is_lookup_deep_available())
 			return;
 
 #ifdef PRINT_PREDICT_STEPS
@@ -174,7 +186,7 @@ void item_t::process_predictable_move(bool need_fill_neitrals,unsigned lookup_de
 			<<"\r\n"<<print_field(player.field.get_steps());
 #endif
 
-		process_neitrals(need_fill_neitrals,lookup_deep-1);
+		process_neitrals(need_fill_neitrals);
 		return;
 	}
 
@@ -247,7 +259,7 @@ void item_t::process_predictable_move(bool need_fill_neitrals,unsigned lookup_de
 
 		add_neitrals(do4_pts);
 
-		if(lookup_deep==0)
+		if(!player.is_lookup_deep_available())
 			return;
 
 #ifdef PRINT_PREDICT_STEPS
@@ -256,10 +268,10 @@ void item_t::process_predictable_move(bool need_fill_neitrals,unsigned lookup_de
 			<<"\r\n"<<print_field(player.field.get_steps());
 #endif
 
-		return process_neitrals(false,lookup_deep-1);
+		return process_neitrals(false);
 	}
 
-	if(!need_fill_neitrals&&lookup_deep==0)
+	if(!need_fill_neitrals&&!player.is_lookup_deep_available())
 		return;
 
 	if(!ac4_pts.empty())
@@ -276,7 +288,7 @@ void item_t::process_predictable_move(bool need_fill_neitrals,unsigned lookup_de
 				<<" pts="<<print_points(pts)
 				<<"\r\n"<<print_field(player.field.get_steps());
 #endif
-		add_and_process_neitrals(pts,lookup_deep,2);
+		add_and_process_neitrals(pts,2);
 		if(is_win())
 			return;
 	}
@@ -297,7 +309,7 @@ void item_t::process_predictable_move(bool need_fill_neitrals,unsigned lookup_de
 				<<" pts="<<print_points(pts)
 				<<"\r\n"<<print_field(player.field.get_steps());
 #endif
-		add_and_process_neitrals(pts,lookup_deep,1);
+		add_and_process_neitrals(pts,1);
 		if(is_win())
 			return;
 	}
@@ -315,7 +327,7 @@ void item_t::process_predictable_move(bool need_fill_neitrals,unsigned lookup_de
 				<<" pts="<<print_points(pts)
 				<<"\r\n"<<print_field(player.field.get_steps());
 #endif
-		add_and_process_neitrals(pts,lookup_deep,1);
+		add_and_process_neitrals(pts,1);
 		if(is_win())
 			return;
 	}
@@ -351,23 +363,31 @@ void item_t::process_predictable_move(bool need_fill_neitrals,unsigned lookup_de
 	add_neitrals(do3_pts);
 }
 
-void item_t::process_neitrals(bool need_fill_neitrals,unsigned lookup_deep,unsigned from,const item_t* parent_node)
+void item_t::process_neitrals(bool need_fill_neitrals,unsigned from,const item_t* parent_node)
 {
+	unsigned_restore_t hld(player.lookup_deep);
+
 	for(unsigned i=from;i<neitrals.size();i++)
 	{
 		player.check_cancel();
 		item_ptr& pch=neitrals[i];
 		item_t& ch=*pch;
 
+		if(ch.neitrals_min_deep>=neitrals_min_deep)
+			return;
+
+		bool b=player.is_lookup_deep_available();
+
 		temporary_state ts(player,ch);
-		ch.process(need_fill_neitrals,lookup_deep,this);
+		ch.process(need_fill_neitrals,this);
 
 		if(ch.is_fail())
 		{
 			add_win(pch);
 			pch.reset();
-			if(!lookup_deep)break;
-			--lookup_deep;
+			if(!b)
+				break;
+			--player.lookup_deep;
 			continue;
 		}
 		else if(ch.is_win())
@@ -380,15 +400,15 @@ void item_t::process_neitrals(bool need_fill_neitrals,unsigned lookup_deep,unsig
 	neitrals.erase(std::remove(neitrals.begin(),neitrals.end(),item_ptr()),neitrals.end());
 }
 
-void item_t::add_and_process_neitrals(const npoints_t& pts,unsigned lookup_deep,unsigned drop_generation)
+void item_t::add_and_process_neitrals(const npoints_t& pts,unsigned drop_generation)
 {
 	unsigned from=neitrals.size();
 	add_neitrals(pts);
 
-	if(lookup_deep==0)
+	if(!player.is_lookup_deep_available())
 		return;
 	
-	process_neitrals(false,lookup_deep-1,from);
+	process_neitrals(false,from);
 }
 
 void item_t::process_treat_sequence()
@@ -534,6 +554,10 @@ void item_t::add_neitrals(const Points& pts)
 		static_cast<point&>(s)=*i;
 		*j=create_neitral_item(s);
 	}
+
+	if(neitrals_min_deep==0 && !neitrals.empty())
+		neitrals_min_deep=1;
+
 }
 
 item_ptr item_t::create_neitral_item(const step_t& s)
@@ -563,7 +587,9 @@ void item_t::solve_ant(const item_t* parent_node)
 	
 	if(neitrals.empty())
 	{
-		process_predict_treat_sequence(true,0);
+		unsigned_restore_t hld(player.lookup_deep);
+		player.lookup_deep=0;
+		process_predict_treat_sequence(true);
 
 		if(is_completed())
 		{
@@ -636,6 +662,24 @@ size_t item_t::select_ant_neitral(const item_t* parent_node)
     return shift;
 }
 
+void item_t::calculate_neitrals_min_deep()
+{
+	if(neitrals.empty())
+	{
+		neitrals_min_deep=0;
+		return;
+	}
+
+	neitrals_min_deep=neitrals.front()->neitrals_min_deep+1;
+
+	for(unsigned i=1;i<neitrals.size();i++)
+	{
+		unsigned v=neitrals[i]->neitrals_min_deep+1;
+		if(v<neitrals_min_deep)
+			neitrals_min_deep=v;
+	}
+}
+
 
 ///////////////////////////////////////////////////////////////
 void wide_item_t::process_deep_common()
@@ -650,33 +694,39 @@ void wide_item_t::process_deep_stored()
 {
 	for(unsigned i=0;i<stored_deep;i++)
 	{
-		process(i+1<stored_deep||stored_deep==1,(i+1<stored_deep? 0:def_lookup_deep));
+		process(i+1<stored_deep||stored_deep==1);
 		if(neitrals.empty())break;
 	}
 }
 
-void wide_item_t::process(bool need_fill_neitrals,unsigned lookup_deep)
+void wide_item_t::process(bool need_fill_neitrals)
 {
-	if(neitrals.empty()&&wins.empty()&&fails.empty())
+	if(!neitrals.empty()||!wins.empty()||!fails.empty())
 	{
-		process_predictable_move(false,0);
-		if(is_completed())
-			return;
-
-		clear();
-
-		process_treat_sequence();
-		if(is_completed())
-			return;
-
-		process_predictable_move(need_fill_neitrals,lookup_deep);
+		process_neitrals(need_fill_neitrals);
+		calculate_neitrals_min_deep();
 		return;
 	}
 
-	process_neitrals(need_fill_neitrals,lookup_deep);
+	unsigned_restore_t hld(player.lookup_deep);
+	player.lookup_deep=0;
+
+	process_predictable_move(false);
+	if(is_completed())
+		return;
+
+	clear();
+	hld.reset();
+
+	process_treat_sequence();
+	if(is_completed())
+		return;
+
+	process_predictable_move(need_fill_neitrals);
+	calculate_neitrals_min_deep();
 }
 
-void wide_item_t::process_neitrals(bool need_fill_neitrals,unsigned lookup_deep,unsigned from,const item_t* parent_node)
+void wide_item_t::process_neitrals(bool need_fill_neitrals,unsigned from,const item_t* parent_node)
 {
 	for(unsigned i=from;i<neitrals.size();i++)
 	{
@@ -684,8 +734,11 @@ void wide_item_t::process_neitrals(bool need_fill_neitrals,unsigned lookup_deep,
 		item_ptr& pch=neitrals[i];
 		item_t& ch=*pch;
 
+		if(ch.neitrals_min_deep>=neitrals_min_deep)
+			return;
+
 		temporary_state ts(player,ch);
-		ch.process(need_fill_neitrals,lookup_deep);
+		ch.process(need_fill_neitrals);
 		
 		if(!ch.is_completed())
 			continue;

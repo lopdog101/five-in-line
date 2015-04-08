@@ -100,7 +100,7 @@ void solver::print_results()
 TEST_F(solver, skiped_neitrals_inside_field)
 {
 	WsPlayer::stored_deep=1;
-	WsPlayer::def_lookup_deep=5;
+	WsPlayer::def_lookup_deep=6;
 
 	solve("fd0201fd0302fe0102fe0201ff0002ff0101ff020200fe0200ff0200000100010101ff0101010102fe02020001020102020202030101");
 
@@ -134,7 +134,7 @@ TEST_F(solver, lost_close_four_treat_cause_opponent_open_four_exists)
 TEST_F(solver, wrong_ant_win_lookup_enabled)
 {
 	WsPlayer::stored_deep=1;
-	WsPlayer::def_lookup_deep=4;
+	WsPlayer::def_lookup_deep=5;
 	WsPlayer::treat_deep=0;
 	WsPlayer::ant_count=1000;
 
@@ -147,18 +147,19 @@ TEST_F(solver, wrong_ant_win_lookup_enabled)
 TEST_F(solver, regress_before_duplicated_states)
 {
 	WsPlayer::stored_deep=3;
-	WsPlayer::def_lookup_deep=2;
+	WsPlayer::def_lookup_deep=5;
 	WsPlayer::ant_count=1000;
 
 	solve("(0,0:X);(2,1:O);(-1,1:X);(-2,-2:O);(-1,0:X);(-2,2:O)");
 
-	EXPECT_TRUE(wins_contains(point(0,-1)));
-	EXPECT_TRUE(wins_contains(point(0,1)));
-	EXPECT_TRUE(wins_contains(point(-2,-1)));
-	EXPECT_TRUE(wins_contains(point(-2,1)));
+	sort_results();
+	print_results();
+
+	EXPECT_TRUE(wins_contains(point(0,1)) );
 
 	//517963
 	//523690
+	//5558
 }
 
 

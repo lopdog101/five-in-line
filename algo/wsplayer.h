@@ -26,6 +26,7 @@ namespace Gomoku { namespace WsPlayer
 		field_t field;
 		unsigned long long predict_processed;
 		unsigned predict_deep;
+		unsigned lookup_deep;
 
         states_t states;
 		unsigned current_state;
@@ -41,6 +42,8 @@ namespace Gomoku { namespace WsPlayer
 		void increase_state();
 		inline void decrease_state(){--current_state;}
 		unsigned current_state_index() const{return current_state;}
+
+		inline bool is_lookup_deep_available() const{return current_state_index()+1<lookup_deep;}
 
         void increase_treat_check_count();
         void increase_treat_check_rebuild_tree_count();

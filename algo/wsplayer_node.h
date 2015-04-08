@@ -69,14 +69,14 @@ namespace Gomoku { namespace WsPlayer
         template<class Points>
 		void add_neitrals(const Points& pts);
 
-		void add_and_process_neitrals(const npoints_t& pts,unsigned lookup_deep,unsigned drop_generation);
+		void add_and_process_neitrals(const npoints_t& pts,unsigned drop_generation);
 
 		void clear();
 
-		void process_predict_treat_sequence(bool need_fill_neitrals,unsigned lookup_deep);
-		void process_predictable_move(bool need_fill_neitrals,unsigned lookup_deep);
+		void process_predict_treat_sequence(bool need_fill_neitrals);
+		void process_predictable_move(bool need_fill_neitrals);
 		void process_treat_sequence();
-		virtual void process_neitrals(bool need_fill_neitrals,unsigned lookup_deep,unsigned from=0,const item_t* parent_node=0);
+		virtual void process_neitrals(bool need_fill_neitrals,unsigned from=0,const item_t* parent_node=0);
 		void process_deep_stored();
         bool is_defence_five_exists() const;
 		size_t select_ant_neitral(const item_t* parent_node);
@@ -91,6 +91,7 @@ namespace Gomoku { namespace WsPlayer
 		wsplayer_t& player;
 		long long deep_wins_count;
 		long long deep_fails_count;
+		unsigned neitrals_min_deep;
 
 		item_t(wsplayer_t& _player,const step_t& s);
 		item_t(wsplayer_t& _player,const Gomoku::point& p,Step s);
@@ -100,7 +101,7 @@ namespace Gomoku { namespace WsPlayer
 		item_ptr get_win_fail_step() const;
 		unsigned get_chain_depth() const;
 
-		void process(bool need_fill_neitrals,unsigned lookup_deep,const item_t* parent_node=0);
+		void process(bool need_fill_neitrals,const item_t* parent_node=0);
 		void process_deep_common();
 
 		inline void add_win(const item_ptr& val){wins.add(val);}
@@ -114,14 +115,15 @@ namespace Gomoku { namespace WsPlayer
 		inline bool is_win() const{return !wins.empty();}
 		inline bool is_fail() const{return !is_win() && !fails.empty() && neitrals.empty();}
 		inline bool is_completed() const{return is_win() || is_fail();}
+		void calculate_neitrals_min_deep();
 	};
 
 	class wide_item_t : public item_t
 	{
 	protected:
-		void process(bool need_fill_neitrals,unsigned lookup_deep);
+		void process(bool need_fill_neitrals);
 		void process_deep_stored();
-		virtual void process_neitrals(bool need_fill_neitrals,unsigned lookup_deep,unsigned from=0,const item_t* parent_node=0);
+		virtual void process_neitrals(bool need_fill_neitrals,unsigned from=0,const item_t* parent_node=0);
 
 		virtual item_ptr create_neitral_item(const step_t& s);
 	public:
