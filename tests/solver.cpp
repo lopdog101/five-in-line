@@ -162,5 +162,17 @@ TEST_F(solver, regress_before_duplicated_states)
 	//5558
 }
 
+TEST_F(solver, solver_crash)
+{
+	WsPlayer::stored_deep=2;
+	WsPlayer::def_lookup_deep=5;
+	WsPlayer::ant_count=5000;
+
+	solve("000001020102ff0101fe000201ff0102fe02ff0201000202000101ff0302020001fd0502");
+
+	sort_results();
+	print_results();
+}
+
 
 }//namespace
