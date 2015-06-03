@@ -159,7 +159,8 @@ TEST_F(solver, regress_before_duplicated_states)
 
 	//517963
 	//523690
-	//5558
+	
+	//538882
 }
 
 TEST_F(solver, solver_crash)
@@ -172,6 +173,25 @@ TEST_F(solver, solver_crash)
 
 	sort_results();
 	print_results();
+}
+
+TEST_F(solver, high_branch_zero)
+{
+	WsPlayer::stored_deep=4;
+	WsPlayer::def_lookup_deep=0;
+	WsPlayer::ant_count=0;
+	WsPlayer::treat_deep=0;
+
+	solve("000001020102ff010100ff02fe0001010002030201");
+
+	sort_results();
+	print_results();
+
+	EXPECT_TRUE(wins.empty());
+
+	//517963
+	//523690
+	//5558
 }
 
 

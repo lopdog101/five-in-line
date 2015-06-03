@@ -374,7 +374,7 @@ void item_t::process_neitrals(bool need_fill_neitrals,unsigned from,const item_t
 		item_t& ch=*pch;
 
 		if(ch.neitrals_min_deep>=neitrals_min_deep)
-			break;
+			continue;
 
 		bool b=player.is_lookup_deep_available();
 
@@ -735,7 +735,7 @@ void wide_item_t::process_neitrals(bool need_fill_neitrals,unsigned from,const i
 		item_t& ch=*pch;
 
 		if(ch.neitrals_min_deep>=neitrals_min_deep)
-			break;
+			continue;
 
 		temporary_state ts(player,ch);
 		ch.process(need_fill_neitrals);
